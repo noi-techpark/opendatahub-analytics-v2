@@ -1,0 +1,45 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+#app {
+  @apply w-full min-h-screen;
+}
+
+html {
+  @apply font-sans scroll-smooth;
+
+  font-size: 16px;
+  -moz-osx-font-smoothing: grayscale;
+  -webkit-font-smoothing: antialiased;
+  box-sizing: border-box;
+}
+*::before,
+*::after {
+  box-sizing: border-box;
+  margin: 0;
+}
+
+svg {
+  @apply inline-block;
+}
+
+img {
+  @apply object-cover object-center;
+}
+
+.__clickable {
+  @apply transition-opacity duration-200 cursor-pointer;
+
+  &:active {
+    @apply transition-none opacity-[0.6];
+  }
+}
+
+.__center {
+  width: 970px;
+  margin: 0 auto;
+}
+
+@media (max-width: theme('screens.md')) {
+}
