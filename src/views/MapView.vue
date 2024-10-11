@@ -1,6 +1,5 @@
 <template>
   <main class="main">
-    ciao
     <div class="map-ct">
       <div id="map" />
     </div>
@@ -8,9 +7,9 @@
 </template>
 
 <script setup lang="ts">
-import maplibregl from 'maplibre-gl';
-import 'maplibre-gl/dist/maplibre-gl.css';
-import { onMounted } from 'vue';
+import maplibregl from 'maplibre-gl'
+import 'maplibre-gl/dist/maplibre-gl.css'
+import { onMounted } from 'vue'
 
 onMounted(() => {
   const map = new maplibregl.Map({
@@ -38,8 +37,8 @@ onMounted(() => {
     },
     center: [11.3295, 46.4896],
     zoom: 13,
-  });
-});
+  })
+})
 </script>
 
 <style lang="postcss" scoped>

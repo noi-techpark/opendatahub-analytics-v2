@@ -5,10 +5,21 @@ import { createPinia } from 'pinia'
 
 import App from './App.vue'
 import router from './router'
+import keycloakService from './services/keycloak.service'
 
-const app = createApp(App)
+const initApp = async () => {
+  try {
+    const app = createApp(App)
 
-app.use(createPinia())
-app.use(router)
+    await keycloakService.init()
 
-app.mount('#app')
+    app.use(createPinia())
+    app.use(router)
+
+    app.mount('#app')
+  } catch (error) {
+    console.error('Failed to keycloak app:', error)
+  }
+}
+
+initApp()

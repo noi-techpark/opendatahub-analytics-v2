@@ -435,6 +435,13 @@
   resolved "https://registry.yarnpkg.com/@types/json-schema/-/json-schema-7.0.15.tgz#596a1747233694d50f6ad8a7869fcb6f56cf5841"
   integrity sha512-5+fP8P8MFNC+AyZCDxrB2pkZFPGzqQWUzpSeuuVLvm8VMcorNYavBqoFcxK8bQz4Qsbn4oUEEem4wDLfcysGHA==
 
+"@types/keycloak-js@^3.4.1":
+  version "3.4.1"
+  resolved "https://registry.yarnpkg.com/@types/keycloak-js/-/keycloak-js-3.4.1.tgz#32fe1c44ab750aa9e99bb62502ab782444765297"
+  integrity sha512-uWB18tdjmnABDxfS7XQULAy4rrL7mGxy1SN+ijvHJPbcIAhtZWqcJHrcMKruw7Eh4TKnLlK+vmIEmZDtpHFQmA==
+  dependencies:
+    keycloak-js "*"
+
 "@types/mapbox__point-geometry@*", "@types/mapbox__point-geometry@^0.1.4":
   version "0.1.4"
   resolved "https://registry.yarnpkg.com/@types/mapbox__point-geometry/-/mapbox__point-geometry-0.1.4.tgz#0ef017b75eedce02ff6243b4189210e2e6d5e56d"
@@ -1597,6 +1604,11 @@ kdbush@^4.0.2:
   version "4.0.2"
   resolved "https://registry.yarnpkg.com/kdbush/-/kdbush-4.0.2.tgz#2f7b7246328b4657dd122b6c7f025fbc2c868e39"
   integrity sha512-WbCVYJ27Sz8zi9Q7Q0xHC+05iwkm3Znipc2XTlrnJbsHMYktW4hPhXUE8Ys1engBrvffoSCqbil1JQAa7clRpA==
+
+keycloak-js@*, keycloak-js@^26.0.0:
+  version "26.0.0"
+  resolved "https://registry.yarnpkg.com/keycloak-js/-/keycloak-js-26.0.0.tgz#2c14fdd2e86a6b4bdb1cbff43b6e0e6a5ae4d715"
+  integrity sha512-uUvoc6luDuAOQ74i4/wKm1tGduYcJ/2jSh29Krekkt+ytn1mLL+mHug27FfpwgxcTb6yx+uL0OcehXwl3WIRMQ==
 
 keyv@^4.5.3:
   version "4.5.4"
