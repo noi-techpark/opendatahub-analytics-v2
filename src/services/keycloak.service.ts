@@ -53,7 +53,8 @@ class KeycloakService {
   public async init(): Promise<void> {
     try {
       const initOptions: KeycloakInitOptions = {
-        onLoad: 'check-sso',
+        //   onLoad: 'check-sso',
+        responseMode: 'query',
         silentCheckSsoRedirectUri: import.meta.env
           .KEYCLOAK_SILENT_CHECK_SSO_REDIRECT_URI,
       }

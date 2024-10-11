@@ -1,0 +1,18 @@
+{
+  "common": {
+    "login": "Login",
+    "logout": "Logout"
+  },
+  "components": {
+    "sidebar": {
+      "map": "Map Overview",
+      "charts": "Charts",
+      "events": "Events"
+    },
+    "sidebar-map-content": {
+      "deselect": "Deselect all",
+      "deselect-group": "Deselect group"
+    }
+  },
+  "pages": {}
+}

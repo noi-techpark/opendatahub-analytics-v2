@@ -15,10 +15,10 @@ import Sidebar from './components/nav/Sidebar.vue'
 
 <style lang="postcss" scoped>
 .page-ct {
-  @apply relative flex;
+  @apply flex;
 
   & .main-ct {
-    @apply ml-[350px];
+    @apply relative ml-[350px] h-screen w-full;
   }
 }
 </style>

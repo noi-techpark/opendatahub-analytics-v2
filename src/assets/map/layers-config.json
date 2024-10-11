@@ -1,0 +1,297 @@
+[
+  {
+    "id": "Node Layer",
+    "layers": [
+      {
+        "id": "Weather",
+        "icons": [
+          "weather.svg",
+          ["green.svg", "precipitation", 300, 0, 0.1],
+          ["green.svg", "precipitation", 600, 0, 0.1],
+          ["green.svg", "precipitation", 900, 0, 0.1],
+          ["yellow.svg", "precipitation", 300, 0.1, 1],
+          ["yellow.svg", "precipitation", 600, 0.1, 1],
+          ["yellow.svg", "precipitation", 900, 0.1, 1],
+          ["red.svg", "precipitation", 300, 1, 99999],
+          ["red.svg", "precipitation", 600, 1, 99999],
+          ["red.svg", "precipitation", 900, 1, 99999]
+        ],
+        "stationType": ["MeteoStation"],
+        "projection": "EPSG:4326",
+        "format": "integreen",
+        "custom-function": null,
+        "color": "#F7D25A",
+        "main-data": [
+          ["air-temperature", null],
+          ["precipitation", null]
+        ]
+      },
+      {
+        "id": "Air quality",
+        "icons": [
+          "air_quality.svg",
+          ["green.svg", "nitrogen-dioxide", 3600, 0, 40],
+          ["yellow.svg", "nitrogen-dioxide", 3600, 40, 60],
+          ["red.svg", "nitrogen-dioxide", 3600, 60, 99999],
+          ["green.svg", "NO2 - Ossidi di azoto", 3600, 0, 40],
+          ["yellow.svg", "NO2 - Ossidi di azoto", 3600, 40, 60],
+          ["red.svg", "NO2 - Ossidi di azoto", 3600, 60, 99999],
+          ["green.svg", "nitrogen-dioxide", 600, 0, 40],
+          ["yellow.svg", "nitrogen-dioxide", 600, 40, 60],
+          ["red.svg", "nitrogen-dioxide", 600, 60, 99999],
+          ["green.svg", "Biossido di Azoto", 600, 0, 40],
+          ["yellow.svg", "Biossido di Azoto", 600, 40, 60],
+          ["red.svg", "Biossido di Azoto", 600, 60, 99999],
+          ["green.svg", "NO2-Alphasense_processed", 3600, 0, 40],
+          ["yellow.svg", "NO2-Alphasense_processed", 3600, 40, 60],
+          ["red.svg", "NO2-Alphasense_processed", 3600, 60, 99999]
+        ],
+        "stationType": ["EnvironmentStation"],
+        "projection": "EPSG:4326",
+        "format": "integreen",
+        "custom-function": null,
+        "color": "#F0A050",
+        "main-data": [
+          ["nitrogen-dioxide", null],
+          ["particulate-matter10", null],
+          ["NO2 - Ossidi di azoto", null],
+          ["Biossido di Azoto", null],
+          ["NO2-Alphasense_processed", null]
+        ]
+      },
+      {
+        "id": "Parking",
+        "icons": [
+          "parking.svg",
+          ["red.svg", "free", 300, 0, 10],
+          ["yellow.svg", "free", 300, 10, 100],
+          ["green.svg", "free", 300, 100, 99999],
+          ["red.svg", "free", 1, 0, 1],
+          ["green.svg", "free", 1, 1, 99999]
+        ],
+        "stationType": ["ParkingStation", "ParkingSensor", "ParkingFacility"],
+        "projection": "EPSG:4326",
+        "format": "integreen",
+        "custom-function": null,
+        "color": "#E86161",
+        "main-data": [
+          ["occupied", 300],
+          ["free", 300],
+          ["parking-forecast-30", 1800],
+          ["parking-forecast-60", 3600]
+        ]
+      },
+      {
+        "id": "BikeParking",
+        "icons": [
+          "parking.svg",
+          ["red.svg", "free", 600, 0, 10],
+          ["yellow.svg", "free", 600, 10, 100],
+          ["green.svg", "free", 600, 100, 99999]
+        ],
+        "stationType": ["BikeParking"],
+        "projection": "EPSG:4326",
+        "format": "integreen",
+        "custom-function": null,
+        "color": "#F58BB5",
+        "main-data": [
+          ["free", 600],
+          ["freeSpotsRegularBike", 600],
+          ["freeSpotsElectricBike", 600],
+          ["usageState", 600]
+        ]
+      },
+      {
+        "id": "Bluetooth",
+        "icons": [
+          "bluetooth.svg",
+          ["green.svg", "Bluetooth Count record", 600, 0, 75],
+          ["yellow.svg", "Bluetooth Count record", 600, 75, 150],
+          ["red.svg", "Bluetooth Count record", 600, 150, 99999]
+        ],
+        "stationType": ["BluetoothStation"],
+        "format": "integreen",
+        "projection": "EPSG:4326",
+        "custom-function": null,
+        "color": "#F0ABAB",
+        "main-data": [
+          ["Bluetooth Count record", 600],
+          ["Bluetooth Count record", 3600]
+        ]
+      },
+      {
+        "id": "Traffic",
+        "icons": [
+          "traffic.svg",
+          ["green.svg", "Average Speed Light Vehicles", 600, 120, 99999],
+          ["yellow.svg", "Average Speed Light Vehicles", 600, 100, 120],
+          ["red.svg", "Average Speed Light Vehicles", 600, 0, 100],
+          ["green.svg", "average-vehicle-speed", 600, 40, 99999],
+          ["yellow.svg", "average-vehicle-speed", 600, 26, 40],
+          ["red.svg", "average-vehicle-speed", 600, 0, 25]
+        ],
+        "stationType": ["TrafficSensor", "TrafficDirection"],
+        "format": "integreen",
+        "projection": "EPSG:4326",
+        "custom-function": null,
+        "color": "#CB8BC3",
+        "main-data": [
+          ["Nr. Equivalent Vehicles", 600],
+          ["Average Flow", 600],
+          ["Average Speed Light Vehicles", 600]
+        ]
+      },
+      {
+        "id": "BikeCounter",
+        "icons": [
+          "traffic.svg",
+          ["green.svg", "vehicle detection (count)", 3600, 0, 49],
+          ["yellow.svg", "vehicle detection (count)", 3600, 50, 149],
+          ["red.svg", "vehicle detection (count)", 3600, 150, 999999]
+        ],
+        "stationType": ["BikeCounter"],
+        "format": "integreen",
+        "projection": "EPSG:4326",
+        "custom-function": null,
+        "color": "#CB8BC3",
+        "main-data": []
+      },
+      {
+        "id": "Road weather",
+        "icons": [
+          "road_weather.svg",
+          ["green.svg", "ground-surface-temperature", 600, 0, 99999],
+          ["yellow.svg", "ground-surface-temperature", 600, -5, 0],
+          ["red.svg", "ground-surface-temperature", 600, -99999, -5],
+          ["green.svg", "temp_suolo", 1, 0, 99999],
+          ["yellow.svg", "temp_suolo", 1, -5, 0],
+          ["red.svg", "temp_suolo", 1, -99999, -5]
+        ],
+        "stationType": ["RWISstation"],
+        "format": "integreen",
+        "projection": "EPSG:4326",
+        "custom-function": null,
+        "color": "#9399E5",
+        "main-data": [
+          ["ground-surface-temperature", 600],
+          ["air-temperature", 600],
+          ["precipitation-intensity", 600],
+          ["wind-speed", 600],
+          ["temp_suolo", 1],
+          ["temp_aria", 1],
+          ["prec_qta", 1],
+          ["prec_tipo", 1]
+        ]
+      },
+      {
+        "id": "Car sharing",
+        "icons": [
+          "car_sharing.svg",
+          ["red.svg", "number-available", 600, 0, 1],
+          ["yellow.svg", "number-available", 600, 1, 2],
+          ["green.svg", "number-available", 600, 2, 100]
+        ],
+        "stationType": ["CarsharingStation"],
+        "format": "integreen",
+        "projection": "EPSG:4326",
+        "custom-function": null,
+        "color": "#478DDD",
+        "main-data": []
+      },
+      {
+        "id": "Bike sharing",
+        "icons": [
+          "bike_sharing.svg",
+          ["red.svg", "number-available", 300, 0, 1],
+          ["green.svg", "number-available", 300, 1, 100],
+          ["red.svg", "availability", 300, 0, 1],
+          ["green.svg", "availability", 300, 1, 100]
+        ],
+        "stationType": ["BikesharingStation", "Bicycle"],
+        "apiWhere": "or(and(stype.eq.\"Bicycle\",sorigin.eq.\"BIKE_SHARING_MERANO\"),stype.neq.\"Bicycle\")",
+        "format": "integreen",
+        "projection": "EPSG:4326",
+        "custom-function": null,
+        "color": "#8BD1E6",
+        "main-data": []
+      },
+      {
+        "id": "E-Mobility",
+        "icons": [
+          "e_mobility.svg",
+          ["red.svg", "number-available", 600, 0, 1],
+          ["yellow.svg", "number-available", 600, 1, 2],
+          ["green.svg", "number-available", 600, 2, 100]
+        ],
+        "stationType": ["EChargingStation"],
+        "format": "integreen",
+        "projection": "EPSG:4326",
+        "custom-function": null,
+        "color": "#BFCE89",
+        "main-data": []
+      },
+      {
+        "id": "Bike chargers",
+        "icons": [
+          "e_mobility.svg",
+          ["red.svg", "freebay", 300, 0, 1],
+          ["yellow.svg", "freebay", 300, 1, 2],
+          ["green.svg", "freebay", 300, 2, 100]
+        ],
+        "stationType": ["BIKE_CHARGER"],
+        "format": "integreen",
+        "projection": "EPSG:4326",
+        "custom-function": null,
+        "color": "#BFCE89",
+        "main-data": []
+      },
+      {
+        "id": "VMS",
+        "icons": [
+          "vms.svg",
+          ["red.svg", "stato", 1, 0, 1],
+          ["green.svg", "stato", 1, 1, 2]
+        ],
+        "stationType": ["VMS"],
+        "projection": "EPSG:4326",
+        "format": "integreen",
+        "custom-function": null,
+        "color": "#A3BC94",
+        "main-data": [],
+        "imageMapping": [
+          {
+            "dataType": "esposizione",
+            "dataTypeMetadata": "signal-codes",
+            "valueSeparator": "|",
+            "metaDataImgData": "signalAsBase64"
+          }
+        ]
+      }
+    ]
+  },
+  {
+    "id": "Edge Layer",
+    "layers": [
+      {
+        "id": "Vehicular time",
+        "icons": ["vehicular_times.svg"],
+        "stationType": ["LinkStation"],
+        "format": "integreen",
+        "projection": "xxx",
+        "custom-function": null,
+        "color": "#A5ABB7",
+        "main-data": []
+      },
+      {
+        "id": "Province BZ",
+        "icons": ["caution_multiple.svg", "caution.svg"],
+        "stationType": ["PROVINCE_BZ"],
+        "format": "road_events",
+        "projection": "xxx",
+        "custom-function": null,
+        "color": "#A5ABB7",
+        "main-data": []
+      }
+    ]
+  }
+]

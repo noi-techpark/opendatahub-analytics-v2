@@ -5,7 +5,7 @@ export default {
   theme: {
     extend: {
       colors: {
-        primary: '#7c0e6e',
+        primary: '#476929',
       },
       fontFamily: {
         title: ['Roboto', 'sans-serif'],

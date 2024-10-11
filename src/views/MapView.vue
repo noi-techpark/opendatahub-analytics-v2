@@ -1,55 +1,54 @@
 <template>
   <main class="main">
-    <div class="map-ct">
-      <div id="map" />
-    </div>
+    <Map :loading="loading > 0" :points />
   </main>
 </template>
 
 <script setup lang="ts">
-import maplibregl from 'maplibre-gl'
-import 'maplibre-gl/dist/maplibre-gl.css'
-import { onMounted } from 'vue'
+import { ref, watch, watchEffect } from 'vue'
+import Map from '../components/ui/map/Map.vue'
+import { useLayerStore } from '../stores/map-layers'
+import { useFetch } from '@vueuse/core'
+import { FlatResponse, DataPoint } from '../types/api'
 
-onMounted(() => {
-  const map = new maplibregl.Map({
-    container: 'map',
-    style: {
-      version: 8,
-      sources: {
-        'raster-tiles': {
-          type: 'raster',
-          tiles: ['https://tile.openstreetmap.org/{z}/{x}/{y}.png'],
-          tileSize: 256,
-          attribution:
-            '<a target="_blank" href="http://www.opendatahub.com">OpenDataHub.com</a> | Map tiles by <a href="https://www.openstreetmap.org/about" target="_blank">OpenStreetMap</a>',
-        },
-      },
-      layers: [
-        {
-          id: 'simple-tiles',
-          type: 'raster',
-          source: 'raster-tiles',
-          minzoom: 0,
-          maxzoom: 22,
-        },
-      ],
-    },
-    center: [11.3295, 46.4896],
-    zoom: 13,
-  })
-})
+const layerStore = useLayerStore()
+const loading = ref<number>(0)
+const points = ref<DataPoint[]>([])
+
+watchEffect(async () => {})
+
+watch(
+  () => layerStore.getSelectedLayers,
+  async (curr, old) => {
+    const latestSelected = curr.at(-1)
+
+    if (latestSelected && curr.length > old.length) {
+      loading.value += 1
+      const url = `${import.meta.env.VITE_ODH_MOBILITY_API_URI}/flat/${latestSelected.stationType[0]}/?limit=-1&distinct=true&select=scoordinate%2Cscode%2Cstype&where=`
+      const res = (await useFetch(url)).text()
+      const data = JSON.parse(res.data.value || '') as FlatResponse
+
+      if (data) {
+        points.value = [...points.value, ...data.data]
+      }
+
+      loading.value -= 1
+    } else {
+      const newTypes = curr.map((n) => n.stationType[0])
+      const oldTypes = old.map((o) => o.stationType[0])
+      const diff = oldTypes.filter((ot) => !newTypes.includes(ot))
+
+      diff.forEach(
+        (d) => (points.value = points.value.filter((p) => p.stype !== d))
+      )
+    }
+  },
+  { deep: true }
+)
 </script>
 
 <style lang="postcss" scoped>
 .main {
-  & .map-ct {
-    @apply absolute top-0 left-0 w-full h-screen;
-
-    & #map {
-      @apply w-full h-full;
-    }
-  }
 }
 
 @media (max-width: theme('screens.md')) {
