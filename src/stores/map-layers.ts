@@ -1,13 +1,24 @@
+// SPDX-FileCopyrightText: NOI Techpark <digital@noi.bz.it>
+//
+// SPDX-License-Identifier: AGPL-3.0-or-later
+
 import { defineStore } from 'pinia'
 import { ref, computed } from 'vue'
 import layers from '../assets/map/layers-config.json'
 import { MapLayer } from '../types/map-layer.js'
 
 export const useLayerStore = defineStore('layers', () => {
-  const allLayers = ref(layers as MapLayer)
+  // State
+  const allLayers = ref<MapLayer>(layers as MapLayer)
   const selectedLayers = ref<{ [key: string]: boolean }>({})
+  const selectedLayerId = ref<string | null>(null)
 
+  // Getters
   const getAllLayers = computed(() => allLayers.value)
+
+  const getSelectedLayer = computed(() =>
+    allLayers.value.find((layer) => layer.id === selectedLayerId.value)
+  )
 
   const getSelectedCount = computed(
     () => Object.values(selectedLayers.value).filter(Boolean).length
@@ -16,73 +27,94 @@ export const useLayerStore = defineStore('layers', () => {
   const getSelectedLayers = computed(() =>
     Object.entries(selectedLayers.value)
       .filter(([_, isSelected]) => isSelected)
-      .map(([key]) => key)
-      .map((i) => {
-        const idx = i.split('-')
-        return layers[Number(idx[0])].layers[Number(idx[1])]
+      .map(([key]) => {
+        const [layerId, layerIndex] = key.split('-')
+        const layer = allLayers.value.find((l) => l.id === layerId)
+        return layer?.layers[Number(layerIndex)]
       })
+      .filter((layer) => layer !== undefined)
   )
 
-  const getLayerKey = (i: number, j: number) => `${i}-${j}`
-
-  function initializeLayers(layers: any[]) {
-    const initialState: { [key: string]: boolean } = {}
-
-    layers.forEach((item, i) => {
-      item.layers.forEach((_: any, j: number) => {
-        initialState[getLayerKey(i, j)] = false
-      })
-    })
-
-    selectedLayers.value = initialState
+  function getLayerKey(layerId: string, index: number): string {
+    return `${layerId}-${index}`
   }
 
-  function toggleLayer(i: number, j: number) {
-    const key = getLayerKey(i, j)
+  function initializeLayers() {
+    const initialState: { [key: string]: boolean } = {}
+    allLayers.value.forEach((group) => {
+      group.layers.forEach((_, index) => {
+        initialState[getLayerKey(group.id, index)] = false
+      })
+    })
+    selectedLayers.value = initialState
+    selectedLayerId.value = null
+  }
+
+  function selectLayer(layerId: string) {
+    selectedLayerId.value = layerId
+  }
+
+  function toggleLayer(layerId: string, index: number) {
+    const key = getLayerKey(layerId, index)
     selectedLayers.value[key] = !selectedLayers.value[key]
   }
 
-  function setLayerState(i: number, j: number, state: boolean) {
-    const key = getLayerKey(i, j)
+  function setLayerState(layerId: string, index: number, state: boolean) {
+    const key = getLayerKey(layerId, index)
     selectedLayers.value[key] = state
   }
 
-  function deselectAllInGroup(groupIndex: number) {
-    Object.keys(selectedLayers.value)
-      .filter((key) => key.startsWith(`${groupIndex}-`))
-      .forEach((key) => {
-        selectedLayers.value[key] = false
-      })
-  }
-
-  function deselectAll() {
-    Object.keys(selectedLayers.value).forEach((key) => {
-      selectedLayers.value[key] = false
-    })
-  }
-
-  function isLayerSelected(i: number, j: number): boolean {
-    const key = getLayerKey(i, j)
+  function isLayerSelected(layerId: string, index: number): boolean {
+    const key = getLayerKey(layerId, index)
     return selectedLayers.value[key] ?? false
   }
 
-  function isAnyInGroupSelected(groupIndex: number): boolean {
-    return Object.keys(selectedLayers.value)
-      .filter((key) => key.startsWith(`${groupIndex}-`))
-      .some((key) => selectedLayers.value[key])
+  function areAllLayersInGroupSelected(layerId: string): boolean {
+    const currentLayer = getSelectedLayer.value
+    if (!currentLayer) return false
+
+    return currentLayer.layers.every((_, index) =>
+      isLayerSelected(layerId, index)
+    )
   }
 
-  return {
-    getAllLayers,
-    getSelectedLayers,
-    getSelectedCount,
+  function toggleAllInGroup(layerId: string) {
+    const currentLayer = getSelectedLayer.value
+    if (!currentLayer) return
 
-    initializeLayers,
+    const shouldSelect = !areAllLayersInGroupSelected(layerId)
+    currentLayer.layers.forEach((_, index) => {
+      setLayerState(layerId, index, shouldSelect)
+    })
+  }
+
+  function deselectAll() {
+    if (!selectedLayerId.value) return
+    const currentLayer = getSelectedLayer.value
+    if (!currentLayer) return
+
+    currentLayer.layers.forEach((_, index) => {
+      setLayerState(currentLayer.id, index, false)
+    })
+  }
+
+  // Initialize on store creation
+  initializeLayers()
+
+  return {
+    // Getters
+    getAllLayers,
+    getSelectedLayer,
+    getSelectedCount,
+    getSelectedLayers,
+
+    // Actions
+    selectLayer,
     toggleLayer,
     setLayerState,
-    deselectAllInGroup,
-    deselectAll,
     isLayerSelected,
-    isAnyInGroupSelected,
+    areAllLayersInGroupSelected,
+    toggleAllInGroup,
+    deselectAll,
   }
 })

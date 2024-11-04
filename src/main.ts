@@ -1,11 +1,15 @@
+// SPDX-FileCopyrightText: NOI Techpark <digital@noi.bz.it>
+//
+// SPDX-License-Identifier: AGPL-3.0-or-later
+
 import './assets/main.css'
+import './assets/font.css'
 
 import { createApp } from 'vue'
 import { createPinia } from 'pinia'
 
 import App from './App.vue'
 import router from './router'
-import keycloakService from './services/keycloak.service'
 import { createI18n } from 'vue-i18n'
 
 import en from './assets/translations/en.json'
@@ -20,8 +24,6 @@ const initApp = async () => {
         en,
       },
     })
-
-    await keycloakService.init()
 
     app.use(createPinia())
     app.use(i18n)

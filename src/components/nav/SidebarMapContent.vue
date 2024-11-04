@@ -1,85 +1,82 @@
+<!--
+SPDX-FileCopyrightText: NOI Techpark <digital@noi.bz.it>
+
+SPDX-License-Identifier: AGPL-3.0-or-later
+-->
+
 <template>
   <div class="sidebar-map-content">
-    <ul class="layer-list" v-for="(item, i) in layerStore.getAllLayers">
-      <div class="group-header">
-        <p class="layer-title">{{ item.id }}</p>
-        <p
-          v-if="layerStore.isAnyInGroupSelected(i)"
-          class="deselect-group __clickable"
-          @click="layerStore.deselectAllInGroup(i)"
-        >
-          {{ $t('components.sidebar-map-content.deselect-group') }}
-        </p>
-      </div>
-      <li v-for="(layer, j) in item.layers">
-        <label
-          class="layer-item __clickable"
-          :class="{ selected: layerStore.isLayerSelected(i, j) }"
-        >
-          <div
-            class="layer-color"
-            :style="{
-              'background-color': layer.color,
-            }"
-          />
-          <input
-            class="hidden"
-            :name="`checkbox-${j}`"
-            type="checkbox"
-            :checked="layerStore.isLayerSelected(i, j)"
-            @change="layerStore.toggleLayer(i, j)"
-          />
-          {{ layer.id }}
-        </label>
+    <ul v-if="layerStore.getSelectedLayer" class="layer-list">
+      <Checkbox
+        class="layer-item"
+        :checked="
+          layerStore.areAllLayersInGroupSelected(layerStore.getSelectedLayer.id)
+        "
+        @change="handleToggleAll"
+        :label="$t('common.all')"
+      />
+      <li
+        v-for="(layer, j) in layerStore.getSelectedLayer.layers"
+        :key="layer.id"
+        class="layer-item"
+      >
+        <Checkbox
+          class="flex-grow"
+          :checked="
+            layerStore.isLayerSelected(layerStore.getSelectedLayer.id, j)
+          "
+          @change="() => handleLayerToggle(j)"
+          :label="layer.id"
+        />
+
+        <div
+          v-if="layerStore.isLayerSelected(layerStore.getSelectedLayer.id, j)"
+          class="layer-item-color"
+          :style="{
+            'background-color': layer.color,
+          }"
+        />
       </li>
     </ul>
+    <Divider />
   </div>
 </template>
 
 <script lang="ts" setup>
 import { useLayerStore } from '../../stores/map-layers.js'
+import Checkbox from '../ui/Checkbox.vue'
+import Divider from '../ui/Divider.vue'
 
 const layerStore = useLayerStore()
+
+const handleToggleAll = () => {
+  if (layerStore.getSelectedLayer) {
+    layerStore.toggleAllInGroup(layerStore.getSelectedLayer.id)
+  }
+}
+
+const handleLayerToggle = (index: number) => {
+  if (layerStore.getSelectedLayer) {
+    layerStore.toggleLayer(layerStore.getSelectedLayer.id, index)
+  }
+}
 </script>
 
 <style lang="postcss" scoped>
 .sidebar-map-content {
-  @apply flex flex-col gap-5;
-
   & .layer-list {
-    @apply flex flex-col gap-1 select-none;
-
-    & .group-header {
-      @apply flex justify-between items-center;
-
-      & .layer-title {
-        @apply font-title text-lg font-semibold;
-      }
-
-      & .deselect-group {
-        @apply text-sm font-medium underline opacity-60  transition-opacity;
-
-        &:hover {
-          @apply opacity-100;
-        }
-      }
-    }
-
     & .layer-item {
-      @apply flex items-center gap-2 w-fit opacity-40 transition-all;
+      @apply flex pl-3 pr-[6px] items-center;
 
-      & .layer-color {
-        @apply scale-0 size-4 rounded-full transition-all;
-      }
-
-      &.selected {
-        @apply opacity-100 font-medium;
-
-        & .layer-color {
-          @apply scale-100;
-        }
+      & .layer-item-color {
+        @apply size-3 rounded-full;
       }
     }
+  }
+}
+
+@media only screen and (max-width: theme('screens.md')) {
+  .sidebar-map-content {
   }
 }
 </style>

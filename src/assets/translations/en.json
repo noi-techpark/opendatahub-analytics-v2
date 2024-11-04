@@ -1,17 +1,32 @@
 {
   "common": {
     "login": "Login",
-    "logout": "Logout"
+    "logout": "Logout",
+    "about": "About",
+    "back": "Back",
+    "all": "All"
+  },
+  "auth": {
+    "login": "Login",
+    "register": "Register"
   },
   "components": {
     "sidebar": {
-      "map": "Map Overview",
+      "map": "Maps",
       "charts": "Charts",
       "events": "Events"
     },
     "sidebar-map-content": {
       "deselect": "Deselect all",
       "deselect-group": "Deselect group"
+    }
+  },
+  "layouts": {
+    "app-header": {
+      "title": "analytics",
+      "how-to": "How to",
+      "contact": "Contact",
+      "logo": "opendatahub"
     }
   },
   "pages": {}

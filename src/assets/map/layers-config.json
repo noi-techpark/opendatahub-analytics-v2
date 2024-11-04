@@ -1,6 +1,7 @@
 [
   {
-    "id": "Node Layer",
+    "title": "Stations",
+    "id": "stations",
     "layers": [
       {
         "id": "Weather",
@@ -270,7 +271,8 @@
     ]
   },
   {
-    "id": "Edge Layer",
+    "title": "Linear elaborations",
+    "id": "linear",
     "layers": [
       {
         "id": "Vehicular time",
@@ -293,5 +295,10 @@
         "main-data": []
       }
     ]
+  },
+  {
+    "title": "Maps",
+    "id": "maps",
+    "layers": []
   }
 ]

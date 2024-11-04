@@ -1,24 +1,20 @@
+<!--
+SPDX-FileCopyrightText: NOI Techpark <digital@noi.bz.it>
+
+SPDX-License-Identifier: AGPL-3.0-or-later
+-->
+
 <template>
   <div class="page-ct">
-    <Sidebar />
-
-    <div class="main-ct">
-      <RouterView />
-    </div>
+    <AppLayout>
+      <main class="relative h-full flex-grow">
+        <RouterView />
+      </main>
+    </AppLayout>
   </div>
 </template>
 
 <script setup lang="ts">
 import { RouterView } from 'vue-router'
-import Sidebar from './components/nav/Sidebar.vue'
+import AppLayout from './layouts/AppLayout.vue'
 </script>
-
-<style lang="postcss" scoped>
-.page-ct {
-  @apply flex;
-
-  & .main-ct {
-    @apply relative ml-[350px] h-screen w-full;
-  }
-}
-</style>

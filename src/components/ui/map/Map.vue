@@ -1,5 +1,11 @@
+<!--
+SPDX-FileCopyrightText: NOI Techpark <digital@noi.bz.it>
+
+SPDX-License-Identifier: AGPL-3.0-or-later
+-->
+
 <template>
-  <div class="map-ct">
+  <div class="map-component">
     <div class="loading-ct" :class="{ active: loading || !mapLoaded }">
       <SpinnerIcon class="loading-indicator animate-spin" />
     </div>
@@ -9,99 +15,64 @@
 
 <script setup lang="ts">
 import 'maplibre-gl/dist/maplibre-gl.css'
-import { onMounted, ref, watch } from 'vue'
-import SpinnerIcon from '../../icons/SpinnerIcon.vue'
-import { DataPoint } from '../../../types/api'
-import {
-  createPointLayer,
-  createPointSource,
-  initMap,
-} from '../../../utils/map-utils'
-import { Map } from 'maplibre-gl'
-
-type PointCache = {
-  [key: string]: {
-    coordinates: [number, number]
-    layerId: string
-    sourceId: string
-  }
-}
+import { h, onMounted, ref, render, watch } from 'vue'
+import { DataMarker } from '../../../types/api'
+import { coordinatesInRange, initMap } from '../../../utils/map-utils'
+import { Map, Marker } from 'maplibre-gl'
+import MapMarker from './MapMarker.vue'
+import SpinnerIcon from '../svg/SpinnerIcon.vue'
 
 type Props = {
   loading?: boolean
-  points?: DataPoint[]
+  markers?: DataMarker[]
+  selectedScode?: string
 }
+type Emit = {
+  markerPress: [string]
+}
+
 const props = withDefaults(defineProps<Props>(), {})
+const emit = defineEmits<Emit>()
 
 const mapLoaded = ref<boolean>()
 const map = ref<Map>()
-
-const pointCache: PointCache = {}
-
-const updatePoints = (curr?: DataPoint[], old?: DataPoint[]) => {
-  if (!map.value) return
-
-  const currentPoints = new Set(curr?.map((p) => p.scode) || [])
-  const oldPoints = new Set(old?.map((p) => p.scode) || [])
-
-  for (const scode of oldPoints) {
-    if (!currentPoints.has(scode)) {
-      const cache = pointCache[scode]
-      if (cache) {
-        if (map.value.getLayer(cache.layerId)) {
-          map.value.removeLayer(cache.layerId)
-        }
-        if (map.value.getSource(cache.sourceId)) {
-          map.value.removeSource(cache.sourceId)
-        }
-        delete pointCache[scode]
-      }
-    }
-  }
-
-  curr?.forEach((point) => {
-    const sourceId = `point-source-${point.scode}`
-    const layerId = `point-layer-${point.scode}`
-    const coordinates: [number, number] = [
-      point.scoordinate.x,
-      point.scoordinate.y,
-    ]
-
-    const cached = pointCache[point.scode]
-
-    if (
-      cached &&
-      cached.coordinates[0] === coordinates[0] &&
-      cached.coordinates[1] === coordinates[1]
-    ) {
-      return
-    }
-
-    if (cached) {
-      if (map.value?.getLayer(layerId)) {
-        map.value?.removeLayer(layerId)
-      }
-      if (map.value?.getSource(sourceId)) {
-        map.value?.removeSource(sourceId)
-      }
-    }
-
-    map.value?.addSource(sourceId, createPointSource(point))
-    map.value?.addLayer(createPointLayer(point))
-
-    pointCache[point.scode] = {
-      coordinates,
-      layerId,
-      sourceId,
-    }
-  })
-}
+let markers: Marker[] = []
 
 watch(
-  [() => props.points, () => mapLoaded.value],
-  ([currPoints, mapLoadedCurr], [oldPoints]) => {
-    if (mapLoadedCurr) {
-      updatePoints(currPoints, oldPoints)
+  [() => props.markers, () => mapLoaded.value, () => props.selectedScode],
+  ([currentProps, currentMapLoaded, currentSelected]) => {
+    if (currentMapLoaded) {
+      markers.forEach((marker) => marker.remove())
+      markers = []
+
+      currentProps
+        ?.sort((p1, p2) => (p2.y || 0) - (p1.y || 0))
+        .forEach((data) => {
+          const selected = data.scode === currentSelected
+          const coordinates = [data.x, data.y]
+
+          if (map.value && coordinatesInRange(coordinates)) {
+            const el = document.createElement('div')
+            const vNode = h(MapMarker, {
+              ...data,
+              map: map.value,
+              selected: selected,
+            })
+            render(vNode, el)
+            const marker = new Marker({ element: el, anchor: 'bottom' })
+              .setLngLat([data.x, data.y])
+              .addTo(map.value)
+            markers.push(marker)
+          }
+
+          if (selected) {
+            map.value?.flyTo({
+              center: { lng: coordinates[0], lat: coordinates[1] },
+              duration: 1000,
+              zoom: 15,
+            })
+          }
+        })
     }
   }
 )
@@ -111,12 +82,15 @@ onMounted(() => {
   map.value.on('load', () => {
     mapLoaded.value = map.value?.loaded()
   })
+  map.value.on('marker-click', (v) => {
+    emit('markerPress', v.eventData)
+  })
 })
 </script>
 
 <style lang="postcss" scoped>
-.map-ct {
-  @apply absolute inset-0 w-full h-screen z-[1];
+.map-component {
+  @apply absolute inset-0 w-full h-full z-[1];
 
   & .loading-ct {
     @apply opacity-0 flex items-center justify-center absolute inset-0 bg-black/50 z-[999] pointer-events-none transition-all;
