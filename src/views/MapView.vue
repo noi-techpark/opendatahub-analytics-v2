@@ -3,7 +3,6 @@ SPDX-FileCopyrightText: NOI Techpark <digital@noi.bz.it>
 SPDX-License-Identifier: AGPL-3.0-or-later
 -->
 
-<!-- TODO: better handling of layer selection -->
 <template>
    <main class="map-view">
       <div class="map-filters-ct">
@@ -30,50 +29,26 @@ SPDX-License-Identifier: AGPL-3.0-or-later
 <script setup lang="ts">
 import { ref, watch } from 'vue'
 import Map from '../components/ui/map/Map.vue'
-import { useLayerStore } from '../stores/map-layers'
+import { useMapLayerStore } from '../stores/map-layers'
 import { useFetch } from '@vueuse/core'
-import {
-   DataMarker,
-   DataPoint,
-   MapMarkerDetails,
-   MarkerData,
-   MarkerInfo,
-} from '../types/api'
-import MarkerCard, { MarkerDetails } from '../components/ui/MarkerCard.vue'
+import { DataMarker, DataPoint, MarkerData, MarkerInfo } from '../types/api'
+import MarkerCard from '../components/ui/MarkerCard.vue'
 import MapFilter from '../components/ui/map/MapFilter.vue'
+import { MapMarkerDetails } from '../types/map-layer'
 
-const layerStore = useLayerStore()
+const layerStore = useMapLayerStore()
 const loading = ref<number>(0)
 const markers = ref<DataMarker[]>([])
 const selectedScode = ref<string>()
-const selectedMarker = ref<MarkerDetails>()
+const selectedMarker = ref<MapMarkerDetails>()
 
 const handleSelectMarker = async (data?: MapMarkerDetails) => {
    selectedScode.value = data?.scode
+   selectedMarker.value = data
    layerStore.selectMarker(data)
-   console.log(selectedScode.value)
-   if (!data) {
-      return
-   }
-
-   const dataUrl = `${import.meta.env.VITE_ODH_MOBILITY_API_URI}/tree/${data.stype}/*/latest?where=scode.eq.%22${data.scode}%22`
-   const infoUrl = `${import.meta.env.VITE_ODH_MOBILITY_API_URI}/tree/${data.stype}/?where=scode.eq.%22${data.scode}%22`
-
-   const resInfo: MarkerInfo = JSON.parse(
-      (await useFetch(infoUrl)).text().data.value || '{}'
-   ).data
-   const resData: MarkerData = JSON.parse(
-      (await useFetch(dataUrl)).text().data.value || '{}'
-   ).data
-
-   // console.log(resData)
-   // console.log(resInfo)
-
-   selectedMarker.value = {
-      name: resInfo[data.stype].stations[data.scode].sname,
-   }
 }
 
+// TODO: better handling of layer selection
 watch(
    () => layerStore.getSelectedLayers,
    async (curr, old) => {

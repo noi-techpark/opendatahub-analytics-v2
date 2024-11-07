@@ -37,7 +37,7 @@ const props = withDefaults(defineProps<Props>(), {})
 
 const route = useRoute()
 const { t } = useI18n()
-const selectedIdx = ref<number>(0)
+const selectedIdx = ref<number>()
 
 const links = computed(() => [
    { title: t('components.sidebar.map'), route: '/' },

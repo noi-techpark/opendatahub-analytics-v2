@@ -30,7 +30,7 @@ type Props = {
       action?: () => void
    }[]
    grow?: boolean
-   selectedIdx: number
+   selectedIdx?: number
 }
 
 const props = withDefaults(defineProps<Props>(), {})

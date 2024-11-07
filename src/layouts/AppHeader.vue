@@ -4,8 +4,8 @@ SPDX-License-Identifier: AGPL-3.0-or-later
 -->
 
 <template>
-   <div class="app-header">
-      <div class="__center">
+   <header class="app-header-ct">
+      <div class="app-header">
          <div class="header-links">
             <RouterLink to="/" class="header-link">
                <H tag="h2">{{ t('layouts.app-header.title') }}</H>
@@ -49,7 +49,7 @@ SPDX-License-Identifier: AGPL-3.0-or-later
             </div>
          </div>
       </div>
-   </div>
+   </header>
 </template>
 
 <script lang="ts" setup>
@@ -79,11 +79,11 @@ function toggleMenu() {
 </script>
 
 <style lang="postcss" scoped>
-.app-header {
+.app-header-ct {
    @apply sticky inset-x-0 top-0 z-[999] w-full select-none border-b bg-grey;
 
-   & .__center {
-      @apply gap-4;
+   & .app-header {
+      @apply m-auto mx-auto flex w-full gap-4 px-6;
 
       & .header-links {
          @apply flex items-center justify-center py-4;
@@ -120,10 +120,10 @@ function toggleMenu() {
 }
 
 @media (max-width: theme('screens.md')) {
-   .app-header {
+   .app-header-ct {
       @apply flex-col;
 
-      & .__center {
+      & .app-header {
          @apply flex-col;
 
          & .header-links {

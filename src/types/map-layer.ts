@@ -1,3 +1,6 @@
+// SPDX-FileCopyrightText: NOI Techpark <digital@noi.bz.it>
+// SPDX-License-Identifier: AGPL-3.0-or-later
+
 /*
    id: code of the layer, unique string without spaces
    icons: icon for the layer ["weather.svg"]. the array can
@@ -34,7 +37,6 @@ export type MapLayer = {
 
 export type Layer = {
    id: string
-   icons: (string | [string, string, number, number, number])[]
    stationType: string[]
    projection: string
    apiWhere?: string
@@ -48,4 +50,9 @@ export type Layer = {
       valueSeparator: string
       metaDataImgData: string
    }
+}
+
+export type MapMarkerDetails = {
+   scode: string
+   stype: string
 }

@@ -9,7 +9,10 @@ SPDX-License-Identifier: AGPL-3.0-or-later
          <P bold>{{ title }}</P>
          <P>{{ $t('common.updated-at', { time: updatedAt }) }}</P>
       </div>
-      <div :style="plotHeight ? { height: `${plotHeight}px` } : undefined">
+      <div
+         class="flex-grow"
+         :style="plotHeight ? { height: `${plotHeight}px` } : undefined"
+      >
          <Line :data="chartData" :options="chartOptions" />
       </div>
    </div>
@@ -19,7 +22,7 @@ SPDX-License-Identifier: AGPL-3.0-or-later
 import { Line } from 'vue-chartjs'
 import type { ChartData } from 'chart.js'
 import { computed } from 'vue'
-import P from './tags/P.vue'
+import P from '../tags/P.vue'
 
 type Props = {
    title: string
@@ -34,6 +37,7 @@ const data = {
    v3: [43, 12, 44, 19, 97, 54],
 }
 
+// TODO: chart data integration
 const chartData = computed(
    (): ChartData => ({
       labels: Array.from({ length: data.v1.length }).fill(''),
@@ -41,20 +45,17 @@ const chartData = computed(
          {
             data: data?.v1 || [],
             fill: false,
-            borderColor: '#FFBD00',
-            tension: 0.3,
+            borderColor: '#FFC000',
          },
          {
             data: data?.v2 || [],
             fill: false,
             borderColor: '#FF0000',
-            tension: 0.3,
          },
          {
             data: data?.v3 || [],
             fill: false,
-            borderColor: '#FF00BD',
-            tension: 0.3,
+            borderColor: '#50742F',
          },
       ],
    })

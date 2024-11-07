@@ -39,14 +39,14 @@ import IconText from '../components/ui/IconText.vue'
 import IconInfo from '../components/tmp/components/svg/IconInfo.vue'
 import SidebarMapHeader from '../components/nav/SidebarMapHeader.vue'
 import Divider from '../components/ui/Divider.vue'
-import { useLayerStore } from '../stores/map-layers'
+import { useMapLayerStore } from '../stores/map-layers'
 import SidebarNavigation from '../components/nav/SidebarNavigation.vue'
 import { useI18n } from 'vue-i18n'
 import { ref } from 'vue'
 
 const route = useRoute()
 const router = useRouter()
-const layerStore = useLayerStore()
+const layerStore = useMapLayerStore()
 const { t } = useI18n()
 
 const showFooter = ref<boolean>(true)
@@ -107,7 +107,7 @@ watch(route, () => {
    @apply flex h-full w-[300px] flex-shrink-0 flex-col overflow-y-auto border-r bg-white px-3;
 
    & .sidebar-footer {
-      @apply mt-auto pb-2;
+      @apply mt-auto pb-2 pt-10;
    }
 }
 </style>

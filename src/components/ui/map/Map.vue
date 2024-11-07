@@ -3,7 +3,6 @@ SPDX-FileCopyrightText: NOI Techpark <digital@noi.bz.it>
 SPDX-License-Identifier: AGPL-3.0-or-later
 -->
 
-<!-- TODO: reload markers when map reloads -->
 <template>
    <div class="map-component">
       <div class="loading-ct" :class="{ active: loading || !mapLoaded }">
@@ -16,11 +15,12 @@ SPDX-License-Identifier: AGPL-3.0-or-later
 <script setup lang="ts">
 import 'maplibre-gl/dist/maplibre-gl.css'
 import { h, onMounted, ref, render, watch } from 'vue'
-import { DataMarker, MapMarkerDetails } from '../../../types/api'
+import { DataMarker } from '../../../types/api'
 import { coordinatesInRange, initMap } from '../../../utils/map-utils'
 import { Map, Marker } from 'maplibre-gl'
 import MapMarker from './MapMarker.vue'
 import SpinnerIcon from '../svg/SpinnerIcon.vue'
+import { MapMarkerDetails } from '../../../types/map-layer'
 
 type Props = {
    loading?: boolean
@@ -38,6 +38,17 @@ const mapLoaded = ref<boolean>()
 const map = ref<Map>()
 let markers: Marker[] = []
 
+onMounted(() => {
+   map.value = initMap()
+   map.value.on('load', () => {
+      mapLoaded.value = map.value?.loaded()
+   })
+   map.value.on('marker-click', (v) => {
+      emit('markerPress', v.eventData)
+   })
+})
+
+// TODO: reload markers when map reloads
 watch(
    [() => props.markers, () => mapLoaded.value, () => props.selectedScode],
    ([currentProps, currentMapLoaded, currentSelected]) => {
@@ -76,16 +87,6 @@ watch(
       }
    }
 )
-
-onMounted(() => {
-   map.value = initMap()
-   map.value.on('load', () => {
-      mapLoaded.value = map.value?.loaded()
-   })
-   map.value.on('marker-click', (v) => {
-      emit('markerPress', v.eventData)
-   })
-})
 </script>
 
 <style lang="postcss" scoped>

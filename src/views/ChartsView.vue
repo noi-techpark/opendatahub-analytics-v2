@@ -21,11 +21,18 @@ SPDX-License-Identifier: AGPL-3.0-or-later
             <div class="chart-control">
                <div class="chart-time-ct">
                   <MenuButtons :links :selectedIdx="selectedTimeIdx" />
-                  <div>{{$t('views.charts.time.custom')}}</div>
+                  <div>{{ $t('views.charts.time.custom') }}</div>
                </div>
-               <div>{{$t('views.charts.plot-height')}}: {{plotHeights[selectedPlotHeightIdx].title}}</div>
+               <div>
+                  {{ $t('views.charts.plot-height') }}:
+                  {{ plotHeights[selectedPlotHeightIdx].title }}
+               </div>
             </div>
-            <Chart title="Timeseries data" :updatedAt="updatedAt" :plotHeight="plotHeights[selectedPlotHeightIdx].value" />
+            <Chart
+               title="Timeseries data"
+               :updatedAt="updatedAt"
+               :plotHeight="plotHeights[selectedPlotHeightIdx].value"
+            />
          </div>
 
          <div class="chart-side">
@@ -40,10 +47,15 @@ SPDX-License-Identifier: AGPL-3.0-or-later
             </div>
 
             <div class="card">
-               <IconText bold :text="$t('views.charts.embed')" reverse>
+               <IconText
+                  bold
+                  :text="$t('views.charts.embed')"
+                  reverse
+                  noPadding
+               >
                   <ContentCopyIcon />
                </IconText>
-               <P class="card-content">{{ '<beacons-map-table view="map"></beacons-map-table>scriptsrc="httpscdn.webcomponents.opendatahub.com/dist/2e117771-7047-4e26-8b1a315ae75f/beacons-map-table.min.js"></script>' }}</P>
+               <P class="card-content">EMBED CODE</P>
             </div>
 
             <Button center :value="$t('views.charts.save')">
@@ -65,17 +77,17 @@ import Button from '../components/ui/Button.vue'
 import SaveIcon from '../components/ui/svg/SaveIcon.vue'
 import IconText from '../components/ui/IconText.vue'
 import ContentCopyIcon from '../components/ui/svg/ContentCopyIcon.vue'
-import Chart from '../components/ui/Chart.vue'
+import Chart from '../components/ui/chart/Chart.vue'
 
 const { t } = useI18n()
 
 const selectedTimeIdx = ref<number>(0)
-const selectedPlotHeightIdx=ref<number>(0)
+const selectedPlotHeightIdx = ref<number>(0)
 const updatedAt = new Date().toISOString()
 
 const plotHeights = computed(() => [
-   {title:t('common.auto'), value:0},
-   {title:'500px', value:500}
+   { title: t('common.auto'), value: 0 },
+   { title: '500px', value: 500 },
 ])
 
 const links = computed(() => [
@@ -96,24 +108,20 @@ const links = computed(() => [
       action: () => (selectedTimeIdx.value = 3),
    },
 ])
-
-
 </script>
 
 <style lang="postcss" scoped>
 .charts-view {
    @apply flex flex-col gap-2;
 
-
-
    & .chart-content-ct {
       @apply flex justify-between gap-6;
 
       & .chart-content {
-         @apply flex flex-col gap-2 flex-grow flex-shrink;
+         @apply flex flex-shrink flex-grow flex-col gap-2;
 
          & .chart-control {
-            @apply flex gap-6;
+            @apply flex justify-between gap-6;
 
             & .chart-time-ct {
                @apply flex gap-2;
@@ -128,7 +136,7 @@ const links = computed(() => [
             @apply flex w-[300px] flex-col gap-3 rounded border p-4;
 
             & .card-content {
-               @apply text-green underline break-words text-xs;
+               @apply break-words text-xs text-green underline;
             }
          }
       }
@@ -136,9 +144,7 @@ const links = computed(() => [
 }
 
 @media (max-width: theme('screens.md')) {
-   .charts-view{
-
-
+   .charts-view {
    }
 }
 </style>

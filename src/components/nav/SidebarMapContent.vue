@@ -46,11 +46,11 @@ SPDX-License-Identifier: AGPL-3.0-or-later
 </template>
 
 <script lang="ts" setup>
-import { useLayerStore } from '../../stores/map-layers.js'
+import { useMapLayerStore } from '../../stores/map-layers.js'
 import Checkbox from '../ui/Checkbox.vue'
 import Divider from '../ui/Divider.vue'
 
-const layerStore = useLayerStore()
+const layerStore = useMapLayerStore()
 
 const handleToggleAll = () => {
    if (layerStore.getSelectedLayer) {

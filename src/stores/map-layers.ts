@@ -4,10 +4,9 @@
 import { defineStore } from 'pinia'
 import { ref, computed } from 'vue'
 import layers from '../assets/map/layers-config.json'
-import { MapLayer } from '../types/map-layer.js'
-import { MapMarkerDetails } from '../types/api.js'
+import { MapLayer, MapMarkerDetails } from '../types/map-layer.js'
 
-export const useLayerStore = defineStore('layers', () => {
+export const useMapLayerStore = defineStore('map-layers', () => {
    // State
    const allLayers = ref<MapLayer>(layers as MapLayer)
    const selectedLayers = ref<{ [key: string]: boolean }>({})
@@ -38,11 +37,18 @@ export const useLayerStore = defineStore('layers', () => {
 
    const getSelectedMarker = computed(() => selectedMarker.value)
 
-   function getLayerKey(layerId: string, index: number): string {
+   const getLayerKey = (layerId: string, index: number): string => {
       return `${layerId}-${index}`
    }
 
-   function initializeLayers() {
+   // Actions
+
+   const getLayerByStationType = (id: string) => {
+      const layers = allLayers.value.map((l) => l.layers).flat()
+      return layers.find((l) => l.stationType.includes(id))
+   }
+
+   const initializeLayers = () => {
       const initialState: { [key: string]: boolean } = {}
       allLayers.value.forEach((group) => {
          group.layers.forEach((_, index) => {
@@ -53,26 +59,26 @@ export const useLayerStore = defineStore('layers', () => {
       selectedLayerId.value = null
    }
 
-   function selectLayer(layerId: string) {
+   const selectLayer = (layerId: string) => {
       selectedLayerId.value = layerId
    }
 
-   function toggleLayer(layerId: string, index: number) {
+   const toggleLayer = (layerId: string, index: number) => {
       const key = getLayerKey(layerId, index)
       selectedLayers.value[key] = !selectedLayers.value[key]
    }
 
-   function setLayerState(layerId: string, index: number, state: boolean) {
+   const setLayerState = (layerId: string, index: number, state: boolean) => {
       const key = getLayerKey(layerId, index)
       selectedLayers.value[key] = state
    }
 
-   function isLayerSelected(layerId: string, index: number): boolean {
+   const isLayerSelected = (layerId: string, index: number): boolean => {
       const key = getLayerKey(layerId, index)
       return selectedLayers.value[key] ?? false
    }
 
-   function areAllLayersInGroupSelected(layerId: string): boolean {
+   const areAllLayersInGroupSelected = (layerId: string): boolean => {
       const currentLayer = getSelectedLayer.value
       if (!currentLayer) return false
 
@@ -81,7 +87,7 @@ export const useLayerStore = defineStore('layers', () => {
       )
    }
 
-   function toggleAllInGroup(layerId: string) {
+   const toggleAllInGroup = (layerId: string) => {
       const currentLayer = getSelectedLayer.value
       if (!currentLayer) return
 
@@ -91,7 +97,7 @@ export const useLayerStore = defineStore('layers', () => {
       })
    }
 
-   function deselectAll() {
+   const deselectAll = () => {
       if (!selectedLayerId.value) return
       const currentLayer = getSelectedLayer.value
       if (!currentLayer) return
@@ -101,11 +107,10 @@ export const useLayerStore = defineStore('layers', () => {
       })
    }
 
-   function selectMarker(marker?: MapMarkerDetails) {
+   const selectMarker = (marker?: MapMarkerDetails) => {
       selectedMarker.value = marker
    }
 
-   // Initialize on store creation
    initializeLayers()
 
    return {
@@ -117,6 +122,7 @@ export const useLayerStore = defineStore('layers', () => {
       getSelectedMarker,
 
       // Actions
+      getLayerByStationType,
       selectLayer,
       selectMarker,
       toggleLayer,

@@ -1,5 +1,8 @@
 <template>
-   <div class="icon-text-component __clickable" :class="{ hover, reverse }">
+   <div
+      class="icon-text-component __clickable"
+      :class="{ hover, reverse, 'no-padding': noPadding }"
+   >
       <slot />
       <P :bold v-if="text">{{ text }}</P>
    </div>
@@ -13,6 +16,7 @@ type Props = {
    hover?: boolean
    bold?: boolean
    reverse?: boolean
+   noPadding?: boolean
 }
 const props = withDefaults(defineProps<Props>(), {
    hover: true,
@@ -22,6 +26,10 @@ const props = withDefaults(defineProps<Props>(), {
 <style lang="postcss" scoped>
 .icon-text-component {
    @apply inline-flex select-none items-center gap-2 rounded px-3 py-[6px] text-sm transition-colors;
+
+   &.no-padding {
+      @apply p-0;
+   }
 
    &.reverse {
       @apply flex-row-reverse justify-between;

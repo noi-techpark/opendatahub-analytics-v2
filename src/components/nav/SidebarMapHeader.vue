@@ -24,7 +24,7 @@ SPDX-License-Identifier: AGPL-3.0-or-later
 
 <script lang="ts" setup>
 import { useRoute } from 'vue-router'
-import { useLayerStore } from '../../stores/map-layers.js'
+import { useMapLayerStore } from '../../stores/map-layers.js'
 import IconText from '../ui/IconText.vue'
 import AirlineStopIcon from '../ui/svg/AirlineStopIcon.vue'
 import ArrowRightIcon from '../ui/svg/ArrowRightIcon.vue'
@@ -33,7 +33,7 @@ import LocationSearchingIcon from '../ui/svg/LocationSearchingIcon.vue'
 import Divider from '../ui/Divider.vue'
 
 const route = useRoute()
-const layerStore = useLayerStore()
+const layerStore = useMapLayerStore()
 </script>
 
 <style lang="postcss" scoped>

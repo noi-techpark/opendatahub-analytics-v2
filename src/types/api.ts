@@ -32,8 +32,3 @@ export type MarkerInfo = {
 }
 
 export type MarkerData = {}
-
-export type MapMarkerDetails = {
-   scode: string
-   stype: string
-}

@@ -40,6 +40,12 @@
       },
       "sidebar-charts-content": {
          "add": "Add new Time series"
+      },
+      "time-series-card": {
+         "dataset": "Datasetname",
+         "station": "Station",
+         "datatype": "Datatype",
+         "period": "Period"
       }
    },
    "views": {

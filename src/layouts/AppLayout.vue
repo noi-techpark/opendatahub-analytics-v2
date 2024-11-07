@@ -5,7 +5,10 @@ SPDX-License-Identifier: AGPL-3.0-or-later
 
 <template>
    <div class="app-layout">
-      <AppHeader :is-menu-open="isMenuOpen" @toggle-menu="toggleMenu" />
+      <div ref="appHeader">
+         <AppHeader :is-menu-open="isMenuOpen" @toggle-menu="toggleMenu" />
+      </div>
+
       <div class="content-ct">
          <AppSidebar />
          <slot />
@@ -16,9 +19,11 @@ SPDX-License-Identifier: AGPL-3.0-or-later
 <script setup lang="ts">
 import AppSidebar from './AppSidebar.vue'
 import AppHeader from './AppHeader.vue'
-import { ref } from 'vue'
+import { computed, ref } from 'vue'
 
 const isMenuOpen = ref(false)
+const appHeader = ref<HTMLElement>()
+const headerHeight = computed(() => `${appHeader.value?.offsetHeight}px`)
 
 function toggleMenu() {
    isMenuOpen.value = !isMenuOpen.value
@@ -27,10 +32,12 @@ function toggleMenu() {
 
 <style lang="postcss" scoped>
 .app-layout {
-   @apply flex h-screen flex-col overflow-y-auto;
+   @apply flex h-full flex-col overflow-y-auto;
 
    & .content-ct {
-      @apply flex h-full;
+      @apply flex h-screen;
+
+      max-height: calc(100vh - v-bind(headerHeight));
    }
 }
 </style>
