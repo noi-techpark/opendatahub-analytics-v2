@@ -9,37 +9,37 @@ SPDX-License-Identifier: AGPL-3.0-or-later
 @tailwind utilities;
 
 #app {
-  @apply w-full min-h-screen;
+   @apply min-h-screen w-full;
 }
 
 html {
-  @apply font-sans scroll-smooth;
+   @apply scroll-smooth font-sans text-black-2;
 
-  font-size: 16px;
-  -moz-osx-font-smoothing: grayscale;
-  -webkit-font-smoothing: antialiased;
-  box-sizing: border-box;
+   font-size: 16px;
+   -moz-osx-font-smoothing: grayscale;
+   -webkit-font-smoothing: antialiased;
+   box-sizing: border-box;
 }
 *::before,
 *::after {
-  box-sizing: border-box;
-  margin: 0;
+   box-sizing: border-box;
+   margin: 0;
 }
 
 svg {
-  @apply inline-block;
+   @apply inline-block;
 }
 
 img {
-  @apply object-cover object-center;
+   @apply object-cover object-center;
 }
 
 .__clickable {
-  @apply transition-opacity duration-200 cursor-pointer;
+   @apply cursor-pointer transition-opacity duration-200;
 }
 
 .__center {
-  @apply mx-auto w-full px-6 m-auto flex;
+   @apply m-auto mx-auto flex w-full px-6;
 }
 
 @media (max-width: theme('screens.md')) {

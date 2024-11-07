@@ -1,18 +1,17 @@
 <!--
 SPDX-FileCopyrightText: NOI Techpark <digital@noi.bz.it>
-
 SPDX-License-Identifier: AGPL-3.0-or-later
 -->
 
 <template>
-  <div class="profile-button" :class="bgColorClass" :title="username">
-    <div class="user-icon-ct">
-      <PersonIcon v-if="iconName" class="user-icon" />
-      <span v-else>
-        {{ letter }}
-      </span>
-    </div>
-  </div>
+   <div class="profile-button" :class="bgColorClass" :title="username">
+      <div class="user-icon-ct">
+         <PersonIcon v-if="iconName" class="user-icon" />
+         <span v-else>
+            {{ letter }}
+         </span>
+      </div>
+   </div>
 </template>
 
 <script setup lang="ts">
@@ -20,9 +19,9 @@ import { computed, toRefs } from 'vue'
 import PersonIcon from '../../components/ui/svg/PersonIcon.vue'
 
 type Props = {
-  username?: string
-  iconName?: string
-  customBgColor?: string
+   username?: string
+   iconName?: string
+   customBgColor?: string
 }
 
 const props = defineProps<Props>()
@@ -30,38 +29,38 @@ const props = defineProps<Props>()
 const { username } = toRefs(props)
 
 const letter = computed(() =>
-  username?.value != null && username.value.length > 0
-    ? username.value.at(0)?.toUpperCase()
-    : '?'
+   username?.value != null && username.value.length > 0
+      ? username.value.at(0)?.toUpperCase()
+      : '?'
 )
 
 const bgColorClasses = [
-  'bg-blue-500',
-  'bg-gray-500',
-  'bg-green-500',
-  'bg-red-500',
-  'bg-yellow-500',
+   'bg-blue-500',
+   'bg-gray-500',
+   'bg-green-500',
+   'bg-red-500',
+   'bg-yellow-500',
 ]
 const bgColorClass = computed(() => {
-  if (props.customBgColor) return props.customBgColor
+   if (props.customBgColor) return props.customBgColor
 
-  const ascii = letter.value?.charCodeAt(0) ?? 0
-  const colorIndex = ascii % bgColorClasses.length
-  return bgColorClasses[colorIndex]
+   const ascii = letter.value?.charCodeAt(0) ?? 0
+   const colorIndex = ascii % bgColorClasses.length
+   return bgColorClasses[colorIndex]
 })
 </script>
 
 <style lang="postcss" scoped>
 .profile-button {
-  @apply size-8 flex items-center justify-center rounded-full text-lg font-bold text-white;
+   @apply flex size-8 items-center justify-center rounded-full text-lg font-bold text-white;
 
-  & .user-icon-ct {
-    @apply border-stroke border rounded-full size-8;
-  }
+   & .user-icon-ct {
+      @apply size-8 rounded-full border;
+   }
 }
 
 @media (max-width: theme('screens.md')) {
-  .profile-button {
-  }
+   .profile-button {
+   }
 }
 </style>

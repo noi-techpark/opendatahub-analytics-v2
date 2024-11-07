@@ -1,29 +1,39 @@
 // SPDX-FileCopyrightText: NOI Techpark <digital@noi.bz.it>
-//
 // SPDX-License-Identifier: AGPL-3.0-or-later
 
 import { Layer } from './map-layer.js'
 
 export type DataMarker = {
-  x: number
-  y: number
-  alarm?: boolean
-  selected?: boolean
+   x: number
+   y: number
+   alarm?: boolean
+   selected?: boolean
 } & Pick<Layer, 'color'> &
-  Pick<DataPoint, 'stype' | 'scode'>
+   Pick<DataPoint, 'stype' | 'scode'>
 
 export type DataPoint = {
-  scode: string
-  scoordinate?: {
-    x: number
-    y: number
-    srid: number
-  }
-  stype: string
+   scode: string
+   scoordinate?: {
+      x: number
+      y: number
+      srid: number
+   }
+   stype: string
 }
 
-export type FlatResponse = {
-  offset: number
-  data: DataPoint[]
-  limit: number
+export type MarkerInfo = {
+   [key: string]: {
+      stations: {
+         [key: string]: {
+            sname: string
+         }
+      }
+   }
+}
+
+export type MarkerData = {}
+
+export type MapMarkerDetails = {
+   scode: string
+   stype: string
 }

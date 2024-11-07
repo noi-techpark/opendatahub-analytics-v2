@@ -1,11 +1,10 @@
 <!--
 SPDX-FileCopyrightText: NOI Techpark <digital@noi.bz.it>
-
 SPDX-License-Identifier: AGPL-3.0-or-later
 -->
 
 <template>
-  <div class="my-5 lg:my-7">
-    <slot></slot>
-  </div>
+   <div class="my-5 lg:my-7">
+      <slot></slot>
+   </div>
 </template>

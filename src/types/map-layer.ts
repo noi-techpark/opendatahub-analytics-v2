@@ -27,25 +27,25 @@
  */
 
 export type MapLayer = {
-  id: string
-  layers: Layer[]
-  title: string
+   id: string
+   layers: Layer[]
+   title: string
 }[]
 
 export type Layer = {
-  id: string
-  icons: (string | [string, string, number, number, number])[]
-  stationType: string[]
-  projection: string
-  apiWhere?: string
-  format: 'integreen' | 'wms'
-  'custom-function': any | null
-  color: string
-  'main-data': [string, any][]
-  imageMapping?: {
-    dataType: string
-    dataTypeMetadata: string
-    valueSeparator: string
-    metaDataImgData: string
-  }
+   id: string
+   icons: (string | [string, string, number, number, number])[]
+   stationType: string[]
+   projection: string
+   apiWhere?: string
+   format: 'integreen' | 'wms'
+   'custom-function': any | null
+   color: string
+   'main-data': [string, any][]
+   imageMapping?: {
+      dataType: string
+      dataTypeMetadata: string
+      valueSeparator: string
+      metaDataImgData: string
+   }
 }

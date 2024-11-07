@@ -2,23 +2,23 @@
 //
 // SPDX-License-Identifier: AGPL-3.0-or-later
 
-export type SelectValue = string | number | boolean;
+export type SelectValue = string | number | boolean
 
 export enum SelectSize {
-  sm = 'sm',
-  md = 'md',
+   sm = 'sm',
+   md = 'md',
 }
 
 export interface SelectOption<T = string | number | undefined> {
-  label: string;
-  value: T;
-  disabled?: boolean;
-  isAction?: boolean;
+   label: string
+   value: T
+   disabled?: boolean
+   isAction?: boolean
 }
 
 export interface GroupSelectOption<T = string | number | undefined> {
-  name: string;
-  options: SelectOption<T>[];
+   name: string
+   options: SelectOption<T>[]
 }
 
-export type SelectOptionsPlacement = 'bottom' | 'top';
+export type SelectOptionsPlacement = 'bottom' | 'top'

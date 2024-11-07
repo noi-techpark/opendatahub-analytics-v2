@@ -1,11 +1,11 @@
 <template>
-  <label class="checkbox-component __clickable">
-    <div class="checkbox-ct">
-      <input class="checkbox" type="checkbox" :checked="props.checked" />
-      <CheckIcon v-if="props.checked" class="check-icon" />
-    </div>
-    <span class="checkbox-text">{{ label }}</span>
-  </label>
+   <label class="checkbox-component __clickable">
+      <div class="checkbox-ct">
+         <input class="checkbox" type="checkbox" :checked="props.checked" />
+         <CheckIcon v-if="props.checked" class="check-icon" />
+      </div>
+      <span class="checkbox-text">{{ label }}</span>
+   </label>
 </template>
 
 <script lang="ts" setup>
@@ -13,39 +13,39 @@ import { withDefaults, defineProps } from 'vue'
 import CheckIcon from './svg/CheckIcon.vue'
 
 type Props = {
-  checked: boolean
-  label: string
+   checked: boolean
+   label: string
 }
 const props = withDefaults(defineProps<Props>(), {})
 </script>
 
 <style lang="postcss" scoped>
 .checkbox-component {
-  @apply inline-flex gap-2 items-center text-sm select-none py-[6px];
+   @apply inline-flex select-none items-center gap-2 py-[6px] text-sm;
 
-  & .checkbox-ct {
-    @apply relative w-fit h-fit;
+   & .checkbox-ct {
+      @apply relative h-fit w-fit;
 
-    & .checkbox {
-      @apply appearance-none size-5 border-stroke border transition-colors;
+      & .checkbox {
+         @apply size-5 appearance-none border transition-colors;
 
-      &:checked {
-        @apply bg-green border-green;
+         &:checked {
+            @apply border-green bg-green;
+         }
       }
-    }
 
-    & .check-icon {
-      @apply absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-[70%];
-    }
-  }
+      & .check-icon {
+         @apply absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-[70%] transform;
+      }
+   }
 
-  & .checkbox-text {
-    @apply pb-1 flex-grow;
-  }
+   & .checkbox-text {
+      @apply flex-grow pb-1;
+   }
 }
 
 @media only screen and (max-width: theme('screens.md')) {
-  .checkbox {
-  }
+   .checkbox {
+   }
 }
 </style>

@@ -3,20 +3,20 @@
 // SPDX-License-Identifier: AGPL-3.0-or-later
 
 export enum Variant {
-  solid = 'solid',
-  ghost = 'ghost',
-  transparent = 'transparent',
+   solid = 'solid',
+   ghost = 'ghost',
+   transparent = 'transparent',
 }
 
 export enum Size {
-  xs = 'xs',
-  sm = 'sm',
-  xm2col = 'xm2col',
-  md = 'md',
-  md2col = 'md2col',
+   xs = 'xs',
+   sm = 'sm',
+   xm2col = 'xm2col',
+   md = 'md',
+   md2col = 'md2col',
 }
 
 export enum Tone {
-  primary = 'primary',
-  danger = 'danger',
+   primary = 'primary',
+   danger = 'danger',
 }

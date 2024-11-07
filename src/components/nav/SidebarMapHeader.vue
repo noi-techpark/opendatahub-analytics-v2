@@ -1,34 +1,25 @@
 <!--
 SPDX-FileCopyrightText: NOI Techpark <digital@noi.bz.it>
-
 SPDX-License-Identifier: AGPL-3.0-or-later
 -->
 
 <template>
-  <ul class="sidebar-map-header" :class="{ back: !!route.hash }">
-    <SidebarNavigation
-      :back="{
-        visible: !!route.hash,
-        title: layerStore.getSelectedLayer?.title || '',
-        route: '/',
-      }"
-    />
-
-    <li
+   <div
       v-if="!route.hash"
       v-for="(item, i) in layerStore.getAllLayers"
       class="__clickable"
-    >
+   >
       <RouterLink class="layer-title" :to="`#${item.id}`">
-        <IconText :text="item.title">
-          <LocationSearchingIcon v-if="i === 0" />
-          <AirlineStopIcon v-if="i === 1" />
-          <ExploreIcon v-if="i === 2" />
-        </IconText>
-        <ArrowRightIcon class="arrow" />
+         <IconText :text="item.title">
+            <LocationSearchingIcon v-if="i === 0" />
+            <AirlineStopIcon v-if="i === 1" />
+            <ExploreIcon v-if="i === 2" />
+         </IconText>
+         <ArrowRightIcon class="arrow" />
       </RouterLink>
-    </li>
-  </ul>
+   </div>
+
+   <Divider v-if="!route.hash" :noTop="!!route.hash" />
 </template>
 
 <script lang="ts" setup>
@@ -39,45 +30,26 @@ import AirlineStopIcon from '../ui/svg/AirlineStopIcon.vue'
 import ArrowRightIcon from '../ui/svg/ArrowRightIcon.vue'
 import ExploreIcon from '../ui/svg/ExploreIcon.vue'
 import LocationSearchingIcon from '../ui/svg/LocationSearchingIcon.vue'
-import SidebarNavigation from './SidebarNavigation.vue'
-import { computed, watch } from 'vue'
+import Divider from '../ui/Divider.vue'
 
-const layerStore = useLayerStore()
 const route = useRoute()
-
-watch(route, () => {
-  if (route.hash) {
-    layerStore.selectLayer(route.hash.split('#')[1])
-  }
-})
-
-const backTitle = computed(() => {
-  return !!route.hash
-})
+const layerStore = useLayerStore()
 </script>
 
 <style lang="postcss" scoped>
-.sidebar-map-header {
-  @apply flex flex-col;
+.layer-title {
+   @apply flex items-center justify-between rounded pr-1 transition-colors;
 
-  &.back {
-    @apply -mb-2;
-  }
-
-  & .layer-title {
-    @apply transition-colors rounded-small flex justify-between items-center pr-1;
-
-    & .arrow {
+   & .arrow {
       @apply opacity-0 transition-opacity;
-    }
+   }
 
-    &:hover {
+   &:hover {
       @apply bg-grey;
 
       & .arrow {
-        @apply opacity-100;
+         @apply opacity-100;
       }
-    }
-  }
+   }
 }
 </style>

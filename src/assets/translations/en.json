@@ -1,33 +1,74 @@
 {
-  "common": {
-    "login": "Login",
-    "logout": "Logout",
-    "about": "About",
-    "back": "Back",
-    "all": "All"
-  },
-  "auth": {
-    "login": "Login",
-    "register": "Register"
-  },
-  "components": {
-    "sidebar": {
-      "map": "Maps",
-      "charts": "Charts",
-      "events": "Events"
-    },
-    "sidebar-map-content": {
-      "deselect": "Deselect all",
-      "deselect-group": "Deselect group"
-    }
-  },
-  "layouts": {
-    "app-header": {
-      "title": "analytics",
-      "how-to": "How to",
-      "contact": "Contact",
-      "logo": "opendatahub"
-    }
-  },
-  "pages": {}
+   "common": {
+      "login": "Login",
+      "logout": "Logout",
+      "about": "About",
+      "back": "Back",
+      "all": "All",
+      "updated-at": "last updated on {time}",
+      "auto": "Auto"
+   },
+   "auth": {
+      "login": "Login",
+      "register": "Register"
+   },
+   "components": {
+      "sidebar": {
+         "map": "Maps",
+         "charts": "Charts",
+         "events": "Events"
+      },
+      "sidebar-map-content": {
+         "deselect": "Deselect all",
+         "deselect-group": "Deselect group"
+      },
+      "marker-card": {
+         "measurements": "Measurements",
+         "alarms": "Alarms",
+         "metadata": {
+            "title": "Metadata",
+            "code": "Code",
+            "name": "Name",
+            "latitude": "Latitude",
+            "longitude": "Longitude",
+            "epsg": "EPSG",
+            "origin": "origin",
+            "name-de": "Name_DE",
+            "name-en": "Name_EN",
+            "name-it": "Name_IT"
+         }
+      },
+      "sidebar-charts-content": {
+         "add": "Add new Time series"
+      }
+   },
+   "views": {
+      "charts": {
+         "title": "Headline for Charts",
+         "time": {
+            "day": "Day",
+            "week": "Week",
+            "month": "Month",
+            "6-months": "6 Months",
+            "custom": "Custom"
+         },
+         "plot-height": "Plot height",
+         "export": {
+            "title": "Export Details",
+            "xls": "Export data as XLS",
+            "image": "Export chart as image"
+         },
+         "embed": "Embed code",
+         "save": "Save configured charts"
+      }
+   },
+   "layouts": {
+      "app-header": {
+         "title": "analytics",
+         "how-to": "How to",
+         "contact": "Contact",
+         "logo": "opendatahub"
+      }
+   },
+   "pages": {}
 }

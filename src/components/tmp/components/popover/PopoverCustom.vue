@@ -1,30 +1,29 @@
 <!--
 SPDX-FileCopyrightText: NOI Techpark <digital@noi.bz.it>
-
 SPDX-License-Identifier: AGPL-3.0-or-later
 -->
 
 <template>
-  <PopoverGroup>
-    <Popover>
-      <span ref="trigger">
-        <slot name="trigger"></slot>
-      </span>
+   <PopoverGroup>
+      <Popover>
+         <span ref="trigger">
+            <slot name="trigger"></slot>
+         </span>
 
-      <Teleport to="#popper-root">
-        <div
-          ref="container"
-          class="absolute"
-          :class="{ 'z-50': zIndex == null }"
-          :style="{
-            zIndex: zIndex == null ? undefined : zIndex,
-          }"
-        >
-          <slot name="container"></slot>
-        </div>
-      </Teleport>
-    </Popover>
-  </PopoverGroup>
+         <Teleport to="#popper-root">
+            <div
+               ref="container"
+               class="absolute"
+               :class="{ 'z-50': zIndex == null }"
+               :style="{
+                  zIndex: zIndex == null ? undefined : zIndex,
+               }"
+            >
+               <slot name="container"></slot>
+            </div>
+         </Teleport>
+      </Popover>
+   </PopoverGroup>
 </template>
 
 <script setup lang="ts">
@@ -32,12 +31,12 @@ import { Popover, PopoverGroup } from '@headlessui/vue'
 import { useFloatingUi } from '../utils/useFloatingUi.js'
 
 withDefaults(defineProps<{ fullScreenWidth?: boolean; zIndex?: number }>(), {
-  fullScreenWidth: true,
-  zIndex: undefined,
+   fullScreenWidth: true,
+   zIndex: undefined,
 })
 
 const [trigger, container] = useFloatingUi({
-  placement: 'bottom-start',
-  offset: 8,
+   placement: 'bottom-start',
+   offset: 8,
 })
 </script>
