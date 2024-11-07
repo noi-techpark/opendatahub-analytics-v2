@@ -35,10 +35,10 @@ const props = withDefaults(
    {
       modelValue: true,
       disabled: false,
-      activeBorderClass: 'border-green-400',
-      activeBgClass: 'bg-green-400',
-      inactiveBorderClass: 'border-red-400',
-      inactiveBgClass: 'bg-red-400',
+      activeBorderClass: 'border-green',
+      activeBgClass: 'bg-green',
+      inactiveBorderClass: 'border-stroke',
+      inactiveBgClass: 'bg-stroke',
    }
 )
 

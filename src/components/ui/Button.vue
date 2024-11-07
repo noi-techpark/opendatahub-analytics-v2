@@ -8,6 +8,8 @@
          secondary,
          disabled,
          center,
+         outline,
+         grow,
       }"
    >
       <IconText bold :text="value" :hover="false">
@@ -25,6 +27,8 @@ type Props = {
    secondary?: boolean
    disabled?: boolean
    center?: boolean
+   outline?: boolean
+   grow?: boolean
 }
 
 const props = withDefaults(defineProps<Props>(), {
@@ -34,10 +38,14 @@ const props = withDefaults(defineProps<Props>(), {
 
 <style lang="postcss" scoped>
 .button {
-   @apply relative flex h-8 w-full select-none items-center justify-start rounded;
+   @apply relative flex h-8 select-none items-center justify-start rounded font-semibold;
 
    &.center {
       @apply justify-center;
+   }
+
+   &.grow {
+      @apply w-full;
    }
 
    min-width: 50px;
@@ -52,7 +60,7 @@ const props = withDefaults(defineProps<Props>(), {
          & > svg {
             width: 18px;
             height: 18px;
-            fill: theme(colors.white);
+            fill: theme('colors.white');
          }
       }
    }
@@ -64,6 +72,10 @@ const props = withDefaults(defineProps<Props>(), {
 
    &.primary {
       @apply bg-green text-white;
+
+      &.outline {
+         @apply border-green bg-white text-green;
+      }
    }
 
    &.secondary {

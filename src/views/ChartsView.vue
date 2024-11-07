@@ -48,10 +48,12 @@ SPDX-License-Identifier: AGPL-3.0-or-later
 
             <div class="card">
                <IconText
+                  class="justify-between"
                   bold
                   :text="$t('views.charts.embed')"
                   reverse
                   noPadding
+                  :hover="false"
                >
                   <ContentCopyIcon />
                </IconText>

@@ -20,6 +20,6 @@ import AppLayout from './layouts/AppLayout.vue'
 
 <style lang="postcss" scoped>
 .main-ct {
-   @apply relative flex-shrink flex-grow overflow-y-auto px-6 py-2;
+   @apply relative flex-grow overflow-y-auto px-6 py-2;
 }
 </style>

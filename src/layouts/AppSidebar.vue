@@ -18,7 +18,17 @@ SPDX-License-Identifier: AGPL-3.0-or-later
 
       <div class="sidebar-footer" v-if="showFooter">
          <Divider />
-         <div v-if="mapLayerSelection">TODO: alarms</div>
+
+         <Switch v-if="mapLayerSelection" v-model="showAlarms">
+            <IconText
+               :text="$t('layouts.app-sidebar.alarms')"
+               noPaddingX
+               reverse
+               :hover="false"
+            >
+               <IconInfo />
+            </IconText>
+         </Switch>
 
          <RouterLink to="/about" v-else>
             <IconText :text="$t('common.about')">
@@ -43,11 +53,13 @@ import { useMapLayerStore } from '../stores/map-layers'
 import SidebarNavigation from '../components/nav/SidebarNavigation.vue'
 import { useI18n } from 'vue-i18n'
 import { ref } from 'vue'
+import Switch from '../components/ui/Switch.vue'
 
 const route = useRoute()
 const router = useRouter()
 const layerStore = useMapLayerStore()
 const { t } = useI18n()
+const showAlarms = ref<boolean>(false)
 
 const showFooter = ref<boolean>(true)
 const page = ref<'map' | 'charts' | 'charts-add' | 'events' | 'about'>()
@@ -104,7 +116,7 @@ watch(route, () => {
 
 <style lang="postcss" scoped>
 .app-sidebar {
-   @apply flex h-full w-[300px] flex-shrink-0 flex-col overflow-y-auto border-r bg-white px-3;
+   @apply relative z-20 flex h-full w-[300px] flex-shrink-0 flex-col overflow-y-auto border-r bg-white px-3;
 
    & .sidebar-footer {
       @apply mt-auto pb-2 pt-10;

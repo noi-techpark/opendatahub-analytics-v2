@@ -6,53 +6,37 @@ SPDX-License-Identifier: AGPL-3.0-or-later
 <template>
    <div class="sidebar-charts-content">
       <RouterLink to="/charts/add">
-         <Button :value="$t('components.sidebar-charts-content.add')">
+         <Button grow :value="$t('components.sidebar-charts-content.add')">
             <AddIcon />
          </Button>
       </RouterLink>
 
       <div class="time-series-ct">
-         <TimeSeriesCard
-            :timeSeries="{
-               displayName: 'Weather, Mila, Air Temperature Max, 600s',
-               color: '#FFC000',
-               dataset: 'Weather',
-               station: 'Mila',
-               datatype: 'Air temperature MAX',
-               period: '600s',
-            }"
-         />
-         <TimeSeriesCard
-            :timeSeries="{
-               displayName: 'Weather, Mila, Air Temperature Max, 600s',
-               color: '#FF0000',
-               dataset: 'Weather',
-               station: 'Mila',
-               datatype: 'Air temperature MAX',
-               period: '600s',
-            }"
-         />
-         <TimeSeriesCard
-            :timeSeries="{
-               displayName: 'Weather, Mila, Air Temperature Max, 600s',
-               color: '#50742F',
-               dataset: 'Weather',
-               station: 'Mila',
-               datatype: 'Air temperature MAX',
-               period: '600s',
-            }"
-         />
+         <TimeSeriesCard v-for="item in timeSeries" :timeSeries="item" />
       </div>
    </div>
 </template>
 
 <script lang="ts" setup>
+import { computed } from 'vue'
 import Button from '../ui/Button.vue'
 import TimeSeriesCard from '../ui/chart/TimeSeriesCard.vue'
 import AddIcon from '../ui/svg/AddIcon.vue'
 
 type Props = {}
 const props = withDefaults(defineProps<Props>(), {})
+
+// TODO: chart data integration
+const timeSeries = computed(() => [
+   {
+      displayName: 'Weather, Mila, Air Temperature Max, 600s',
+      color: '#50742F',
+      dataset: 'Weather',
+      station: 'Mila',
+      datatype: 'Air temperature MAX',
+      period: '600s',
+   },
+])
 </script>
 
 <style lang="postcss" scoped>

@@ -6,7 +6,8 @@
       "back": "Back",
       "all": "All",
       "updated-at": "last updated on {time}",
-      "auto": "Auto"
+      "auto": "Auto",
+      "cancel": "Cancel"
    },
    "auth": {
       "login": "Login",
@@ -42,7 +43,7 @@
          "add": "Add new Time series"
       },
       "time-series-card": {
-         "dataset": "Datasetname",
+         "dataset": "Dataset",
          "station": "Station",
          "datatype": "Datatype",
          "period": "Period"
@@ -66,6 +67,21 @@
          },
          "embed": "Embed code",
          "save": "Save configured charts"
+      },
+      "charts-add": {
+         "title": "Add a new Time series",
+         "provider": "Dataprovider",
+         "provider-description": "Here is a short description",
+         "dataset": "Dataset",
+         "dataset-description": "Here is a short description",
+         "station": "Station",
+         "station-description": "Here is a short description",
+         "station-map": "Select station on Map",
+         "datatype": "Datatype",
+         "datatype-description": "Here is a short description",
+         "period": "Period",
+         "period-description": "Here is a short description",
+         "save": "Create Time series"
       }
    },
    "layouts": {
@@ -74,6 +90,9 @@
          "how-to": "How to",
          "contact": "Contact",
          "logo": "opendatahub"
+      },
+      "app-sidebar": {
+         "alarms": "Highlight alarms on dataset"
       }
    },
    "pages": {}

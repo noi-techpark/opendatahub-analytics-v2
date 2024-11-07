@@ -91,7 +91,7 @@ watch(
 
 <style lang="postcss" scoped>
 .map-component {
-   @apply absolute inset-0 h-full w-full;
+   @apply fixed inset-0 z-0 h-full w-full;
 
    & .loading-ct {
       @apply pointer-events-none absolute inset-0 z-[999] flex items-center justify-center bg-black-2/50 opacity-0 transition-all;

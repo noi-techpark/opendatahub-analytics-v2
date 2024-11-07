@@ -1,7 +1,12 @@
 <template>
    <div
       class="icon-text-component __clickable"
-      :class="{ hover, reverse, 'no-padding': noPadding }"
+      :class="{
+         hover,
+         reverse,
+         'no-padding': noPadding,
+         'no-padding-x': noPaddingX,
+      }"
    >
       <slot />
       <P :bold v-if="text">{{ text }}</P>
@@ -17,6 +22,7 @@ type Props = {
    bold?: boolean
    reverse?: boolean
    noPadding?: boolean
+   noPaddingX?: boolean
 }
 const props = withDefaults(defineProps<Props>(), {
    hover: true,
@@ -31,8 +37,12 @@ const props = withDefaults(defineProps<Props>(), {
       @apply p-0;
    }
 
+   &.no-padding-x {
+      @apply px-0;
+   }
+
    &.reverse {
-      @apply flex-row-reverse justify-between;
+      @apply flex-row-reverse;
    }
 
    &.hover {

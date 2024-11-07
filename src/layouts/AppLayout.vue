@@ -37,7 +37,7 @@ function toggleMenu() {
    & .content-ct {
       @apply flex h-screen;
 
-      max-height: calc(100vh - v-bind(headerHeight));
+      max-height: calc(100vh - v-bind('headerHeight'));
    }
 }
 </style>

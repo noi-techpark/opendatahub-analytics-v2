@@ -88,7 +88,7 @@ onMounted(() => {
    @apply relative select-none overflow-hidden pb-0 transition-all duration-300;
 
    &.open {
-      padding-bottom: v-bind(contentHeightPx);
+      padding-bottom: v-bind('contentHeightPx');
 
       & .card-header {
          @apply mb-[-1px] rounded-b-none bg-grey;
@@ -112,7 +112,8 @@ onMounted(() => {
          &:before {
             @apply w-[2px] flex-shrink-0;
             content: '';
-            background-color: v-bind(props.timeSeries.color);
+            /** @vue-ignore */
+            background-color: v-bind('props.timeSeries.color');
          }
 
          & .title {

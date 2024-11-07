@@ -82,7 +82,7 @@ const data = asyncComputed(async () => {
          &:before {
             @apply w-[2px] flex-shrink-0;
             content: '';
-            background-color: v-bind(data?.color);
+            background-color: v-bind('data?.color');
          }
 
          & .marker-title {
