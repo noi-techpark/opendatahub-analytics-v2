@@ -21,12 +21,15 @@ SPDX-License-Identifier: AGPL-3.0-or-later
             <div class="chart-control">
                <div class="chart-time-ct">
                   <MenuButtons :links :selectedIdx="selectedTimeIdx" />
-                  <div>{{ $t('views.charts.time.custom') }}</div>
+                  <Select :text="$t('views.charts.time.custom')"></Select>
                </div>
-               <div>
-                  {{ $t('views.charts.plot-height') }}:
-                  {{ plotHeights[selectedPlotHeightIdx].title }}
-               </div>
+
+               <Select
+                  :text="$t('views.charts.plot-height')"
+                  :selectedIdx="selectedPlotHeightIdx"
+                  :values="plotHeights"
+                  type="list"
+               />
             </div>
             <Chart
                title="Timeseries data"
@@ -80,6 +83,7 @@ import SaveIcon from '../components/ui/svg/SaveIcon.vue'
 import IconText from '../components/ui/IconText.vue'
 import ContentCopyIcon from '../components/ui/svg/ContentCopyIcon.vue'
 import Chart from '../components/ui/chart/Chart.vue'
+import Select from '../components/ui/Select.vue'
 
 const { t } = useI18n()
 

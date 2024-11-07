@@ -59,7 +59,7 @@
             "6-months": "6 Months",
             "custom": "Custom"
          },
-         "plot-height": "Plot height",
+         "plot-height": "Plot height:",
          "export": {
             "title": "Export Details",
             "xls": "Export data as XLS",
@@ -72,15 +72,20 @@
          "title": "Add a new Time series",
          "provider": "Dataprovider",
          "provider-description": "Here is a short description",
+         "provider-select": "Select dataprovider",
          "dataset": "Dataset",
          "dataset-description": "Here is a short description",
+         "dataset-select": "Select dataset",
          "station": "Station",
          "station-description": "Here is a short description",
          "station-map": "Select station on Map",
+         "station-select": "Select station",
          "datatype": "Datatype",
          "datatype-description": "Here is a short description",
+         "datatype-select": "Select datatype",
          "period": "Period",
          "period-description": "Here is a short description",
+         "period-select": "Select period",
          "save": "Create Time series"
       }
    },

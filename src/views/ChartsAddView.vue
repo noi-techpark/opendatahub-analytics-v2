@@ -14,7 +14,7 @@ SPDX-License-Identifier: AGPL-3.0-or-later
                   <H tag="h2">{{ $t('views.charts-add.provider') }}</H>
                   <P>{{ $t('views.charts-add.provider-description') }}</P>
                </div>
-               <div>select</div>
+               <Select :text="$t('views.charts-add.provider-select')"></Select>
             </div>
          </div>
 
@@ -24,7 +24,7 @@ SPDX-License-Identifier: AGPL-3.0-or-later
                   <H tag="h2">{{ $t('views.charts-add.dataset') }}</H>
                   <P>{{ $t('views.charts-add.dataset-description') }}</P>
                </div>
-               <div>select</div>
+               <Select :text="$t('views.charts-add.dataset-select')"></Select>
             </div>
          </div>
 
@@ -34,7 +34,7 @@ SPDX-License-Identifier: AGPL-3.0-or-later
                   <H tag="h2">{{ $t('views.charts-add.station') }}</H>
                   <P>{{ $t('views.charts-add.station-description') }}</P>
                </div>
-               <div>select</div>
+               <Select :text="$t('views.charts-add.station-select')"></Select>
             </div>
             <Switch v-model="stationFromMap">
                <P>{{ $t('views.charts-add.station-map') }}</P>
@@ -47,7 +47,7 @@ SPDX-License-Identifier: AGPL-3.0-or-later
                   <H tag="h2">{{ $t('views.charts-add.datatype') }}</H>
                   <P>{{ $t('views.charts-add.datatype-description') }}</P>
                </div>
-               <div>select</div>
+               <Select :text="$t('views.charts-add.datatype-select')"></Select>
             </div>
          </div>
 
@@ -57,7 +57,7 @@ SPDX-License-Identifier: AGPL-3.0-or-later
                   <H tag="h2">{{ $t('views.charts-add.period') }}</H>
                   <P>{{ $t('views.charts-add.period-description') }}</P>
                </div>
-               <div>select</div>
+               <Select :text="$t('views.charts-add.period-select')"></Select>
             </div>
          </div>
 
@@ -76,6 +76,7 @@ import H from '../components/ui/tags/H.vue'
 import P from '../components/ui/tags/P.vue'
 import Switch from '../components/ui/Switch.vue'
 import { ref } from 'vue'
+import Select from '../components/ui/Select.vue'
 
 const router = useRouter()
 const stationFromMap = ref<boolean>(false)

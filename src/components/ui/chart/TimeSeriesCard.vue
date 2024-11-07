@@ -85,7 +85,7 @@ onMounted(() => {
 
 <style lang="postcss" scoped>
 .time-series-card {
-   @apply relative select-none overflow-hidden pb-0 transition-all duration-300;
+   @apply relative select-none overflow-hidden pb-0 transition-all;
 
    &.open {
       padding-bottom: v-bind('contentHeightPx');
