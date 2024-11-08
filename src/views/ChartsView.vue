@@ -29,6 +29,7 @@ SPDX-License-Identifier: AGPL-3.0-or-later
                   :selectedIdx="selectedPlotHeightIdx"
                   :values="plotHeights"
                   type="list"
+                  @selected="handleSelectPlotHeight"
                />
             </div>
             <Chart
@@ -114,6 +115,10 @@ const links = computed(() => [
       action: () => (selectedTimeIdx.value = 3),
    },
 ])
+
+const handleSelectPlotHeight = (idx: number) => {
+   selectedPlotHeightIdx.value = idx
+}
 </script>
 
 <style lang="postcss" scoped>

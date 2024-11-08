@@ -20,7 +20,21 @@ SPDX-License-Identifier: AGPL-3.0-or-later
       </div>
 
       <div class="select-content">
-         <slot />
+         <slot v-if="type === 'custom'" />
+         <ul v-else class="options-ct">
+            <li
+               v-for="(item, i) in values"
+               class="option __clickable"
+               @click="
+                  () => {
+                     open = false
+                     $emit('selected', i)
+                  }
+               "
+            >
+               {{ item.title }}
+            </li>
+         </ul>
       </div>
    </div>
 </template>
@@ -31,7 +45,7 @@ import ArrowDownIcon from './svg/ArrowDownIcon.vue'
 
 type Props = {
    text: string
-   type?: 'dropdown' | 'list'
+   type?: 'custom' | 'list'
    selectedIdx?: number
    values?: {
       title: string
@@ -39,9 +53,15 @@ type Props = {
    }[]
 }
 
+type Emit = {
+   selected: [number]
+}
+
 const props = withDefaults(defineProps<Props>(), {
-   type: 'dropdown',
+   type: 'custom',
 })
+
+const emit = defineEmits<Emit>()
 
 const open = ref<boolean>(false)
 
@@ -64,7 +84,7 @@ const toggleOpen = () => {
       }
 
       & .select-content {
-         @apply pointer-events-auto translate-y-0 opacity-100;
+         @apply pointer-events-auto translate-y-[100%] opacity-100;
       }
    }
 
@@ -81,7 +101,7 @@ const toggleOpen = () => {
    }
 
    & .select-trigger {
-      @apply flex items-center rounded border bg-grey;
+      @apply relative z-10 flex items-center rounded border bg-grey;
 
       & .select-text {
          @apply select-none border-r px-3 py-1 text-sm font-semibold;
@@ -93,7 +113,14 @@ const toggleOpen = () => {
    }
 
    & .select-content {
-      @apply pointer-events-none absolute -bottom-6 z-0 translate-y-6 opacity-0 transition-all;
+      @apply pointer-events-none absolute -bottom-0 z-0 translate-y-[85%] opacity-0 transition-all;
+
+      & .options-ct {
+         @apply flex flex-col;
+
+         & .option {
+         }
+      }
    }
 }
 
