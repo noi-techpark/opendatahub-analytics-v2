@@ -1,0 +1,104 @@
+{
+   "common": {
+      "login": "Login",
+      "logout": "Logout",
+      "about": "About",
+      "back": "Back",
+      "all": "All",
+      "updated-at": "last updated on {time}",
+      "auto": "Auto",
+      "cancel": "Cancel"
+   },
+   "auth": {
+      "login": "Login",
+      "register": "Register"
+   },
+   "components": {
+      "sidebar": {
+         "map": "Maps",
+         "charts": "Charts",
+         "events": "Events"
+      },
+      "sidebar-map-content": {
+         "deselect": "Deselect all",
+         "deselect-group": "Deselect group"
+      },
+      "marker-card": {
+         "measurements": "Measurements",
+         "alarms": "Alarms",
+         "metadata": {
+            "title": "Metadata",
+            "code": "Code",
+            "name": "Name",
+            "latitude": "Latitude",
+            "longitude": "Longitude",
+            "epsg": "EPSG",
+            "origin": "origin",
+            "name-de": "Name_DE",
+            "name-en": "Name_EN",
+            "name-it": "Name_IT"
+         }
+      },
+      "sidebar-charts-content": {
+         "add": "Add new Time series"
+      },
+      "time-series-card": {
+         "dataset": "Dataset",
+         "station": "Station",
+         "datatype": "Datatype",
+         "period": "Period"
+      }
+   },
+   "views": {
+      "charts": {
+         "title": "Headline for Charts",
+         "time": {
+            "day": "Day",
+            "week": "Week",
+            "month": "Month",
+            "6-months": "6 Months",
+            "custom": "Custom"
+         },
+         "plot-height": "Plot height:",
+         "export": {
+            "title": "Export Details",
+            "xls": "Export data as XLS",
+            "image": "Export chart as image"
+         },
+         "embed": "Embed code",
+         "save": "Save configured charts"
+      },
+      "charts-add": {
+         "title": "Add a new Time series",
+         "provider": "Dataprovider",
+         "provider-description": "Here is a short description",
+         "provider-select": "Select dataprovider",
+         "dataset": "Dataset",
+         "dataset-description": "Here is a short description",
+         "dataset-select": "Select dataset",
+         "station": "Station",
+         "station-description": "Here is a short description",
+         "station-map": "Select station on Map",
+         "station-select": "Select station",
+         "datatype": "Datatype",
+         "datatype-description": "Here is a short description",
+         "datatype-select": "Select datatype",
+         "period": "Period",
+         "period-description": "Here is a short description",
+         "period-select": "Select period",
+         "save": "Create Time series"
+      }
+   },
+   "layouts": {
+      "app-header": {
+         "title": "analytics",
+         "how-to": "How to",
+         "contact": "Contact",
+         "logo": "opendatahub"
+      },
+      "app-sidebar": {
+         "alarms": "Highlight alarms on dataset"
+      }
+   },
+   "pages": {}
+}

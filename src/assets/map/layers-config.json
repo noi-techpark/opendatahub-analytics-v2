@@ -1,0 +1,202 @@
+[
+   {
+      "title": "Stations",
+      "id": "stations",
+      "layers": [
+         {
+            "id": "Weather",
+            "stationType": ["MeteoStation"],
+            "projection": "EPSG:4326",
+            "format": "integreen",
+            "custom-function": null,
+            "color": "#F7D25A",
+            "main-data": [
+               ["air-temperature", null],
+               ["precipitation", null]
+            ]
+         },
+         {
+            "id": "Air quality",
+            "stationType": ["EnvironmentStation"],
+            "projection": "EPSG:4326",
+            "format": "integreen",
+            "custom-function": null,
+            "color": "#F0A050",
+            "main-data": [
+               ["nitrogen-dioxide", null],
+               ["particulate-matter10", null],
+               ["NO2 - Ossidi di azoto", null],
+               ["Biossido di Azoto", null],
+               ["NO2-Alphasense_processed", null]
+            ]
+         },
+         {
+            "id": "Parking",
+            "stationType": [
+               "ParkingStation",
+               "ParkingSensor",
+               "ParkingFacility"
+            ],
+            "projection": "EPSG:4326",
+            "format": "integreen",
+            "custom-function": null,
+            "color": "#E86161",
+            "main-data": [
+               ["occupied", 300],
+               ["free", 300],
+               ["parking-forecast-30", 1800],
+               ["parking-forecast-60", 3600]
+            ]
+         },
+         {
+            "id": "BikeParking",
+            "stationType": ["BikeParking"],
+            "projection": "EPSG:4326",
+            "format": "integreen",
+            "custom-function": null,
+            "color": "#F58BB5",
+            "main-data": [
+               ["free", 600],
+               ["freeSpotsRegularBike", 600],
+               ["freeSpotsElectricBike", 600],
+               ["usageState", 600]
+            ]
+         },
+         {
+            "id": "Bluetooth",
+            "stationType": ["BluetoothStation"],
+            "format": "integreen",
+            "projection": "EPSG:4326",
+            "custom-function": null,
+            "color": "#F0ABAB",
+            "main-data": [
+               ["Bluetooth Count record", 600],
+               ["Bluetooth Count record", 3600]
+            ]
+         },
+         {
+            "id": "Traffic",
+            "stationType": ["TrafficSensor", "TrafficDirection"],
+            "format": "integreen",
+            "projection": "EPSG:4326",
+            "custom-function": null,
+            "color": "#CB8BC3",
+            "main-data": [
+               ["Nr. Equivalent Vehicles", 600],
+               ["Average Flow", 600],
+               ["Average Speed Light Vehicles", 600]
+            ]
+         },
+         {
+            "id": "BikeCounter",
+            "stationType": ["BikeCounter"],
+            "format": "integreen",
+            "projection": "EPSG:4326",
+            "custom-function": null,
+            "color": "#CB8BC3",
+            "main-data": []
+         },
+         {
+            "id": "Road weather",
+            "stationType": ["RWISstation"],
+            "format": "integreen",
+            "projection": "EPSG:4326",
+            "custom-function": null,
+            "color": "#9399E5",
+            "main-data": [
+               ["ground-surface-temperature", 600],
+               ["air-temperature", 600],
+               ["precipitation-intensity", 600],
+               ["wind-speed", 600],
+               ["temp_suolo", 1],
+               ["temp_aria", 1],
+               ["prec_qta", 1],
+               ["prec_tipo", 1]
+            ]
+         },
+         {
+            "id": "Car sharing",
+            "stationType": ["CarsharingStation"],
+            "format": "integreen",
+            "projection": "EPSG:4326",
+            "custom-function": null,
+            "color": "#478DDD",
+            "main-data": []
+         },
+         {
+            "id": "Bike sharing",
+            "stationType": ["BikesharingStation", "Bicycle"],
+            "apiWhere": "or(and(stype.eq.\"Bicycle\",sorigin.eq.\"BIKE_SHARING_MERANO\"),stype.neq.\"Bicycle\")",
+            "format": "integreen",
+            "projection": "EPSG:4326",
+            "custom-function": null,
+            "color": "#8BD1E6",
+            "main-data": []
+         },
+         {
+            "id": "E-Mobility",
+            "stationType": ["EChargingStation"],
+            "format": "integreen",
+            "projection": "EPSG:4326",
+            "custom-function": null,
+            "color": "#BFCE89",
+            "main-data": []
+         },
+         {
+            "id": "Bike chargers",
+            "stationType": ["BIKE_CHARGER"],
+            "format": "integreen",
+            "projection": "EPSG:4326",
+            "custom-function": null,
+            "color": "#BFCE89",
+            "main-data": []
+         },
+         {
+            "id": "VMS",
+            "stationType": ["VMS"],
+            "projection": "EPSG:4326",
+            "format": "integreen",
+            "custom-function": null,
+            "color": "#A3BC94",
+            "main-data": [],
+            "imageMapping": [
+               {
+                  "dataType": "esposizione",
+                  "dataTypeMetadata": "signal-codes",
+                  "valueSeparator": "|",
+                  "metaDataImgData": "signalAsBase64"
+               }
+            ]
+         }
+      ]
+   },
+   {
+      "title": "Linear elaborations",
+      "id": "linear",
+      "layers": [
+         {
+            "id": "Vehicular time",
+            "stationType": ["LinkStation"],
+            "format": "integreen",
+            "projection": "xxx",
+            "custom-function": null,
+            "color": "#A5ABB7",
+            "main-data": []
+         },
+         {
+            "id": "Province BZ",
+            "stationType": ["PROVINCE_BZ"],
+            "format": "road_events",
+            "projection": "xxx",
+            "custom-function": null,
+            "color": "#A5ABB7",
+            "main-data": []
+         }
+      ]
+   },
+   {
+      "title": "Maps",
+      "id": "maps",
+      "layers": []
+   }
+]

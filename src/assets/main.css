@@ -1,0 +1,46 @@
+/*
+SPDX-FileCopyrightText: NOI Techpark <digital@noi.bz.it>
+
+SPDX-License-Identifier: AGPL-3.0-or-later
+*/
+
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+#app {
+   @apply min-h-screen w-full;
+}
+
+html {
+   @apply scroll-smooth font-sans text-black-2;
+
+   font-size: 16px;
+   -moz-osx-font-smoothing: grayscale;
+   -webkit-font-smoothing: antialiased;
+   box-sizing: border-box;
+}
+*::before,
+*::after {
+   box-sizing: border-box;
+   margin: 0;
+}
+
+svg {
+   @apply inline-block;
+}
+
+img {
+   @apply object-cover object-center;
+}
+
+.__clickable {
+   @apply cursor-pointer transition-opacity duration-200;
+}
+
+.__center {
+   @apply m-auto mx-auto flex w-full px-6;
+}
+
+@media (max-width: theme('screens.md')) {
+}

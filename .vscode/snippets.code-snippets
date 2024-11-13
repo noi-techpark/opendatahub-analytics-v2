@@ -1,0 +1,18 @@
+{
+   "Vue3 Component": {
+      "prefix": "vueComponent",
+      "body": [
+         "<!--",
+         "SPDX-FileCopyrightText: NOI Techpark <digital@noi.bz.it>",
+         "SPDX-License-Identifier: AGPL-3.0-or-later",
+         "-->",
+         "",
+         "<template></template>",
+         "",
+         "<script lang=\"ts\" setup></script>",
+         "",
+         "<style lang=\"postcss\" scoped></style>",
+      ],
+      "description": "Vue 3 Component Template",
+   },
+}
