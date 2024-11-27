@@ -45,7 +45,7 @@ SPDX-License-Identifier: AGPL-3.0-or-later
                <Button secondary :value="$t('views.charts.export.xls')">
                   <DownloadIcon />
                </Button>
-               <Button secondary :value="$t('views.charts.export.xls')">
+               <Button secondary :value="$t('views.charts.export.image')">
                   <DownloadIcon />
                </Button>
             </div>
