@@ -93,7 +93,9 @@
          "search-for-dataset": "Search for dataset",
          "search-for-station": "Search for station",
          "search-for-datatype": "Search for datatype",
-         "search-for-period": "Search for period"
+         "search-for-period": "Search for period",
+         "your-selected-provider": "Your selected provider: {provider}",
+         "your-selected-dataset": "Your selected dataset: {dataset}"
       }
    },
    "layouts": {

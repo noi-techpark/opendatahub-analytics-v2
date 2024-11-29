@@ -7,7 +7,9 @@ SPDX-License-Identifier: AGPL-3.0-or-later
    <Popover class="relative">
       <PopoverButton
          ref="popoverButton"
+         :disabled="disabled"
          class="relative z-10 flex cursor-pointer items-center rounded border bg-grey"
+         :class="{ 'cursor-not-allowed opacity-70': disabled }"
       >
          <span
             class="max-w-[220px] select-none truncate border-r px-3 py-1 text-sm font-semibold"
@@ -73,7 +75,7 @@ SPDX-License-Identifier: AGPL-3.0-or-later
 </template>
 
 <script lang="ts" setup>
-import { ref, computed } from 'vue'
+import { ref, computed, watch } from 'vue'
 import { Popover, PopoverButton, PopoverPanel } from '@headlessui/vue'
 import { Listbox, ListboxOptions, ListboxOption } from '@headlessui/vue'
 import ArrowDownIcon from '../svg/ArrowDownIcon.vue'
@@ -93,25 +95,35 @@ type Props = {
    text: string
    options: SelectOption[]
    searchLabelPlaceholder?: string
+   searchLocally?: boolean
    loading?: boolean
+   disabled?: boolean
 }
 
 const props = defineProps<Props>()
 
-const emit = defineEmits(['save', 'cancel'])
+const emit = defineEmits(['save', 'cancel', 'search'])
 
 const searchQuery = ref('')
 const popoverButton = ref()
 
-const filteredOptions = computed(() =>
-   props.loading
-      ? Array(5).fill({ label: '...', value: '...' })
-      : props.options.filter(
+const filteredOptions = computed(() => {
+   if (props.loading) {
+      return Array(5).fill({ label: '...', value: '...' })
+   }
+
+   return props.searchLocally
+      ? props.options.filter(
            (item) =>
               !searchQuery.value ||
               item.label.toLowerCase().includes(searchQuery.value.toLowerCase())
         )
-)
+      : props.options
+})
+
+watch(searchQuery, (newVal) => {
+   emit('search', newVal)
+})
 
 const onSave = () => {
    emit('save')
