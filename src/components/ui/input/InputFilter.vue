@@ -9,27 +9,25 @@ SPDX-License-Identifier: AGPL-3.0-or-later
       :model-value="modelValue"
       :disabled="disabled"
       :focus="focus"
-      :label-placeholder="t('components.inputSearch.labelPlaceholder')"
-      :show-icon-in-button="false"
-      :show-button-text-mobile="true"
-      show-icon
+      :label-button="t('components.inputFilter.labelButton')"
+      :label-placeholder="t('components.inputFilter.labelPlaceholder')"
       @update:model-value="emit('update:modelValue', $event)"
-      @confirmed-value="emit('search', $event)"
+      @confirmed-value="emit('filter', $event)"
    >
       <template #icon>
-         <IconSearch class="text-green-500 size-4" />
+         <IconFilter />
       </template>
    </InputWithButton>
 </template>
 
 <script setup lang="ts">
 import { useI18n } from 'vue-i18n'
-import IconSearch from '../svg/IconSearch.vue'
+import IconFilter from '../svg/IconFilter.vue'
 import InputWithButton from './InputWithButton.vue'
 
 const { t } = useI18n()
 
-const emit = defineEmits(['search', 'update:modelValue'])
+const emit = defineEmits(['filter', 'update:modelValue'])
 
 withDefaults(
    defineProps<{

@@ -9,8 +9,7 @@ SPDX-License-Identifier: AGPL-3.0-or-later
       :model-value="modelValue"
       :disabled="disabled"
       :focus="focus"
-      :label-placeholder="t('components.inputSearch.labelPlaceholder')"
-      :show-icon-in-button="false"
+      :label-placeholder="labelPlaceholder"
       :show-button-text-mobile="true"
       show-icon
       @update:model-value="emit('update:modelValue', $event)"
@@ -37,12 +36,14 @@ withDefaults(
       disabled?: boolean
       focus?: boolean
       id?: string
+      labelPlaceholder?: string
    }>(),
    {
       modelValue: undefined,
       disabled: undefined,
       focus: undefined,
       id: undefined,
+      labelPlaceholder: '',
    }
 )
 </script>

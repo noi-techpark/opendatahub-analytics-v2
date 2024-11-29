@@ -7,7 +7,9 @@
       "all": "All",
       "updated-at": "last updated on {time}",
       "auto": "Auto",
-      "cancel": "Cancel"
+      "cancel": "Cancel",
+      "search": "Search",
+      "save": "Save"
    },
    "auth": {
       "login": "Login",
@@ -86,7 +88,12 @@
          "period": "Period",
          "period-description": "Here is a short description",
          "period-select": "Select period",
-         "save": "Create Time series"
+         "save": "Create Time series",
+         "search-for-dataprovider": "Search for dataprovider",
+         "search-for-dataset": "Search for dataset",
+         "search-for-station": "Search for station",
+         "search-for-datatype": "Search for datatype",
+         "search-for-period": "Search for period"
       }
    },
    "layouts": {

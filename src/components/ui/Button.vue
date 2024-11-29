@@ -38,7 +38,7 @@ const props = withDefaults(defineProps<Props>(), {
 
 <style lang="postcss" scoped>
 .button {
-   @apply relative flex h-8 select-none items-center justify-start rounded font-semibold;
+   @apply relative flex h-8 select-none items-center justify-start rounded border font-semibold;
 
    &.center {
       @apply justify-center;
@@ -71,10 +71,10 @@ const props = withDefaults(defineProps<Props>(), {
    }
 
    &.primary {
-      @apply bg-green text-white;
+      @apply border border-green bg-green text-white;
 
       &.outline {
-         @apply border-green bg-white text-green;
+         @apply border-0 bg-white text-green outline-1;
       }
    }
 
