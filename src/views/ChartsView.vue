@@ -20,7 +20,7 @@ SPDX-License-Identifier: AGPL-3.0-or-later
          <div class="chart-content">
             <div class="chart-control">
                <div class="chart-time-ct">
-                  <MenuButtons :links :selectedIdx="selectedTimeIdx" />
+                  <MenuButtons :links :selected-id="selectedTimeId" />
                   <Select :text="$t('views.charts.time.custom')"></Select>
                </div>
 
@@ -33,6 +33,7 @@ SPDX-License-Identifier: AGPL-3.0-or-later
                />
             </div>
             <Chart
+               v-if="timeSeriesList.length"
                title="Timeseries data"
                :updatedAt="updatedAt"
                :plotHeight="plotHeights[selectedPlotHeightIdx].value"
@@ -77,7 +78,7 @@ import { useI18n } from 'vue-i18n'
 import MenuButtons from '../components/ui/MenuButtons.vue'
 import H from '../components/ui/tags/H.vue'
 import P from '../components/ui/tags/P.vue'
-import { computed, ref } from 'vue'
+import { computed, onMounted, ref, watch } from 'vue'
 import DownloadIcon from '../components/ui/svg/DownloadIcon.vue'
 import Button from '../components/ui/Button.vue'
 import SaveIcon from '../components/ui/svg/SaveIcon.vue'
@@ -86,9 +87,23 @@ import ContentCopyIcon from '../components/ui/svg/ContentCopyIcon.vue'
 import Chart from '../components/ui/chart/Chart.vue'
 import Select from '../components/ui/Select.vue'
 
-const { t } = useI18n()
+import { startOfDay, subDays, subMonths } from 'date-fns'
+import { useTimeSeriesStore } from '../stores/time-series'
+import { useFetch } from '@vueuse/core'
 
-const selectedTimeIdx = ref<number>(0)
+const { t } = useI18n()
+const { timeSeriesList } = useTimeSeriesStore()
+
+enum filtersTimeEnum {
+   DAY = 'DAY',
+   WEEK = 'WEEK',
+   MONTH = 'MONTH',
+   SIX_MONTHS = '6_MONTHS',
+}
+
+const loading = ref(false)
+
+const selectedTimeId = ref<filtersTimeEnum>(filtersTimeEnum.DAY)
 const selectedPlotHeightIdx = ref<number>(0)
 const updatedAt = new Date().toISOString()
 
@@ -99,26 +114,85 @@ const plotHeights = computed(() => [
 
 const links = computed(() => [
    {
+      id: filtersTimeEnum.DAY,
       title: t('views.charts.time.day'),
-      action: () => (selectedTimeIdx.value = 0),
+      action: () => (selectedTimeId.value = filtersTimeEnum.DAY),
    },
    {
+      id: filtersTimeEnum.WEEK,
       title: t('views.charts.time.week'),
-      action: () => (selectedTimeIdx.value = 1),
+      action: () => (selectedTimeId.value = filtersTimeEnum.WEEK),
    },
    {
+      id: filtersTimeEnum.MONTH,
       title: t('views.charts.time.month'),
-      action: () => (selectedTimeIdx.value = 2),
+      action: () => (selectedTimeId.value = filtersTimeEnum.MONTH),
    },
    {
+      id: filtersTimeEnum.SIX_MONTHS,
       title: t('views.charts.time.6-months'),
-      action: () => (selectedTimeIdx.value = 3),
+      action: () => (selectedTimeId.value = filtersTimeEnum.SIX_MONTHS),
    },
 ])
+
+const selectedTime = computed(() => {
+   const date = new Date()
+
+   switch (selectedTimeId.value) {
+      case filtersTimeEnum.WEEK:
+         return {
+            from: subDays(date, 7),
+            to: date,
+         }
+      case filtersTimeEnum.MONTH:
+         return {
+            from: subMonths(date, 1),
+            to: date,
+         }
+      case filtersTimeEnum.SIX_MONTHS:
+         return {
+            from: subMonths(date, 6),
+            to: date,
+         }
+
+      default: // DAY
+         return {
+            from: startOfDay(date),
+            to: date,
+         }
+   }
+})
 
 const handleSelectPlotHeight = (idx: number) => {
    selectedPlotHeightIdx.value = idx
 }
+
+const getTimeseriesData = async () => {
+   loading.value = true
+
+   const from = selectedTime.value.from.toJSON()
+   const to = selectedTime.value.to.toJSON()
+   // https://mobility.api.opendatahub.com/v2/flat/ParkingStation%2CParkingSensor%2CParkingFacility/free/2024-11-09T23:00:00.000Z/2024-11-10T23:00:00.000Z?limit=-1&distinct=true&select=mvalue,mvalidtime,mperiod&where=scode.eq.%22103%22,mperiod.eq.300,sactive.eq.true
+   for (const element of timeSeriesList) {
+      const dataUrl = `${import.meta.env.VITE_ODH_MOBILITY_API_URI}/flat/${encodeURIComponent(element.dataset)}/${encodeURIComponent(element.datatype)}/${from}/${to}?limit=-1&offset=0&select=mvalue,mvalidtime,mperiod&where=sname.eq.${encodeURIComponent(element.station)},sorigin.eq.${encodeURIComponent(element.provider)},mperiod.eq.${element.period},sactive.eq.true&shownull=false&distinct=true`
+      const { data } = await useFetch(dataUrl).json()
+
+      element.data = data.value.data.map(
+         (item: { mvalue: number }) => item.mvalue
+      )
+   }
+
+   loading.value = false
+}
+
+watch(selectedTime, (newVal) => {
+   console.log(newVal)
+   getTimeseriesData()
+})
+
+onMounted(() => {
+   getTimeseriesData()
+})
 </script>
 
 <style lang="postcss" scoped>

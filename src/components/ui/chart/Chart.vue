@@ -22,7 +22,12 @@ SPDX-License-Identifier: AGPL-3.0-or-later
 import { Line } from 'vue-chartjs'
 import type { ChartData } from 'chart.js'
 import { computed } from 'vue'
+
 import P from '../tags/P.vue'
+
+import { useTimeSeriesStore } from '../../../stores/time-series'
+
+const { timeSeriesList } = useTimeSeriesStore()
 
 type Props = {
    title: string
@@ -31,33 +36,30 @@ type Props = {
 }
 const props = withDefaults(defineProps<Props>(), {})
 
-const data = {
-   v1: [43, 86, 16, 11, 30, 32],
-   v2: [34, 56, 76, 44, 32, 22],
-   v3: [43, 12, 44, 19, 97, 54],
-}
-
 // TODO: chart data integration
+const data = computed(() => {
+   const dataObj: Record<string, number[]> = {}
+
+   timeSeriesList.forEach((item) => {
+      dataObj[item.id] = item.data
+   })
+
+   return dataObj
+})
+
+const dataFirstKey = computed(() => Object.keys(data.value)[0])
+
 const chartData = computed(
    (): ChartData => ({
-      labels: Array.from({ length: data.v1.length }).fill(''),
-      datasets: [
-         {
-            data: data?.v1 || [],
-            fill: false,
-            borderColor: '#FFC000',
-         },
-         {
-            data: data?.v2 || [],
-            fill: false,
-            borderColor: '#FF0000',
-         },
-         {
-            data: data?.v3 || [],
-            fill: false,
-            borderColor: '#50742F',
-         },
-      ],
+      labels: Array.from({
+         length: data.value[dataFirstKey.value].length,
+      }).fill(''),
+
+      datasets: timeSeriesList.map((item) => ({
+         data: item.data || [],
+         borderColor: item.color,
+         fill: false,
+      })),
    })
 )
 

@@ -46,7 +46,7 @@ SPDX-License-Identifier: AGPL-3.0-or-later
 </template>
 
 <script lang="ts" setup>
-import { useMapLayerStore } from '../../stores/map-layers.js'
+import { useMapLayerStore } from '../../stores/map-layers'
 import Checkbox from '../ui/Checkbox.vue'
 import Divider from '../ui/Divider.vue'
 

@@ -85,6 +85,8 @@ import InputSearch from '../input/InputSearch.vue'
 import { useI18n } from 'vue-i18n'
 import Button from '../Button.vue'
 
+import { useDebounceFn } from '@vueuse/core'
+
 const { t } = useI18n()
 
 const selectedOption = defineModel<string | number | undefined>({
@@ -122,8 +124,12 @@ const filteredOptions = computed(() => {
 })
 
 watch(searchQuery, (newVal) => {
-   emit('search', newVal)
+   emitSearch(newVal)
 })
+
+const emitSearch = useDebounceFn((value: string) => {
+   emit('search', value)
+}, 500)
 
 const onSave = () => {
    emit('save')

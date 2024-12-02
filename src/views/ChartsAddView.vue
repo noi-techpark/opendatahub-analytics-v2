@@ -17,7 +17,10 @@ SPDX-License-Identifier: AGPL-3.0-or-later
                <ChardAddSelectWrapper>
                   <SelectPopover
                      v-model="selection.provider"
-                     :text="$t('views.charts-add.provider-select')"
+                     :text="
+                        selection.provider ||
+                        $t('views.charts-add.provider-select')
+                     "
                      :search-label-placeholder="
                         $t('views.charts-add.search-for-dataprovider')
                      "
@@ -25,16 +28,6 @@ SPDX-License-Identifier: AGPL-3.0-or-later
                      :options="providerOptions"
                      @search="useFetchProviderOptions"
                   />
-                  <i18n-t
-                     tag="p"
-                     keypath="views.charts-add.your-selected-provider"
-                     class="max-w-[300px] truncate text-xs"
-                     ><template #provider>
-                        <strong>
-                           {{ selection.provider || '-' }}
-                        </strong>
-                     </template>
-                  </i18n-t>
                </ChardAddSelectWrapper>
             </div>
          </div>
@@ -48,7 +41,9 @@ SPDX-License-Identifier: AGPL-3.0-or-later
                <SelectPopover
                   v-model="selection.dataset"
                   :disabled="!selection.provider"
-                  :text="$t('views.charts-add.dataset-select')"
+                  :text="
+                     selection.dataset || $t('views.charts-add.dataset-select')
+                  "
                   :options="datasetOptions"
                   :loading="loadingState.dataset"
                   :search-label-placeholder="
@@ -68,7 +63,9 @@ SPDX-License-Identifier: AGPL-3.0-or-later
                <SelectPopover
                   v-model="selection.station"
                   :disabled="!selection.dataset"
-                  :text="$t('views.charts-add.station-select')"
+                  :text="
+                     selection.station || $t('views.charts-add.station-select')
+                  "
                   :options="stationOptions"
                   :loading="loadingState.station"
                   :search-label-placeholder="
@@ -91,7 +88,10 @@ SPDX-License-Identifier: AGPL-3.0-or-later
                <SelectPopover
                   v-model="selection.datatype"
                   :disabled="!selection.station"
-                  :text="$t('views.charts-add.datatype-select')"
+                  :text="
+                     selection.datatype ||
+                     $t('views.charts-add.datatype-select')
+                  "
                   :options="datatypeOptions"
                   :loading="loadingState.datatype"
                   :search-label-placeholder="
@@ -111,7 +111,9 @@ SPDX-License-Identifier: AGPL-3.0-or-later
                <SelectPopover
                   v-model="selection.period"
                   :disabled="!selection.datatype"
-                  :text="$t('views.charts-add.period-select')"
+                  :text="
+                     selection.period || $t('views.charts-add.period-select')
+                  "
                   :options="periodOptions"
                   :loading="loadingState.period"
                   :search-label-placeholder="
@@ -140,6 +142,11 @@ import SelectPopover from '../components/ui/popover/SelectPopover.vue'
 import { useFetch } from '@vueuse/core'
 import { SelectOption } from '../types/select'
 import ChardAddSelectWrapper from '../components/ui/chart/ChardAddSelectWrapper.vue'
+import { TimeSeries } from '../types/time-series'
+import { useTimeSeriesStore } from '../stores/time-series'
+import { randomId } from '../components/utils/useRandomId'
+
+const { addTimeSeries, colors, timeSeriesList } = useTimeSeriesStore()
 
 const router = useRouter()
 const stationFromMap = ref<boolean>(false)
@@ -153,15 +160,18 @@ const loadingState = ref({
 
 const providers = ref<{ sorigin: string }[]>([])
 const datasets = ref<{ stype: string }[]>([])
-const stations = ref<{ sname: string }[]>([])
+const stations = ref<{ sname: string; scode: string }[]>([])
 const datatypes = ref<{ tname: string; tdescription: string }[]>([])
 
-const selection = ref({
+const selection = ref<TimeSeries>({
+   id: randomId(),
    provider: '',
    dataset: '',
    station: '',
    datatype: '',
    period: '',
+   color: colors[timeSeriesList.length],
+   data: [],
 })
 
 const providerOptions = computed<SelectOption[]>(() => {
@@ -187,7 +197,7 @@ const stationOptions = computed<SelectOption[]>(() => {
 
 const datatypeOptions = computed(() => {
    return datatypes.value.map((item) => ({
-      label: item.tdescription,
+      label: item.tname,
       value: item.tname,
    }))
 })
@@ -205,6 +215,9 @@ const cancel = () => {
 
 const save = () => {
    // TODO: save the time series
+
+   addTimeSeries(selection.value)
+   router.push({ name: 'charts' })
 }
 
 const useComputeILIKESearch = (key: string, searchVal?: string) => {
@@ -249,7 +262,6 @@ const useFetchDatasetOptions = async (searchVal?: string) => {
 
 const useFetchStationOptions = async (searchVal?: string) => {
    // TODO: implement infinite scroll
-
    loadingState.value.station = true
 
    if (searchVal) {
@@ -258,7 +270,7 @@ const useFetchStationOptions = async (searchVal?: string) => {
 
    const searchString = useComputeILIKESearch('sname', searchVal)
 
-   const dataUrl = `${import.meta.env.VITE_ODH_MOBILITY_API_URI}/flat/${selection.value.dataset}?limit=100&offset=0&select=sname&where=and(${searchString ? searchString + ',' : ''}sorigin.eq.${selection.value.provider})&shownull=false&distinct=true`
+   const dataUrl = `${import.meta.env.VITE_ODH_MOBILITY_API_URI}/flat/${selection.value.dataset}?limit=100&offset=0&select=sname,scode&where=and(${searchString ? searchString + ',' : ''}sorigin.eq.${selection.value.provider})&shownull=false&distinct=true`
 
    const { data } = await useFetch(dataUrl).json()
    stations.value = data.value.data
@@ -268,7 +280,6 @@ const useFetchStationOptions = async (searchVal?: string) => {
 
 const useFetchDatatypeOptions = async (searchVal?: string) => {
    // TODO: implement infinite scroll
-
    loadingState.value.datatype = true
 
    if (searchVal) {

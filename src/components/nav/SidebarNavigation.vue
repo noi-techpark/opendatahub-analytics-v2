@@ -11,7 +11,7 @@ SPDX-License-Identifier: AGPL-3.0-or-later
          </IconText>
       </RouterLink>
 
-      <MenuButtons v-else :links :selectedIdx="selectedIdx" grow />
+      <MenuButtons v-else :links :selected-id="selectedId" grow />
    </div>
 
    <Divider v-if="back?.visible" :noTop="back?.visible" />
@@ -37,25 +37,22 @@ const props = withDefaults(defineProps<Props>(), {})
 
 const route = useRoute()
 const { t } = useI18n()
-const selectedIdx = ref<number>()
+const selectedId = ref<string>('map')
 
 const links = computed(() => [
-   { title: t('components.sidebar.map'), route: '/' },
-   { title: t('components.sidebar.charts'), route: '/charts' },
-   { title: t('components.sidebar.events'), route: '/events' },
+   { id: 'map', title: t('components.sidebar.map'), route: '/' },
+   { id: 'charts', title: t('components.sidebar.charts'), route: '/charts' },
+   { id: 'events', title: t('components.sidebar.events'), route: '/events' },
 ])
 
 watch(route, () => {
-   const routes = ['/', '/charts', '/events']
-   selectedIdx.value = routes.indexOf(route.path)
+   const id = links.value.find((item) => item.route === route.path)?.id
 
-   return selectedIdx.value === 0
-      ? 'map'
-      : selectedIdx.value === 1
-        ? 'charts'
-        : selectedIdx.value === 2
-          ? 'events'
-          : undefined
+   if (id) {
+      selectedId.value = id
+   }
+
+   return id
 })
 </script>
 

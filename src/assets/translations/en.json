@@ -45,6 +45,7 @@
          "add": "Add new Time series"
       },
       "time-series-card": {
+         "provider": "Provider",
          "dataset": "Dataset",
          "station": "Station",
          "datatype": "Datatype",

@@ -2,10 +2,12 @@
 // SPDX-License-Identifier: AGPL-3.0-or-later
 
 export type TimeSeries = {
-   displayName: string
+   id: string
+   provider: string
    dataset: string
    station: string
-   color: string
    datatype: string
    period: string
+   color: string
+   data: number[]
 }

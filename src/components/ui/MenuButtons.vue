@@ -10,7 +10,7 @@ SPDX-License-Identifier: AGPL-3.0-or-later
          v-for="(item, i) in links"
          class="menu-buttons __clickable"
          :class="{
-            selected: selectedIdx === i,
+            selected: selectedId === item.id,
             first: i === 0,
             last: i === links.length - 1,
          }"
@@ -25,12 +25,13 @@ SPDX-License-Identifier: AGPL-3.0-or-later
 <script lang="ts" setup>
 type Props = {
    links: {
+      id: string
       title: string
       route?: string
       action?: () => void
    }[]
    grow?: boolean
-   selectedIdx?: number
+   selectedId?: string
 }
 
 const props = withDefaults(defineProps<Props>(), {})

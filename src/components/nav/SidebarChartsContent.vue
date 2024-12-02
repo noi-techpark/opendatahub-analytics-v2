@@ -12,31 +12,18 @@ SPDX-License-Identifier: AGPL-3.0-or-later
       </RouterLink>
 
       <div class="time-series-ct">
-         <TimeSeriesCard v-for="item in timeSeries" :timeSeries="item" />
+         <TimeSeriesCard v-for="item in timeSeriesList" :timeSeries="item" />
       </div>
    </div>
 </template>
 
 <script lang="ts" setup>
-import { computed } from 'vue'
 import Button from '../ui/Button.vue'
 import TimeSeriesCard from '../ui/chart/TimeSeriesCard.vue'
 import AddIcon from '../ui/svg/AddIcon.vue'
+import { useTimeSeriesStore } from '../../stores/time-series'
 
-type Props = {}
-const props = withDefaults(defineProps<Props>(), {})
-
-// TODO: chart data integration
-const timeSeries = computed(() => [
-   {
-      displayName: 'Weather, Mila, Air Temperature Max, 600s',
-      color: '#50742F',
-      dataset: 'Weather',
-      station: 'Mila',
-      datatype: 'Air temperature MAX',
-      period: '600s',
-   },
-])
+const { timeSeriesList } = useTimeSeriesStore()
 </script>
 
 <style lang="postcss" scoped>
