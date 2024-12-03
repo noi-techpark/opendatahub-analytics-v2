@@ -7,7 +7,7 @@ SPDX-License-Identifier: AGPL-3.0-or-later
    <div class="time-series-card" :class="{ open }">
       <div class="card-header __clickable" @click="toggleOpen">
          <div class="title-ct">
-            <P bold class="title">{{ timeSeries.displayName }}</P>
+            <P bold class="title">{{ displayName }}</P>
          </div>
 
          <MoreVertIcon class="__clickable flex-shrink-0" />
@@ -31,7 +31,7 @@ SPDX-License-Identifier: AGPL-3.0-or-later
 </template>
 
 <script lang="ts" setup>
-import { computed, onMounted, ref } from 'vue'
+import { computed, onMounted, ref, toRefs } from 'vue'
 import { TimeSeries } from '../../../types/time-series'
 import P from '../tags/P.vue'
 import MoreVertIcon from '../svg/MoreVertIcon.vue'
@@ -49,32 +49,48 @@ const open = ref<boolean>(false)
 const cardContent = ref<HTMLElement>()
 const contentHeightPx = ref<string>('0px')
 
+const { timeSeries } = toRefs(props)
+
 const toggleOpen = () => {
    open.value = !open.value
 }
 
 const cardContentItems = computed(() => [
    {
+      title: t('components.time-series-card.provider'),
+      value: timeSeries.value.provider,
+      action: () => null,
+   },
+   {
       title: t('components.time-series-card.dataset'),
-      value: props.timeSeries.dataset,
+      value: timeSeries.value.dataset,
       action: () => null,
    },
    {
       title: t('components.time-series-card.station'),
-      value: props.timeSeries.station,
+      value: timeSeries.value.station,
       action: () => null,
    },
    {
       title: t('components.time-series-card.datatype'),
-      value: props.timeSeries.datatype,
+      value: timeSeries.value.datatype,
       action: () => null,
    },
    {
       title: t('components.time-series-card.period'),
-      value: props.timeSeries.period,
+      value: timeSeries.value.period,
       action: () => null,
    },
 ])
+
+const displayName = computed(() => {
+   return Object.entries(timeSeries.value)
+      .filter(([key]) =>
+         ['provider', 'dataset', 'station', 'datatype', 'period'].includes(key)
+      )
+      .map(([_, value]) => value)
+      .join(', ')
+})
 
 onMounted(() => {
    if (cardContent.value) {

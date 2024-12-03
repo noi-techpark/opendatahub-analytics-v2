@@ -7,7 +7,7 @@
          <CloseIcon class="marker-close __clickable" @click="$emit('close')" />
       </div>
       <div class="marker-card-content">
-         <MenuButtons :links :selectedIdx="selectedIdx" />
+         <MenuButtons :links :selected-Id="selectedId" />
       </div>
    </div>
 </template>
@@ -30,21 +30,24 @@ type Props = {
 const props = withDefaults(defineProps<Props>(), {})
 
 const { t } = useI18n()
-const selectedIdx = ref<number>(0)
+const selectedId = ref<string>('TITLE')
 const layerStore = useMapLayerStore()
 
 const links = computed(() => [
    {
+      id: 'title',
       title: t('components.marker-card.metadata.title'),
-      action: () => (selectedIdx.value = 0),
+      action: () => (selectedId.value = 'title'),
    },
    {
+      id: 'measurements',
       title: t('components.marker-card.measurements'),
-      action: () => (selectedIdx.value = 1),
+      action: () => (selectedId.value = 'measurements'),
    },
    {
+      id: 'alarms',
       title: t('components.marker-card.alarms'),
-      action: () => (selectedIdx.value = 2),
+      action: () => (selectedId.value = 'alarms'),
    },
 ])
 

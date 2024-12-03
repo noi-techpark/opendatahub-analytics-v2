@@ -7,7 +7,9 @@
       "all": "All",
       "updated-at": "last updated on {time}",
       "auto": "Auto",
-      "cancel": "Cancel"
+      "cancel": "Cancel",
+      "search": "Search",
+      "save": "Save"
    },
    "auth": {
       "login": "Login",
@@ -43,6 +45,7 @@
          "add": "Add new Time series"
       },
       "time-series-card": {
+         "provider": "Provider",
          "dataset": "Dataset",
          "station": "Station",
          "datatype": "Datatype",
@@ -86,7 +89,14 @@
          "period": "Period",
          "period-description": "Here is a short description",
          "period-select": "Select period",
-         "save": "Create Time series"
+         "save": "Create Time series",
+         "search-for-dataprovider": "Search for dataprovider",
+         "search-for-dataset": "Search for dataset",
+         "search-for-station": "Search for station",
+         "search-for-datatype": "Search for datatype",
+         "search-for-period": "Search for period",
+         "your-selected-provider": "Your selected provider: {provider}",
+         "your-selected-dataset": "Your selected dataset: {dataset}"
       }
    },
    "layouts": {
