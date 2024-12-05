@@ -60,7 +60,39 @@ export const useTimeSeriesStore = defineStore('time-series', () => {
       '# f3f8d',
    ]
 
-   const timeSeriesList = ref<TimeSeries[]>([])
+   const embeddableKeys = [
+      'provider',
+      'dataset',
+      'station',
+      'datatype',
+      'period',
+      'color',
+   ]
+
+   const timeSeriesList = ref<TimeSeries[]>([
+      {
+         id: '5eda50aa-3c59-42be-8218-b19cb1defb8d',
+         provider: 'Municipality Bolzano',
+         dataset: 'ParkingStation',
+         station: 'TURIST-PARKING',
+         datatype: 'free',
+         period: '300',
+         color: '#114189',
+         data: [
+            369, 368, 369, 370, 370, 370, 370, 370, 370, 370, 370, 370, 370,
+            370, 369, 368, 367, 366, 365, 366, 365, 364, 363, 362, 361, 360,
+            359, 360, 359, 358, 357, 356, 355, 354, 353, 352, 353, 352, 351,
+            350, 349, 348, 349, 348, 347, 346, 347, 346, 345, 344, 343, 342,
+            341, 342, 341, 342, 343, 342, 343, 344, 345, 344, 343, 342, 343,
+            342, 341, 340, 339, 338, 339, 338, 337, 336, 337, 336, 337, 336,
+            335, 334, 335, 334, 333, 332, 331, 330, 329, 328, 327, 328, 327,
+            328, 327, 326, 325, 324, 323, 322, 323, 324, 323, 324, 325, 324,
+            325, 326, 327, 326, 325, 324, 323, 322, 321, 321, 321, 322, 323,
+            324, 325, 324, 325, 324, 325, 326, 327, 328, 329, 330, 331, 332,
+            331, 332, 333, 332, 333, 334,
+         ],
+      },
+   ])
 
    // Actions
    const addTimeSeries = (timeSeries: TimeSeries) => {
@@ -71,6 +103,21 @@ export const useTimeSeriesStore = defineStore('time-series', () => {
       timeSeriesList.value = timeSeriesList.value.filter((_, i) => i !== index)
    }
 
+   const getTimeSeriesForEmbedCode = () => {
+      const data = [...timeSeriesList.value].map((item, index) => {
+         return Object.keys(item)
+            .map((key: string) =>
+               embeddableKeys.includes(key)
+                  ? `${key}_${index}=${item[key]}`
+                  : ''
+            )
+            .filter((item) => item)
+            .join('&')
+      })
+
+      return data
+   }
+
    return {
       timeSeriesList,
       colors,
@@ -78,5 +125,8 @@ export const useTimeSeriesStore = defineStore('time-series', () => {
       // Actions
       addTimeSeries,
       removeTimeSeries,
+
+      // Getters
+      getTimeSeriesForEmbedCode,
    }
 })

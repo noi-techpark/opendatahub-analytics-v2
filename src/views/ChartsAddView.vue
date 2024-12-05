@@ -26,6 +26,7 @@ SPDX-License-Identifier: AGPL-3.0-or-later
                      "
                      :loading="loadingState.provider"
                      :options="providerOptions"
+                     show-search
                      @search="useFetchProviderOptions"
                   />
                </ChardAddSelectWrapper>
@@ -49,6 +50,7 @@ SPDX-License-Identifier: AGPL-3.0-or-later
                   :search-label-placeholder="
                      $t('views.charts-add.search-for-dataset')
                   "
+                  show-search
                   @search="useFetchDatasetOptions"
                />
             </div>
@@ -71,6 +73,7 @@ SPDX-License-Identifier: AGPL-3.0-or-later
                   :search-label-placeholder="
                      $t('views.charts-add.search-for-station')
                   "
+                  show-search
                   @search="useFetchStationOptions"
                />
             </div>
@@ -97,6 +100,7 @@ SPDX-License-Identifier: AGPL-3.0-or-later
                   :search-label-placeholder="
                      $t('views.charts-add.search-for-datatype')
                   "
+                  show-search
                   @search="useFetchDatatypeOptions"
                />
             </div>
@@ -119,6 +123,7 @@ SPDX-License-Identifier: AGPL-3.0-or-later
                   :search-label-placeholder="
                      $t('views.charts-add.search-for-period')
                   "
+                  show-search
                />
             </div>
          </div>

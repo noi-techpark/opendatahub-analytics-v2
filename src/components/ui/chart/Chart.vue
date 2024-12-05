@@ -1,8 +1,3 @@
-<!--
-SPDX-FileCopyrightText: NOI Techpark <digital@noi.bz.it>
-SPDX-License-Identifier: AGPL-3.0-or-later
--->
-
 <template>
    <div class="chart-ct">
       <div class="chart-title">
@@ -13,19 +8,52 @@ SPDX-License-Identifier: AGPL-3.0-or-later
          class="flex-grow"
          :style="plotHeight ? { height: `${plotHeight}px` } : undefined"
       >
-         <Line :data="chartData" :options="chartOptions" />
+         <Line ref="chart" :data="chartData" :options="chartOptions" />
       </div>
    </div>
 </template>
 
 <script lang="ts" setup>
 import { Line } from 'vue-chartjs'
-import type { ChartData } from 'chart.js'
-import { computed } from 'vue'
-
+import {
+   Chart as ChartJS,
+   Title,
+   Tooltip,
+   Legend,
+   LineElement,
+   CategoryScale,
+   LinearScale,
+   PointElement,
+} from 'chart.js'
+import { computed, onMounted, ref } from 'vue'
 import P from '../tags/P.vue'
-
 import { useTimeSeriesStore } from '../../../stores/time-series'
+
+// Register required Chart.js components
+ChartJS.register(
+   Title,
+   Tooltip,
+   Legend,
+   LineElement,
+   CategoryScale,
+   LinearScale,
+   PointElement
+)
+
+// Register the background plugin globally
+ChartJS.register({
+   id: 'background',
+   beforeDraw: (chart) => {
+      const ctx = chart.ctx
+      const { width, height } = chart
+      const bgColor = chart.options.plugins?.background?.color || 'transparent'
+
+      ctx.save()
+      ctx.fillStyle = bgColor
+      ctx.fillRect(0, 0, width, height)
+      ctx.restore()
+   },
+})
 
 const { timeSeriesList } = useTimeSeriesStore()
 
@@ -36,32 +64,19 @@ type Props = {
 }
 const props = withDefaults(defineProps<Props>(), {})
 
-// TODO: chart data integration
-const data = computed(() => {
-   const dataObj: Record<string, number[]> = {}
+const chart = ref()
 
-   timeSeriesList.forEach((item) => {
-      dataObj[item.id] = item.data
-   })
-
-   return dataObj
-})
-
-const dataFirstKey = computed(() => Object.keys(data.value)[0])
-
-const chartData = computed(
-   (): ChartData => ({
-      labels: Array.from({
-         length: data.value[dataFirstKey.value].length,
-      }).fill(''),
-
-      datasets: timeSeriesList.map((item) => ({
-         data: item.data || [],
-         borderColor: item.color,
-         fill: false,
-      })),
-   })
-)
+const chartData = computed(() => ({
+   labels: Array.from({
+      length: timeSeriesList[0]?.data.length || 0,
+   }).fill(''),
+   datasets: timeSeriesList.map((item) => ({
+      label: item.name,
+      data: item.data,
+      borderColor: item.color,
+      fill: false,
+   })),
+}))
 
 const chartOptions = computed(() => ({
    responsive: true,
@@ -71,21 +86,25 @@ const chartOptions = computed(() => ({
          display: false,
       },
       tooltip: {
-         enabled: false,
+         enabled: true,
+      },
+      background: {
+         color: '#fff', // Set white background
       },
    },
    scales: {
       x: {
-         display: true,
          grid: {
             color: '#D8DEE4',
          },
       },
       y: {
-         display: false,
+         display: true,
       },
    },
 }))
+
+defineExpose({ chart })
 </script>
 
 <style lang="postcss" scoped>

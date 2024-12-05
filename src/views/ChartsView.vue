@@ -24,16 +24,17 @@ SPDX-License-Identifier: AGPL-3.0-or-later
                   <Select :text="$t('views.charts.time.custom')"></Select>
                </div>
 
-               <Select
+               <SelectPopover
                   :text="$t('views.charts.plot-height')"
                   :selectedIdx="selectedPlotHeightIdx"
-                  :values="plotHeights"
+                  :options="plotHeights"
                   type="list"
                   @selected="handleSelectPlotHeight"
                />
             </div>
             <Chart
                v-if="timeSeriesList.length"
+               ref="chartEl"
                title="Timeseries data"
                :updatedAt="updatedAt"
                :plotHeight="plotHeights[selectedPlotHeightIdx].value"
@@ -46,7 +47,11 @@ SPDX-License-Identifier: AGPL-3.0-or-later
                <Button secondary :value="$t('views.charts.export.xls')">
                   <DownloadIcon />
                </Button>
-               <Button secondary :value="$t('views.charts.export.image')">
+               <Button
+                  secondary
+                  :value="$t('views.charts.export.image')"
+                  @click="onExportAsImage()"
+               >
                   <DownloadIcon />
                </Button>
             </div>
@@ -60,9 +65,19 @@ SPDX-License-Identifier: AGPL-3.0-or-later
                   noPadding
                   :hover="false"
                >
-                  <ContentCopyIcon />
+                  <IconCheck
+                     class="transition-all"
+                     :class="{
+                        'pointer-events-none absolute opacity-0': !copied,
+                     }"
+                  />
+                  <ContentCopyIcon
+                     class="transition-all"
+                     :class="{ 'absolute opacity-0': copied }"
+                     @click="onCopy()"
+                  />
                </IconText>
-               <P class="card-content">EMBED CODE</P>
+               <P class="card-content">{{ embeddableCode }}</P>
             </div>
 
             <Button center :value="$t('views.charts.save')">
@@ -89,10 +104,18 @@ import Select from '../components/ui/Select.vue'
 
 import { startOfDay, subDays, subMonths } from 'date-fns'
 import { useTimeSeriesStore } from '../stores/time-series'
-import { useFetch } from '@vueuse/core'
+import { useClipboard, useFetch } from '@vueuse/core'
+import SelectPopover from '../components/ui/popover/SelectPopover.vue'
+import IconCheck from '../components/ui/svg/IconCheck.vue'
+import { randomId } from '../components/utils/useRandomId'
+import { useRoute } from 'vue-router'
 
 const { t } = useI18n()
-const { timeSeriesList } = useTimeSeriesStore()
+const { timeSeriesList, getTimeSeriesForEmbedCode } = useTimeSeriesStore()
+
+const { copy, copied } = useClipboard()
+
+const chartEl = ref()
 
 enum filtersTimeEnum {
    DAY = 'DAY',
@@ -107,9 +130,17 @@ const selectedTimeId = ref<filtersTimeEnum>(filtersTimeEnum.DAY)
 const selectedPlotHeightIdx = ref<number>(0)
 const updatedAt = new Date().toISOString()
 
+const randomDivider = computed(() => {
+   return `_${randomId().slice(0, 5)}_`
+})
+
+const embeddableCode = computed(() => {
+   return `${window.location.origin}/charts?divider=${randomDivider.value}&${getTimeSeriesForEmbedCode().join(randomDivider.value)}`
+})
+
 const plotHeights = computed(() => [
-   { title: t('common.auto'), value: 0 },
-   { title: '500px', value: 500 },
+   { label: t('common.auto'), value: 0 },
+   { label: '500px', value: 500 },
 ])
 
 const links = computed(() => [
@@ -185,12 +216,29 @@ const getTimeseriesData = async () => {
    loading.value = false
 }
 
+const onExportAsImage = () => {
+   const a = document.createElement('a')
+   a.href = chartEl.value.chart.chart.toBase64Image()
+   a.download = `export_${new Date().toJSON()}.png`
+
+   a.click()
+}
+
+const onCopy = () => {
+   copy(embeddableCode.value)
+}
+
+const setSavedTimeseries = () => {
+   const { query } = useRoute()
+   console.log(query)
+}
+
 watch(selectedTime, (newVal) => {
-   console.log(newVal)
    getTimeseriesData()
 })
 
 onMounted(() => {
+   setSavedTimeseries()
    getTimeseriesData()
 })
 </script>
