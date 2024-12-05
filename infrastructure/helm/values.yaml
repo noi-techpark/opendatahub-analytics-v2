@@ -12,10 +12,14 @@ service:
 ingress:
   enabled: true
 
+  annotations:
+    cert-manager.io/issuer: "letsencrypt-prod"
+
   className: nginx
   tls:
     - hosts:
       - analytics.beta.dev.testingmachine.eu
+      secretName: tls-rest-push
   hosts:
     - host: analytics.beta.dev.testingmachine.eu
       paths: 
