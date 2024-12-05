@@ -29,11 +29,12 @@ jobs:
     env:
       SERVER_PORT: 8999
       DOCKER_TAG: ${{ github.sha }}-test
-      VITE_ENDPOINT_URL: https://analytics.opendatahub.com/v2
+      VALUES_YAML: infrastructure/helm/values.yaml
+      K8S_NAME: analytics-v2
 
+      VITE_ENDPOINT_URL: https://analytics.opendatahub.com/v2
       VITE_ODH_MOBILITY_API_URI: https://mobility.api.opendatahub.com/v2
       VITE_LOG_APPLICATION_NAME: opendatahub-analytics
-
       VITE_KEYCLOAK_AUTHORIZATION_URI: https://auth.opendatahub.com/auth
       VITE_KEYCLOAK_REALM: noi
       VITE_KEYCLOAK_CLIENT_ID: odh-mobility-analytics
@@ -52,6 +53,14 @@ jobs:
           X_SERVER_PORT: ${{ env.SERVER_PORT }}
           X_DOCKER_IMAGE: ${{ env.DOCKER_IMAGE }}
           X_DOCKER_TAG: ${{ env.DOCKER_TAG }}
+
+      - name: Build and push images
+        uses: noi-techpark/github-actions/docker-build-and-push@v2
+        with:
+          working-directory: ${{ env.WORKING_DIRECTORY }}/infrastructure
+          docker-username: ${{ github.actor }}
+          docker-password: ${{ secrets.GITHUB_TOKEN }}
+          
       - name: Deploy on cluster  
         uses: noi-techpark/github-actions/helm-deploy@v2
         with:
