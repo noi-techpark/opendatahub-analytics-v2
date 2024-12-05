@@ -43,11 +43,6 @@ jobs:
     steps:
       - name: Checkout source code
         uses: actions/checkout@v2
-      - name: Build code
-        uses: noi-techpark/github-actions/yarn-build@v2
-        with:
-          working-directory: ${{ env.WORKING_DIRECTORY }}
-          node-version: ${{ env.NODE_VERSION }}
       - name: Create .env file
         uses: noi-techpark/github-actions/env-file@v2
         with:
