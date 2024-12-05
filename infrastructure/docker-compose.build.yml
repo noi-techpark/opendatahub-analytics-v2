@@ -4,8 +4,8 @@
 services:
   webapp:
     build:
-      context: .
-      dockerfile: Dockerfile
+      context: ..
+      dockerfile: infrastructure/Dockerfile
     ports:
       - "80:80"
     volumes:
