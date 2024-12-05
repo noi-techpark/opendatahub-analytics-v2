@@ -1,2 +1,6 @@
+# SPDX-FileCopyrightText: 2024 NOI Techpark <digital@noi.bz.it>
+#
+# SPDX-License-Identifier: AGPL-3.0-or-later
+
 - src: git+https://github.com/noi-techpark/ansible-docker-deployment.git
   version: "2.0"
