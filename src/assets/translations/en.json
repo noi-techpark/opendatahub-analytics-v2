@@ -70,6 +70,7 @@
    "views": {
       "charts": {
          "title": "Headline for Charts",
+         "timeseries-data": "Timeseries data",
          "time": {
             "day": "Day",
             "week": "Week",
@@ -77,7 +78,7 @@
             "6-months": "6 Months",
             "custom": "Custom"
          },
-         "plot-height": "Plot height:",
+         "plot-height": "Plot height: {value}",
          "export": {
             "title": "Export Details",
             "xls": "Export data as XLS",
