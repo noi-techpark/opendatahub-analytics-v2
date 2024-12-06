@@ -98,9 +98,20 @@ SPDX-License-Identifier: AGPL-3.0-or-later
             <Button
                center
                :value="t('views.charts.save')"
+               :class="{ 'pointer-events-none': configurationSaved }"
                @click="onSaveConfiguration()"
             >
-               <SaveIcon />
+               <IconCheck
+                  class="transition-all"
+                  :class="{
+                     'pointer-events-none absolute opacity-0':
+                        !configurationSaved,
+                  }"
+               />
+               <SaveIcon
+                  class="transition-all"
+                  :class="{ 'absolute opacity-0': configurationSaved }"
+               />
             </Button>
          </div>
       </div>
@@ -151,6 +162,7 @@ const lastUpdateOn = ref(new Date())
 const LOCAL_STORAGE_CONFIG_KEY = 'savedChartConfiguration'
 
 const loading = ref(false)
+const configurationSaved = ref(false)
 
 const selectedTimeId = ref<TimeEnum>(TimeEnum.DAY)
 const rangeCustom = ref<TimeRange>([new Date(), new Date()])
@@ -354,6 +366,11 @@ const setSavedTimeseries = async () => {
 
 const onSaveConfiguration = () => {
    localStorage.setItem(LOCAL_STORAGE_CONFIG_KEY, queryStringToEmbed.value)
+   configurationSaved.value = true
+
+   setTimeout(() => {
+      configurationSaved.value = false
+   }, 2000)
 }
 
 watch(selectedTime, (newVal) => {
