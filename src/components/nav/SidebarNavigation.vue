@@ -14,7 +14,7 @@ SPDX-License-Identifier: AGPL-3.0-or-later
       <MenuButtons v-else :links :selected-id="selectedId" grow />
    </div>
 
-   <Divider v-if="back?.visible" :noTop="back?.visible" />
+   <Divider v-if="back?.visible" :noTop="!!back?.visible" />
 </template>
 
 <script lang="ts" setup>

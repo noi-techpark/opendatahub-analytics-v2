@@ -7,6 +7,7 @@ import ChartsView from '../views/ChartsView.vue'
 import EventsView from '../views/EventsView.vue'
 import AboutView from '../views/AboutView.vue'
 import ChartsAddView from '../views/ChartsAddView.vue'
+import EventsWeatherView from '../views/EventsWeatherView.vue'
 
 const router = createRouter({
    history: createWebHistory(import.meta.env.BASE_URL),
@@ -30,6 +31,11 @@ const router = createRouter({
          path: '/events',
          name: 'events',
          component: EventsView,
+      },
+      {
+         path: '/events/weather',
+         name: 'events-weather',
+         component: EventsWeatherView,
       },
       {
          path: '/about',

@@ -67,7 +67,9 @@ const page = ref<'map' | 'charts' | 'charts-add' | 'events' | 'about'>()
 const mapLayerSelection = computed(() => route.path === '/' && !!route.hash)
 
 const back = computed(() => {
-   const isVisible = !['/', '/charts', '/events'].includes(route.fullPath)
+   const isVisible =
+      !['/', '/charts', '/events', '/events/weather'].includes(route.path) ||
+      route.hash
    const title = route.hash
       ? layerStore.getSelectedLayer?.title || t('common.back')
       : t('common.back')

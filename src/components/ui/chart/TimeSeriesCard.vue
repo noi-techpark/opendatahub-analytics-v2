@@ -24,7 +24,7 @@ SPDX-License-Identifier: AGPL-3.0-or-later
                <P label bold>{{ item.title }}</P>
                <P label>{{ item.value }}</P>
             </div>
-            <MoreVertIcon class="__clickable" />
+            <MoreVertIcon class="__clickable opacity-0" />
          </div>
       </div>
    </div>

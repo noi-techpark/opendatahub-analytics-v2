@@ -6,6 +6,7 @@ SPDX-License-Identifier: AGPL-3.0-or-later
 <template>
    <InputWithButton
       :id="id"
+      class="border-stroke"
       :model-value="modelValue"
       :disabled="disabled"
       :focus="focus"
