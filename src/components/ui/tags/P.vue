@@ -4,7 +4,7 @@ SPDX-License-Identifier: AGPL-3.0-or-later
 -->
 
 <template>
-   <p class="custom-p" :class="{ bold, label, small }">
+   <p class="custom-p" :class="{ bold, label, small, large }">
       <slot />
    </p>
 </template>
@@ -14,6 +14,7 @@ type Props = {
    bold?: boolean
    small?: boolean
    label?: boolean
+   large?: boolean
 }
 const props = withDefaults(defineProps<Props>(), {})
 </script>
@@ -32,6 +33,10 @@ const props = withDefaults(defineProps<Props>(), {})
 
    &.small {
       @apply text-xs;
+   }
+
+   &.large {
+      @apply text-lg;
    }
 }
 

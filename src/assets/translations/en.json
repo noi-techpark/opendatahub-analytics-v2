@@ -88,6 +88,7 @@
          "save": "Save configured charts"
       },
       "charts-add": {
+         "no-time-series": "Please, add a time series to load.",
          "title": "Add a new Time series",
          "provider": "Dataprovider",
          "provider-description": "Here is a short description",

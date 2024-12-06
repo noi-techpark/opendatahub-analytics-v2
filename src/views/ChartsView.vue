@@ -45,12 +45,19 @@ SPDX-License-Identifier: AGPL-3.0-or-later
                :updatedAt="updatedAt"
                :plotHeight="selectedPlotHeight"
             />
+            <P v-else bold large class="pt-4">{{
+               t('views.charts-add.no-time-series')
+            }}</P>
          </div>
 
          <div class="chart-side">
             <div class="card">
                <P bold>{{ t('views.charts.export.title') }}</P>
-               <Button secondary :value="t('views.charts.export.xls')">
+               <Button
+                  secondary
+                  :value="t('views.charts.export.xls')"
+                  @click="onExportAsXLS()"
+               >
                   <DownloadIcon />
                </Button>
                <Button
@@ -83,7 +90,9 @@ SPDX-License-Identifier: AGPL-3.0-or-later
                      @click="onCopy()"
                   />
                </IconText>
-               <P class="card-content">{{ embeddableCode }}</P>
+               <P class="card-content"
+                  ><span class="line-clamp-3">{{ embeddableCode }}</span></P
+               >
             </div>
 
             <Button
@@ -112,7 +121,7 @@ import Chart from '../components/ui/chart/Chart.vue'
 
 import { startOfDay, subDays, subMonths } from 'date-fns'
 import { useTimeSeriesStore } from '../stores/time-series'
-import { useClipboard, useFetch, useNavigatorLanguage } from '@vueuse/core'
+import { useClipboard, useFetch } from '@vueuse/core'
 import SelectPopover from '../components/ui/popover/SelectPopover.vue'
 import IconCheck from '../components/ui/svg/IconCheck.vue'
 import { randomId } from '../components/utils/useRandomId'
@@ -120,16 +129,19 @@ import { useRoute } from 'vue-router'
 import TimeSelector from '../components/ui/TimeSelector.vue'
 import { TimeEnum, TimeRange, TimeSeries } from '../types/time-series'
 
+import XLSX from 'xlsx'
+import { getReadableDateWithTime } from '../utils/date-utils'
+import { storeToRefs } from 'pinia'
+
 const { t } = useI18n()
 const {
-   timeSeriesList,
    getTimeSeriesForEmbedCode,
    embeddableKeys,
    addTimeSeries,
    getBaseTimeSeriesObj,
 } = useTimeSeriesStore()
 
-const { language } = useNavigatorLanguage()
+const { hasToLoad, timeSeriesList } = storeToRefs(useTimeSeriesStore())
 
 const { copy, copied } = useClipboard()
 
@@ -140,20 +152,13 @@ const LOCAL_STORAGE_CONFIG_KEY = 'savedChartConfiguration'
 
 const loading = ref(false)
 
-const selectedTimeId = ref<TimeEnum>()
+const selectedTimeId = ref<TimeEnum>(TimeEnum.DAY)
 const rangeCustom = ref<TimeRange>([new Date(), new Date()])
 
 const selectedPlotHeight = ref<number>(0)
 
 const updatedAt = computed(() => {
-   return lastUpdateOn.value.toLocaleString(language.value, {
-      year: 'numeric',
-      month: '2-digit',
-      day: '2-digit',
-      hour: '2-digit',
-      minute: '2-digit',
-      hour12: false,
-   })
+   return getReadableDateWithTime(lastUpdateOn.value)
 })
 
 const embeddableCode = computed(() => {
@@ -161,7 +166,7 @@ const embeddableCode = computed(() => {
 })
 
 const queryStringToEmbed = computed(() => {
-   return `selectedTimeId=${selectedTimeId.value}&${getTimeSeriesForEmbedCode().join('&')}`
+   return `from=${selectedTime.value.from.toJSON()}&to=${selectedTime.value.to.toJSON()}&selectedTimeId=${selectedTimeId.value}&${getTimeSeriesForEmbedCode().join('&')}`
 })
 
 const plotHeights = computed(() => [
@@ -207,24 +212,64 @@ const getTimeseriesData = async () => {
 
    const from = selectedTime.value.from.toJSON()
    const to = selectedTime.value.to.toJSON()
-   // https://mobility.api.opendatahub.com/v2/flat/ParkingStation%2CParkingSensor%2CParkingFacility/free/2024-11-09T23:00:00.000Z/2024-11-10T23:00:00.000Z?limit=-1&distinct=true&select=mvalue,mvalidtime,mperiod&where=scode.eq.%22103%22,mperiod.eq.300,sactive.eq.true
-   for (const element of timeSeriesList) {
+
+   for (const element of timeSeriesList.value) {
       const dataUrl = `${import.meta.env.VITE_ODH_MOBILITY_API_URI}/flat/${encodeURIComponent(element.dataset)}/${encodeURIComponent(element.datatype)}/${from}/${to}?limit=-1&offset=0&select=mvalue,mvalidtime,mperiod&where=sname.eq.${encodeURIComponent(element.station)},sorigin.eq.${encodeURIComponent(element.provider)},mperiod.eq.${element.period},sactive.eq.true&shownull=false&distinct=true`
       const { data } = await useFetch(dataUrl).json()
+      const labels = []
+      const values = []
 
-      element.data = (data.value || { data: [] }).data.map(
-         (item: { mvalue: number }) => item.mvalue
-      )
+      for (const element of (data.value || { data: [] }).data) {
+         values.push(element.mvalue)
+         labels.push(element.mvalidtime)
+      }
+
+      element.data = values
+      element.labels = labels
    }
 
    lastUpdateOn.value = new Date()
+
+   hasToLoad.value = false
    loading.value = false
+}
+
+const onExportAsXLS = () => {
+   const chartData = chartEl.value.chart.chart.data
+
+   const workbook = XLSX.utils.book_new()
+
+   chartData.datasets.forEach(
+      (chartDataset: Record<string, any>, index: number) => {
+         const exportData = [
+            ['Datetime', 'Value'],
+            ...chartDataset.data.map((label: string, i: number) => [
+               timeSeriesList.value[index].labels[i],
+               chartDataset.data[i],
+            ]),
+         ]
+
+         const worksheet = XLSX.utils.aoa_to_sheet(exportData)
+
+         const { id, provider, dataset, station, datatype } =
+            timeSeriesList.value[index]
+
+         const sheetName = `${provider}_${dataset}_${station}_${datatype}`
+         XLSX.utils.book_append_sheet(
+            workbook,
+            worksheet,
+            `${sheetName.slice(0, 26)}_${id.slice(0, 4)}`
+         )
+      }
+   )
+
+   XLSX.writeFile(workbook, `chart-data-${new Date().getTime()}.xlsx`)
 }
 
 const onExportAsImage = () => {
    const a = document.createElement('a')
    a.href = chartEl.value.chart.chart.toBase64Image()
-   a.download = `export_${new Date().toJSON()}.png`
+   a.download = `export-${new Date().toJSON()}.png`
 
    a.click()
 }
@@ -255,18 +300,14 @@ const getConfigFromLocalStorage = () => {
    return obj
 }
 
-const setSavedTimeseries = () => {
+const setSavedTimeseries = async () => {
    const { query } = useRoute()
 
    const configToLoad = getConfigFromLocalStorage() || query
 
-   console.log(configToLoad)
-
-   if (!configToLoad.selectedTimeId) return
+   if (!configToLoad.selectedTimeId) return { hasLoadedNewData: false }
 
    const data: Partial<TimeSeries>[] = []
-
-   console.log({ configToLoad })
 
    for (const key of Object.keys(configToLoad)) {
       if (embeddableKeys.findIndex((item) => key.startsWith(item)) === -1) {
@@ -278,7 +319,7 @@ const setSavedTimeseries = () => {
       const index = key.slice(indexSeparatorIndex + 1)
 
       if (index === undefined) {
-         return
+         return { hasLoadedNewData: false }
       }
 
       const timeSeriesKey = key.slice(
@@ -292,19 +333,23 @@ const setSavedTimeseries = () => {
    }
 
    for (const item of data) {
+      if (timeSeriesList.value.find((el) => el.id === item.id)) continue
+
       addTimeSeries({ id: randomId(), data: [], ...item } as TimeSeries)
    }
 
-   const hasToLoad = selectedTimeId.value === configToLoad.selectedTimeId
+   const hasLoadedNewData = selectedTimeId.value !== configToLoad.selectedTimeId // triggers selectedTime watch
+
+   if (configToLoad.selectedTimeId === TimeEnum.CUSTOM) {
+      rangeCustom.value = [
+         new Date(configToLoad.from?.toString() || ''),
+         new Date(configToLoad.to?.toString() || ''),
+      ]
+   }
+
    selectedTimeId.value = configToLoad.selectedTimeId as TimeEnum
 
-   if (hasToLoad) {
-      getTimeseriesData()
-   }
-}
-
-const onSaveRangeCustom = () => {
-   selectedTimeId.value = TimeEnum.CUSTOM
+   return { hasLoadedNewData }
 }
 
 const onSaveConfiguration = () => {
@@ -315,8 +360,12 @@ watch(selectedTime, (newVal) => {
    getTimeseriesData()
 })
 
-onMounted(() => {
-   setSavedTimeseries()
+onMounted(async () => {
+   const { hasLoadedNewData } = await setSavedTimeseries()
+
+   if (!hasLoadedNewData) {
+      getTimeseriesData()
+   }
 })
 </script>
 

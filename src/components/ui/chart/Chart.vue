@@ -28,6 +28,7 @@ import {
 import { computed, onMounted, ref } from 'vue'
 import P from '../tags/P.vue'
 import { useTimeSeriesStore } from '../../../stores/time-series'
+import { getReadableDateWithTime } from '../../../utils/date-utils'
 
 // Register required Chart.js components
 ChartJS.register(
@@ -67,9 +68,9 @@ const props = withDefaults(defineProps<Props>(), {})
 const chart = ref()
 
 const chartData = computed(() => ({
-   labels: Array.from({
-      length: timeSeriesList[0]?.data.length || 0,
-   }).fill(''),
+   labels: timeSeriesList[0]?.labels?.map((item) =>
+      getReadableDateWithTime(new Date(item))
+   ),
    datasets: timeSeriesList.map((item) => ({
       label: item.name,
       data: item.data,

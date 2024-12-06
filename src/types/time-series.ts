@@ -10,6 +10,7 @@ export type TimeSeries = {
    period: string
    color: string
    data: number[]
+   labels: string[]
 }
 
 export enum TimeEnum {
