@@ -174,7 +174,7 @@ import Map from '../components/ui/map/Map.vue'
 import { MapMarkerDetails } from '../types/map-layer'
 import { DataMarker, DataPoint } from '../types/api'
 
-const { addTimeSeries, colors, timeSeriesList } = useTimeSeriesStore()
+const { addTimeSeries, getBaseTimeSeriesObj } = useTimeSeriesStore()
 
 const router = useRouter()
 const stationFromMap = ref<boolean>(false)
@@ -192,16 +192,7 @@ const stations = ref<DataPoint[]>([])
 const datatypes = ref<{ tname: string; tdescription: string }[]>([])
 const markers = ref<DataMarker[]>([])
 
-const selection = ref<TimeSeries>({
-   id: randomId(),
-   provider: '',
-   dataset: '',
-   station: '',
-   datatype: '',
-   period: '',
-   color: colors[timeSeriesList.length],
-   data: [],
-})
+const selection = ref<TimeSeries>(getBaseTimeSeriesObj())
 
 const providerOptions = computed<SelectOption[]>(() => {
    return providers.value.map((item) => ({

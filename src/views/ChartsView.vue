@@ -91,7 +91,11 @@ SPDX-License-Identifier: AGPL-3.0-or-later
                <P class="card-content">{{ embeddableCode }}</P>
             </div>
 
-            <Button center :value="t('views.charts.save')">
+            <Button
+               center
+               :value="t('views.charts.save')"
+               @click="onSaveConfiguration()"
+            >
                <SaveIcon />
             </Button>
          </div>
@@ -115,19 +119,31 @@ import Select from '../components/ui/Select.vue'
 
 import { startOfDay, subDays, subMonths } from 'date-fns'
 import { useTimeSeriesStore } from '../stores/time-series'
-import { useClipboard, useFetch } from '@vueuse/core'
+import { useClipboard, useFetch, useNavigatorLanguage } from '@vueuse/core'
 import SelectPopover from '../components/ui/popover/SelectPopover.vue'
 import IconCheck from '../components/ui/svg/IconCheck.vue'
 import { randomId } from '../components/utils/useRandomId'
 import { useRoute } from 'vue-router'
 import RangeDatePicker from '../components/ui/input/RangeDatePicker.vue'
+import { TimeSeries } from '../types/time-series'
 
 const { t } = useI18n()
-const { timeSeriesList, getTimeSeriesForEmbedCode } = useTimeSeriesStore()
+const {
+   timeSeriesList,
+   getTimeSeriesForEmbedCode,
+   embeddableKeys,
+   addTimeSeries,
+   getBaseTimeSeriesObj,
+} = useTimeSeriesStore()
+
+const { language } = useNavigatorLanguage()
 
 const { copy, copied } = useClipboard()
 
 const chartEl = ref()
+const lastUpdateOn = ref(new Date())
+
+const LOCAL_STORAGE_CONFIG_KEY = 'savedChartConfiguration'
 
 enum filtersTimeEnum {
    DAY = 'DAY',
@@ -143,14 +159,24 @@ const rangeCustom = ref([new Date(), new Date()])
 
 const selectedTimeId = ref<filtersTimeEnum>(filtersTimeEnum.DAY)
 const selectedPlotHeight = ref<number>(0)
-const updatedAt = new Date().toISOString()
 
-const randomDivider = computed(() => {
-   return `_${randomId().slice(0, 5)}_`
+const updatedAt = computed(() => {
+   return lastUpdateOn.value.toLocaleString(language.value, {
+      year: 'numeric',
+      month: '2-digit',
+      day: '2-digit',
+      hour: '2-digit',
+      minute: '2-digit',
+      hour12: false,
+   })
 })
 
 const embeddableCode = computed(() => {
-   return `${window.location.origin}/charts?divider=${randomDivider.value}&${getTimeSeriesForEmbedCode().join(randomDivider.value)}`
+   return `${window.location.origin}/charts?${queryStringToEmbed.value}`
+})
+
+const queryStringToEmbed = computed(() => {
+   return `selectedTimeId=${selectedTimeId.value}&${getTimeSeriesForEmbedCode().join('&')}`
 })
 
 const plotHeights = computed(() => [
@@ -229,6 +255,7 @@ const getTimeseriesData = async () => {
       )
    }
 
+   lastUpdateOn.value = new Date()
    loading.value = false
 }
 
@@ -244,13 +271,82 @@ const onCopy = () => {
    copy(embeddableCode.value)
 }
 
+const getConfigFromLocalStorage = () => {
+   const params = localStorage.getItem(LOCAL_STORAGE_CONFIG_KEY)
+      ? new URLSearchParams(
+           new URL(
+              `${window.origin}?${localStorage.getItem(LOCAL_STORAGE_CONFIG_KEY)}`
+           ).search
+        )
+      : undefined
+
+   if (!params) return params
+
+   const obj: Record<string, string> = {}
+
+   params.forEach((value, key) => {
+      if (params.get(key)) {
+         obj[key] = params.get(key) || ''
+      }
+   })
+
+   return obj
+}
+
 const setSavedTimeseries = () => {
    const { query } = useRoute()
-   console.log(query)
+
+   const configToLoad = getConfigFromLocalStorage() || query
+
+   console.log(configToLoad)
+
+   if (!configToLoad.selectedTimeId) return
+
+   const data: Partial<TimeSeries>[] = []
+
+   console.log({ configToLoad })
+
+   for (const key of Object.keys(configToLoad)) {
+      if (embeddableKeys.findIndex((item) => key.startsWith(item)) === -1) {
+         continue
+      }
+
+      const indexSeparatorIndex = key.lastIndexOf('_')
+
+      const index = key.slice(indexSeparatorIndex + 1)
+
+      if (index === undefined) {
+         return
+      }
+
+      const timeSeriesKey = key.slice(
+         0,
+         indexSeparatorIndex
+      ) as keyof TimeSeries
+
+      ;(data[+index] ??= getBaseTimeSeriesObj())[timeSeriesKey] = configToLoad[
+         key
+      ] as string & number[]
+   }
+
+   for (const item of data) {
+      addTimeSeries({ id: randomId(), data: [], ...item } as TimeSeries)
+   }
+
+   const hasToLoad = selectedTimeId.value === configToLoad.selectedTimeId
+   selectedTimeId.value = configToLoad.selectedTimeId as filtersTimeEnum
+
+   if (hasToLoad) {
+      getTimeseriesData()
+   }
 }
 
 const onSaveRangeCustom = () => {
    selectedTimeId.value = filtersTimeEnum.CUSTOM
+}
+
+const onSaveConfiguration = () => {
+   localStorage.setItem(LOCAL_STORAGE_CONFIG_KEY, queryStringToEmbed.value)
 }
 
 watch(selectedTime, (newVal) => {
@@ -259,7 +355,6 @@ watch(selectedTime, (newVal) => {
 
 onMounted(() => {
    setSavedTimeseries()
-   getTimeseriesData()
 })
 </script>
 
