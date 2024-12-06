@@ -7,7 +7,7 @@ SPDX-License-Identifier: AGPL-3.0-or-later
    <main class="events-view">
       <div class="header-ct">
          <H tag="h1">{{ $t('views.events.title') }}</H>
-         <TimeSelector v-model="selectedTimeId" />
+         <TimeSelector v-model="selectedTimeId" v-model:range="rangeCustom" />
       </div>
 
       table events
@@ -15,15 +15,13 @@ SPDX-License-Identifier: AGPL-3.0-or-later
 </template>
 
 <script setup lang="ts">
-import { computed, ref } from 'vue'
+import { ref } from 'vue'
 import H from '../components/ui/tags/H.vue'
-import { useI18n } from 'vue-i18n'
-import MenuButtons from '../components/ui/MenuButtons.vue'
-import Select from '../components/ui/Select.vue'
 import TimeSelector from '../components/ui/TimeSelector.vue'
-import { TimeEnum } from '../types/time-series'
+import { TimeEnum, TimeRange } from '../types/time-series'
 
 const selectedTimeId = ref<TimeEnum>()
+const rangeCustom = ref<TimeRange>()
 </script>
 
 <style lang="postcss" scoped>

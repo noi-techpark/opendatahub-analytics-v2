@@ -19,15 +19,10 @@ SPDX-License-Identifier: AGPL-3.0-or-later
       <div class="chart-content-ct">
          <div class="chart-content">
             <div class="chart-control">
-               <div class="chart-time-ct">
-                  <MenuButtons :links :selected-id="selectedTimeId" />
-                  <RangeDatePicker
-                     :text="t('views.charts.time.custom')"
-                     v-model="rangeCustom"
-                     :selected="selectedTimeId === filtersTimeEnum.CUSTOM"
-                     @save="onSaveRangeCustom()"
-                  ></RangeDatePicker>
-               </div>
+               <TimeSelector
+                  v-model="selectedTimeId"
+                  v-model:range="rangeCustom"
+               />
 
                <SelectPopover
                   v-model="selectedPlotHeight"
@@ -121,6 +116,8 @@ import IconCheck from '../components/ui/svg/IconCheck.vue'
 import { randomId } from '../components/utils/useRandomId'
 import { useRoute } from 'vue-router'
 import RangeDatePicker from '../components/ui/input/RangeDatePicker.vue'
+import TimeSelector from '../components/ui/TimeSelector.vue'
+import { TimeEnum, TimeRange } from '../types/time-series'
 
 const { t } = useI18n()
 const { timeSeriesList, getTimeSeriesForEmbedCode } = useTimeSeriesStore()
@@ -129,19 +126,11 @@ const { copy, copied } = useClipboard()
 
 const chartEl = ref()
 
-enum filtersTimeEnum {
-   DAY = 'DAY',
-   WEEK = 'WEEK',
-   MONTH = 'MONTH',
-   SIX_MONTHS = '6_MONTHS',
-   CUSTOM = 'CUSTOM',
-}
-
 const loading = ref(false)
 
-const rangeCustom = ref([new Date(), new Date()])
+const selectedTimeId = ref<TimeEnum>()
+const rangeCustom = ref<TimeRange>()
 
-const selectedTimeId = ref<filtersTimeEnum>(filtersTimeEnum.DAY)
 const selectedPlotHeight = ref<number>(0)
 const updatedAt = new Date().toISOString()
 
@@ -158,49 +147,26 @@ const plotHeights = computed(() => [
    { label: '500px', value: 500 },
 ])
 
-const links = computed(() => [
-   {
-      id: filtersTimeEnum.DAY,
-      title: t('views.charts.time.day'),
-      action: () => (selectedTimeId.value = filtersTimeEnum.DAY),
-   },
-   {
-      id: filtersTimeEnum.WEEK,
-      title: t('views.charts.time.week'),
-      action: () => (selectedTimeId.value = filtersTimeEnum.WEEK),
-   },
-   {
-      id: filtersTimeEnum.MONTH,
-      title: t('views.charts.time.month'),
-      action: () => (selectedTimeId.value = filtersTimeEnum.MONTH),
-   },
-   {
-      id: filtersTimeEnum.SIX_MONTHS,
-      title: t('views.charts.time.6-months'),
-      action: () => (selectedTimeId.value = filtersTimeEnum.SIX_MONTHS),
-   },
-])
-
 const selectedTime = computed(() => {
    const date = new Date()
 
    switch (selectedTimeId.value) {
-      case filtersTimeEnum.WEEK:
+      case TimeEnum.WEEK:
          return {
             from: subDays(date, 7),
             to: date,
          }
-      case filtersTimeEnum.MONTH:
+      case TimeEnum.MONTH:
          return {
             from: subMonths(date, 1),
             to: date,
          }
-      case filtersTimeEnum.SIX_MONTHS:
+      case TimeEnum.SIX_MONTHS:
          return {
             from: subMonths(date, 6),
             to: date,
          }
-      case filtersTimeEnum.CUSTOM:
+      case TimeEnum.CUSTOM:
          return {
             from: rangeCustom.value[0],
             to: rangeCustom.value[1],
@@ -249,10 +215,6 @@ const setSavedTimeseries = () => {
    console.log(query)
 }
 
-const onSaveRangeCustom = () => {
-   selectedTimeId.value = filtersTimeEnum.CUSTOM
-}
-
 watch(selectedTime, (newVal) => {
    getTimeseriesData()
 })
@@ -275,10 +237,6 @@ onMounted(() => {
 
          & .chart-control {
             @apply flex justify-between gap-6;
-
-            & .chart-time-ct {
-               @apply flex gap-3;
-            }
          }
       }
 

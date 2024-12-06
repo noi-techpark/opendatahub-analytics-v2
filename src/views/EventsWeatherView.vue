@@ -7,7 +7,7 @@ SPDX-License-Identifier: AGPL-3.0-or-later
    <main class="events-weather-view">
       <div class="header-ct">
          <H tag="h1">{{ $t('views.events-weather.title') }}</H>
-         <TimeSelector v-model="selectedTimeId" />
+         <TimeSelector v-model="selectedTimeId" v-model:range="rangeCustom" />
       </div>
 
       table weather
@@ -17,10 +17,11 @@ SPDX-License-Identifier: AGPL-3.0-or-later
 <script setup lang="ts">
 import H from '../components/ui/tags/H.vue'
 import { ref } from 'vue'
-import { TimeEnum } from '../types/time-series'
+import { TimeEnum, TimeRange } from '../types/time-series'
 import TimeSelector from '../components/ui/TimeSelector.vue'
 
 const selectedTimeId = ref<TimeEnum>()
+const rangeCustom = ref<TimeRange>()
 </script>
 
 <style lang="postcss" scoped>
