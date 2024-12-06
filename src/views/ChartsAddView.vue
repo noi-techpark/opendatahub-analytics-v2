@@ -64,7 +64,7 @@ SPDX-License-Identifier: AGPL-3.0-or-later
                </div>
                <SelectPopover
                   v-model="selection.station"
-                  :disabled="!selection.dataset"
+                  :disabled="!selection.dataset || stationFromMap"
                   :text="
                      selection.station || $t('views.charts-add.station-select')
                   "
@@ -93,8 +93,10 @@ SPDX-License-Identifier: AGPL-3.0-or-later
                   class="map-ct"
                   :loading="loadingState.station"
                   :markers="markers"
-                  :selected-scode="undefined"
-                  :show-search="$t('views.charts-add.search-for-station')"
+                  :selected-scode="
+                     stations.find((s) => s.sname === selection.station)?.scode
+                  "
+                  show-search
                   @markerSelected="handleSelectMarker"
                />
             </template>
@@ -305,6 +307,7 @@ const useFetchStationOptions = async (searchVal?: string) => {
    markers.value = data.value.data.map(
       (d): DataMarker => ({
          scode: d.scode,
+         sname: d.sname,
          stype: d.stype,
          color: '',
          coordinates: [d.scoordinate?.x || 0, d.scoordinate?.y || 0],
@@ -387,7 +390,7 @@ watch(
          }
 
          & .map-tooltip {
-            @apply border-grey-3 bg-grey-3/10 border py-2 text-black-2;
+            @apply border-grey-3 bg-grey-3/10 border py-2;
          }
 
          & .map-ct {

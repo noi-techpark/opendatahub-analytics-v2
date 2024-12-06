@@ -5,6 +5,7 @@ import { Layer } from './map-layer.js'
 
 export type DataMarker = {
    alarm?: boolean
+   sname: string
    selected?: boolean
    coordinates: [number, number]
 } & Pick<Layer, 'color'> &

@@ -6,7 +6,12 @@ SPDX-License-Identifier: AGPL-3.0-or-later
 <template>
    <div class="time-selector">
       <MenuButtons :links :selected-id="model" />
-      <Select :text="$t('components.time-selector.custom')"></Select>
+      <RangeDatePicker
+         :text="$t('components.time-selector.custom')"
+         v-model="range"
+         :selected="model === TimeEnum.CUSTOM"
+         @save="onSaveRangeCustom()"
+      />
    </div>
 </template>
 
@@ -16,9 +21,17 @@ import { TimeEnum } from '../../types/time-series'
 import MenuButtons from './MenuButtons.vue'
 import Select from './Select.vue'
 import { useI18n } from 'vue-i18n'
+import RangeDatePicker from './input/RangeDatePicker.vue'
 
 const { t } = useI18n()
 const model = defineModel<TimeEnum>({ default: TimeEnum.DAY })
+const range = defineModel<[Date, Date]>('range', {
+   default: [new Date(), new Date()],
+})
+
+const onSaveRangeCustom = () => {
+   model.value = TimeEnum.CUSTOM
+}
 
 const links = computed(() => [
    {

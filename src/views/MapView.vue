@@ -69,6 +69,7 @@ watch(
                const newPoints = flatData.map(
                   (d): DataMarker => ({
                      scode: d.scode,
+                     sname: d.sname,
                      color: latestSelected.color,
                      stype: d.stype,
                      coordinates: [

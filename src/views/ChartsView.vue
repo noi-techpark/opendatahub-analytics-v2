@@ -19,15 +19,10 @@ SPDX-License-Identifier: AGPL-3.0-or-later
       <div class="chart-content-ct">
          <div class="chart-content">
             <div class="chart-control">
-               <div class="chart-time-ct">
-                  <MenuButtons :links :selected-id="selectedTimeId" />
-                  <RangeDatePicker
-                     :text="t('views.charts.time.custom')"
-                     v-model="rangeCustom"
-                     :selected="selectedTimeId === filtersTimeEnum.CUSTOM"
-                     @save="onSaveRangeCustom()"
-                  ></RangeDatePicker>
-               </div>
+               <TimeSelector
+                  v-model="selectedTimeId"
+                  v-model:range="rangeCustom"
+               />
 
                <SelectPopover
                   v-model="selectedPlotHeight"
@@ -105,7 +100,6 @@ SPDX-License-Identifier: AGPL-3.0-or-later
 
 <script setup lang="ts">
 import { useI18n } from 'vue-i18n'
-import MenuButtons from '../components/ui/MenuButtons.vue'
 import H from '../components/ui/tags/H.vue'
 import P from '../components/ui/tags/P.vue'
 import { computed, onMounted, ref, watch } from 'vue'
@@ -115,7 +109,6 @@ import SaveIcon from '../components/ui/svg/SaveIcon.vue'
 import IconText from '../components/ui/IconText.vue'
 import ContentCopyIcon from '../components/ui/svg/ContentCopyIcon.vue'
 import Chart from '../components/ui/chart/Chart.vue'
-import Select from '../components/ui/Select.vue'
 
 import { startOfDay, subDays, subMonths } from 'date-fns'
 import { useTimeSeriesStore } from '../stores/time-series'
@@ -124,8 +117,8 @@ import SelectPopover from '../components/ui/popover/SelectPopover.vue'
 import IconCheck from '../components/ui/svg/IconCheck.vue'
 import { randomId } from '../components/utils/useRandomId'
 import { useRoute } from 'vue-router'
-import RangeDatePicker from '../components/ui/input/RangeDatePicker.vue'
-import { TimeSeries } from '../types/time-series'
+import TimeSelector from '../components/ui/TimeSelector.vue'
+import { TimeEnum, TimeRange, TimeSeries } from '../types/time-series'
 
 const { t } = useI18n()
 const {
@@ -145,19 +138,11 @@ const lastUpdateOn = ref(new Date())
 
 const LOCAL_STORAGE_CONFIG_KEY = 'savedChartConfiguration'
 
-enum filtersTimeEnum {
-   DAY = 'DAY',
-   WEEK = 'WEEK',
-   MONTH = 'MONTH',
-   SIX_MONTHS = '6_MONTHS',
-   CUSTOM = 'CUSTOM',
-}
-
 const loading = ref(false)
 
-const rangeCustom = ref([new Date(), new Date()])
+const selectedTimeId = ref<TimeEnum>()
+const rangeCustom = ref<TimeRange>([new Date(), new Date()])
 
-const selectedTimeId = ref<filtersTimeEnum>(filtersTimeEnum.DAY)
 const selectedPlotHeight = ref<number>(0)
 
 const updatedAt = computed(() => {
@@ -184,49 +169,26 @@ const plotHeights = computed(() => [
    { label: '500px', value: 500 },
 ])
 
-const links = computed(() => [
-   {
-      id: filtersTimeEnum.DAY,
-      title: t('views.charts.time.day'),
-      action: () => (selectedTimeId.value = filtersTimeEnum.DAY),
-   },
-   {
-      id: filtersTimeEnum.WEEK,
-      title: t('views.charts.time.week'),
-      action: () => (selectedTimeId.value = filtersTimeEnum.WEEK),
-   },
-   {
-      id: filtersTimeEnum.MONTH,
-      title: t('views.charts.time.month'),
-      action: () => (selectedTimeId.value = filtersTimeEnum.MONTH),
-   },
-   {
-      id: filtersTimeEnum.SIX_MONTHS,
-      title: t('views.charts.time.6-months'),
-      action: () => (selectedTimeId.value = filtersTimeEnum.SIX_MONTHS),
-   },
-])
-
 const selectedTime = computed(() => {
    const date = new Date()
 
    switch (selectedTimeId.value) {
-      case filtersTimeEnum.WEEK:
+      case TimeEnum.WEEK:
          return {
             from: subDays(date, 7),
             to: date,
          }
-      case filtersTimeEnum.MONTH:
+      case TimeEnum.MONTH:
          return {
             from: subMonths(date, 1),
             to: date,
          }
-      case filtersTimeEnum.SIX_MONTHS:
+      case TimeEnum.SIX_MONTHS:
          return {
             from: subMonths(date, 6),
             to: date,
          }
-      case filtersTimeEnum.CUSTOM:
+      case TimeEnum.CUSTOM:
          return {
             from: rangeCustom.value[0],
             to: rangeCustom.value[1],
@@ -334,7 +296,7 @@ const setSavedTimeseries = () => {
    }
 
    const hasToLoad = selectedTimeId.value === configToLoad.selectedTimeId
-   selectedTimeId.value = configToLoad.selectedTimeId as filtersTimeEnum
+   selectedTimeId.value = configToLoad.selectedTimeId as TimeEnum
 
    if (hasToLoad) {
       getTimeseriesData()
@@ -342,7 +304,7 @@ const setSavedTimeseries = () => {
 }
 
 const onSaveRangeCustom = () => {
-   selectedTimeId.value = filtersTimeEnum.CUSTOM
+   selectedTimeId.value = TimeEnum.CUSTOM
 }
 
 const onSaveConfiguration = () => {
@@ -370,10 +332,6 @@ onMounted(() => {
 
          & .chart-control {
             @apply flex justify-between gap-6;
-
-            & .chart-time-ct {
-               @apply flex gap-3;
-            }
          }
       }
 
