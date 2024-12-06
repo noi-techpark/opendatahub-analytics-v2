@@ -55,6 +55,12 @@ SPDX-License-Identifier: AGPL-3.0-or-later
                </ListboxOptions>
             </Listbox>
 
+            <span
+               v-if="!loading && !filteredOptions.length"
+               class="inline-block p-2 text-sm"
+               >{{ t('components.select.no-option-found') }}</span
+            >
+
             <div class="flex justify-between gap-2 border-t p-2">
                <Button grow center outline @click="onCancel">
                   {{ $t('common.cancel') }}

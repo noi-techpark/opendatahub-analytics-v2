@@ -175,8 +175,11 @@ import LightbulbIcon from '../components/ui/svg/LightbulbIcon.vue'
 import Map from '../components/ui/map/Map.vue'
 import { MapMarkerDetails } from '../types/map-layer'
 import { DataMarker, DataPoint } from '../types/api'
+import { storeToRefs } from 'pinia'
 
-const { addTimeSeries, colors, timeSeriesList } = useTimeSeriesStore()
+const { addTimeSeries, getBaseTimeSeriesObj } = useTimeSeriesStore()
+
+const { hasToLoad } = storeToRefs(useTimeSeriesStore())
 
 const router = useRouter()
 const stationFromMap = ref<boolean>(false)
@@ -194,16 +197,7 @@ const stations = ref<DataPoint[]>([])
 const datatypes = ref<{ tname: string; tdescription: string }[]>([])
 const markers = ref<DataMarker[]>([])
 
-const selection = ref<TimeSeries>({
-   id: randomId(),
-   provider: '',
-   dataset: '',
-   station: '',
-   datatype: '',
-   period: '',
-   color: colors[timeSeriesList.length],
-   data: [],
-})
+const selection = ref<TimeSeries>(getBaseTimeSeriesObj())
 
 const providerOptions = computed<SelectOption[]>(() => {
    return providers.value.map((item) => ({
@@ -248,6 +242,7 @@ const save = () => {
    // TODO: save the time series
 
    addTimeSeries(selection.value)
+   hasToLoad.value = true
    router.push({ name: 'charts' })
 }
 

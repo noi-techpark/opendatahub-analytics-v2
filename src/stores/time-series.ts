@@ -4,6 +4,7 @@
 import { defineStore } from 'pinia'
 import { ref, computed } from 'vue'
 import { TimeSeries } from '../types/time-series'
+import { randomId } from '../components/utils/useRandomId'
 
 export const useTimeSeriesStore = defineStore('time-series', () => {
    // State
@@ -60,6 +61,7 @@ export const useTimeSeriesStore = defineStore('time-series', () => {
    ]
 
    const embeddableKeys = [
+      'id',
       'provider',
       'dataset',
       'station',
@@ -68,30 +70,9 @@ export const useTimeSeriesStore = defineStore('time-series', () => {
       'color',
    ]
 
-   const timeSeriesList = ref<TimeSeries[]>([
-      {
-         id: '5eda50aa-3c59-42be-8218-b19cb1defb8d',
-         provider: 'Municipality Bolzano',
-         dataset: 'ParkingStation',
-         station: 'TURIST-PARKING',
-         datatype: 'free',
-         period: '300',
-         color: '#114189',
-         data: [
-            369, 368, 369, 370, 370, 370, 370, 370, 370, 370, 370, 370, 370,
-            370, 369, 368, 367, 366, 365, 366, 365, 364, 363, 362, 361, 360,
-            359, 360, 359, 358, 357, 356, 355, 354, 353, 352, 353, 352, 351,
-            350, 349, 348, 349, 348, 347, 346, 347, 346, 345, 344, 343, 342,
-            341, 342, 341, 342, 343, 342, 343, 344, 345, 344, 343, 342, 343,
-            342, 341, 340, 339, 338, 339, 338, 337, 336, 337, 336, 337, 336,
-            335, 334, 335, 334, 333, 332, 331, 330, 329, 328, 327, 328, 327,
-            328, 327, 326, 325, 324, 323, 322, 323, 324, 323, 324, 325, 324,
-            325, 326, 327, 326, 325, 324, 323, 322, 321, 321, 321, 322, 323,
-            324, 325, 324, 325, 324, 325, 326, 327, 328, 329, 330, 331, 332,
-            331, 332, 333, 332, 333, 334,
-         ],
-      },
-   ])
+   const timeSeriesList = ref<TimeSeries[]>([])
+
+   const hasToLoad = ref(false)
 
    // Actions
    const addTimeSeries = (timeSeries: TimeSeries) => {
@@ -117,9 +98,25 @@ export const useTimeSeriesStore = defineStore('time-series', () => {
       return data
    }
 
+   const getBaseTimeSeriesObj = () => {
+      return {
+         id: randomId(),
+         provider: '',
+         dataset: '',
+         station: '',
+         datatype: '',
+         period: '',
+         color: colors[timeSeriesList.value.length],
+         data: [],
+         labels: [],
+      }
+   }
+
    return {
       timeSeriesList,
       colors,
+      embeddableKeys,
+      hasToLoad,
 
       // Actions
       addTimeSeries,
@@ -127,5 +124,6 @@ export const useTimeSeriesStore = defineStore('time-series', () => {
 
       // Getters
       getTimeSeriesForEmbedCode,
+      getBaseTimeSeriesObj,
    }
 })

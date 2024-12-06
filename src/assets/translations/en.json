@@ -57,6 +57,9 @@
       "map": {
          "search": "Search for station",
          "selected": "Selected station"
+      },
+      "select": {
+         "no-option-found": "No option found"
       }
    },
    "views": {
@@ -80,6 +83,7 @@
          "save": "Save configured charts"
       },
       "charts-add": {
+         "no-time-series": "Please, add a time series to load.",
          "title": "Add a new Time series",
          "provider": "Dataprovider",
          "provider-description": "Here is a short description",
