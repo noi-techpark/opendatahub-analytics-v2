@@ -257,7 +257,7 @@ onMounted(() => {
             @apply flex justify-between gap-6;
 
             & .chart-time-ct {
-               @apply flex gap-2;
+               @apply flex gap-3;
             }
          }
       }

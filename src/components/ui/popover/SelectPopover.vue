@@ -56,12 +56,12 @@ SPDX-License-Identifier: AGPL-3.0-or-later
             </Listbox>
 
             <div class="flex justify-between gap-2 border-t p-2">
-               <Button grow center outline @click="onCancel">{{
-                  $t('common.cancel')
-               }}</Button>
-               <Button grow center @click="onSave">{{
-                  $t('common.save')
-               }}</Button>
+               <Button grow center outline @click="onCancel">
+                  {{ $t('common.cancel') }}
+               </Button>
+               <Button grow center @click="onSave">
+                  {{ $t('common.save') }}
+               </Button>
             </div>
          </PopoverPanel>
       </PopoverTransition>

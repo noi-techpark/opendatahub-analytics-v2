@@ -19,10 +19,11 @@ SPDX-License-Identifier: AGPL-3.0-or-later
    </main>
 
    <Map
+      class="map-ct"
       :loading="loading > 0"
       :markers
       :selectedScode
-      @markerPress="handleSelectMarker"
+      @markerSelected="handleSelectMarker"
    />
 </template>
 
@@ -70,8 +71,10 @@ watch(
                      scode: d.scode,
                      color: latestSelected.color,
                      stype: d.stype,
-                     x: d.scoordinate?.x || 0,
-                     y: d.scoordinate?.y || 0,
+                     coordinates: [
+                        d.scoordinate?.x || 0,
+                        d.scoordinate?.y || 0,
+                     ],
                   })
                )
 
@@ -109,6 +112,10 @@ watch(
    & .map-filters-ct {
       @apply z-20 mb-2 flex gap-2 py-1;
    }
+}
+
+.map-ct {
+   @apply absolute inset-0 z-0 h-full w-full;
 }
 
 @media (max-width: theme('screens.md')) {

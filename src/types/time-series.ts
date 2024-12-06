@@ -11,3 +11,10 @@ export type TimeSeries = {
    color: string
    data: number[]
 }
+
+export enum TimeEnum {
+   DAY = 'DAY',
+   WEEK = 'WEEK',
+   MONTH = 'MONTH',
+   SIX_MONTHS = '6_MONTHS',
+}

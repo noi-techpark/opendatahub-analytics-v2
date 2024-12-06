@@ -77,9 +77,27 @@ SPDX-License-Identifier: AGPL-3.0-or-later
                   @search="useFetchStationOptions"
                />
             </div>
-            <Switch v-model="stationFromMap">
+            <Switch v-model="stationFromMap" :disabled="!selection.dataset">
                <P>{{ $t('views.charts-add.station-map') }}</P>
             </Switch>
+
+            <template v-if="stationFromMap">
+               <IconText
+                  :text="$t('views.charts-add.map-tooltip')"
+                  class="map-tooltip"
+               >
+                  <LightbulbIcon class="text-grey-3" />
+               </IconText>
+
+               <Map
+                  class="map-ct"
+                  :loading="loadingState.station"
+                  :markers="markers"
+                  :selected-scode="undefined"
+                  :show-search="$t('views.charts-add.search-for-station')"
+                  @markerSelected="handleSelectMarker"
+               />
+            </template>
          </div>
 
          <div class="input-card">
@@ -150,6 +168,11 @@ import ChardAddSelectWrapper from '../components/ui/chart/ChardAddSelectWrapper.
 import { TimeSeries } from '../types/time-series'
 import { useTimeSeriesStore } from '../stores/time-series'
 import { randomId } from '../components/utils/useRandomId'
+import IconText from '../components/ui/IconText.vue'
+import LightbulbIcon from '../components/ui/svg/LightbulbIcon.vue'
+import Map from '../components/ui/map/Map.vue'
+import { MapMarkerDetails } from '../types/map-layer'
+import { DataMarker, DataPoint } from '../types/api'
 
 const { addTimeSeries, colors, timeSeriesList } = useTimeSeriesStore()
 
@@ -165,8 +188,9 @@ const loadingState = ref({
 
 const providers = ref<{ sorigin: string }[]>([])
 const datasets = ref<{ stype: string }[]>([])
-const stations = ref<{ sname: string; scode: string }[]>([])
+const stations = ref<DataPoint[]>([])
 const datatypes = ref<{ tname: string; tdescription: string }[]>([])
+const markers = ref<DataMarker[]>([])
 
 const selection = ref<TimeSeries>({
    id: randomId(),
@@ -225,6 +249,13 @@ const save = () => {
    router.push({ name: 'charts' })
 }
 
+const handleSelectMarker = (data?: MapMarkerDetails) => {
+   const name = stations.value.find((s) => s.scode === data?.scode)?.sname
+   if (name) {
+      selection.value.station = name
+   }
+}
+
 const useComputeILIKESearch = (key: string, searchVal?: string) => {
    if (!searchVal) return ''
 
@@ -275,10 +306,19 @@ const useFetchStationOptions = async (searchVal?: string) => {
 
    const searchString = useComputeILIKESearch('sname', searchVal)
 
-   const dataUrl = `${import.meta.env.VITE_ODH_MOBILITY_API_URI}/flat/${selection.value.dataset}?limit=100&offset=0&select=sname,scode&where=and(${searchString ? searchString + ',' : ''}sorigin.eq.${selection.value.provider})&shownull=false&distinct=true`
+   const dataUrl = `${import.meta.env.VITE_ODH_MOBILITY_API_URI}/flat/${selection.value.dataset}?limit=100&offset=0&select=sname,scode,scoordinate,stype&where=and(${searchString ? searchString + ',' : ''}sorigin.eq.${selection.value.provider})&shownull=false&distinct=true`
 
    const { data } = await useFetch(dataUrl).json()
    stations.value = data.value.data
+
+   markers.value = data.value.data.map(
+      (d): DataMarker => ({
+         scode: d.scode,
+         stype: d.stype,
+         color: '',
+         coordinates: [d.scoordinate?.x || 0, d.scoordinate?.y || 0],
+      })
+   )
 
    loadingState.value.station = false
 }
@@ -338,7 +378,7 @@ watch(
    @apply flex flex-col gap-2;
 
    & .input-cards-ct {
-      @apply flex max-w-[700px] flex-col;
+      @apply flex max-w-[700px] flex-col pb-40;
 
       & .input-card {
          @apply flex w-full flex-col gap-2 border border-b-0 p-4;
@@ -353,6 +393,14 @@ watch(
 
          & .input-card-header {
             @apply flex justify-between gap-2;
+         }
+
+         & .map-tooltip {
+            @apply border-grey-3 bg-grey-3/10 border py-2 text-black-2;
+         }
+
+         & .map-ct {
+            @apply h-96 w-full;
          }
       }
 

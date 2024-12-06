@@ -6,7 +6,9 @@ SPDX-License-Identifier: AGPL-3.0-or-later
 <template>
    <div
       class="map-marker-component __clickable"
-      @click="map?.fire('marker-click', { eventData: { scode, stype } })"
+      @click="
+         map?.fire('marker-click', { eventData: { scode, stype, coordinates } })
+      "
    >
       <MarkerIcon
          v-if="!selected"

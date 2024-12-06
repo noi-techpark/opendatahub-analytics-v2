@@ -7,8 +7,9 @@ SPDX-License-Identifier: AGPL-3.0-or-later
    <div class="switch-ct">
       <Switch
          v-model="model"
+         :disabled="disabled"
          class="switch-custom relative inline-flex h-5 w-9 items-center rounded-full bg-grey-2 p-[2px]"
-         :class="{ '!bg-green': model }"
+         :class="{ '!bg-green': model, 'opacity-80': disabled }"
       >
          <span
             aria-hidden="true"
@@ -24,6 +25,11 @@ SPDX-License-Identifier: AGPL-3.0-or-later
 
 <script lang="ts" setup>
 import { Switch } from '@headlessui/vue'
+
+type Props = {
+   disabled?: boolean
+}
+const props = withDefaults(defineProps<Props>(), {})
 
 const model = defineModel<boolean>()
 </script>
