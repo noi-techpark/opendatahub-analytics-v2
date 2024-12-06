@@ -61,6 +61,10 @@
          "station": "Station",
          "datatype": "Datatype",
          "period": "Period"
+      },
+      "map": {
+         "search": "Search for station",
+         "selected": "Selected station"
       }
    },
    "views": {
