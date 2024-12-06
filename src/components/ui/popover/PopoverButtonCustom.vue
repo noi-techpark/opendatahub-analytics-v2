@@ -6,6 +6,7 @@
       :class="{
          'cursor-not-allowed opacity-70': disabled,
          'bg-green-light': open,
+         'border-green !bg-green text-white': selected,
       }"
    >
       <span
@@ -28,6 +29,7 @@ type Props = {
    text: string
    open?: boolean
    disabled?: boolean
+   selected?: boolean
 }
 
 defineProps<Props>()

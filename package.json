@@ -17,6 +17,7 @@
       "@floating-ui/core": "^1.6.8",
       "@floating-ui/dom": "^1.6.11",
       "@headlessui/vue": "^1.7.23",
+      "@vuepic/vue-datepicker": "^10.0.0",
       "@vueuse/core": "^11.1.0",
       "chart.js": "^4.4.4",
       "date-fns": "^4.1.0",

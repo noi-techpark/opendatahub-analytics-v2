@@ -6,10 +6,10 @@ SPDX-License-Identifier: AGPL-3.0-or-later
 <template>
    <main class="charts-view">
       <div class="chart-title">
-         <H tag="h1">{{ $t('views.charts.title') }}</H>
+         <H tag="h1">{{ t('views.charts.title') }}</H>
          <P>
             {{
-               $t('common.updated-at', {
+               t('common.updated-at', {
                   time: updatedAt,
                })
             }}
@@ -21,35 +21,46 @@ SPDX-License-Identifier: AGPL-3.0-or-later
             <div class="chart-control">
                <div class="chart-time-ct">
                   <MenuButtons :links :selected-id="selectedTimeId" />
-                  <Select :text="$t('views.charts.time.custom')"></Select>
+                  <RangeDatePicker
+                     :text="t('views.charts.time.custom')"
+                     v-model="rangeCustom"
+                     :selected="selectedTimeId === filtersTimeEnum.CUSTOM"
+                     @save="onSaveRangeCustom()"
+                  ></RangeDatePicker>
                </div>
 
                <SelectPopover
-                  :text="$t('views.charts.plot-height')"
-                  :selectedIdx="selectedPlotHeightIdx"
+                  v-model="selectedPlotHeight"
+                  :text="
+                     t('views.charts.plot-height', {
+                        value: selectedPlotHeight
+                           ? selectedPlotHeight + 'px'
+                           : t('common.auto'),
+                     })
+                  "
                   :options="plotHeights"
                   type="list"
-                  @selected="handleSelectPlotHeight"
                />
             </div>
             <Chart
                v-if="timeSeriesList.length"
+               :key="`chart_${selectedPlotHeight}`"
                ref="chartEl"
-               title="Timeseries data"
+               :title="t('views.charts.timeseries-data')"
                :updatedAt="updatedAt"
-               :plotHeight="plotHeights[selectedPlotHeightIdx].value"
+               :plotHeight="selectedPlotHeight"
             />
          </div>
 
          <div class="chart-side">
             <div class="card">
-               <P bold>{{ $t('views.charts.export.title') }}</P>
-               <Button secondary :value="$t('views.charts.export.xls')">
+               <P bold>{{ t('views.charts.export.title') }}</P>
+               <Button secondary :value="t('views.charts.export.xls')">
                   <DownloadIcon />
                </Button>
                <Button
                   secondary
-                  :value="$t('views.charts.export.image')"
+                  :value="t('views.charts.export.image')"
                   @click="onExportAsImage()"
                >
                   <DownloadIcon />
@@ -60,7 +71,7 @@ SPDX-License-Identifier: AGPL-3.0-or-later
                <IconText
                   class="justify-between"
                   bold
-                  :text="$t('views.charts.embed')"
+                  :text="t('views.charts.embed')"
                   reverse
                   noPadding
                   :hover="false"
@@ -80,7 +91,7 @@ SPDX-License-Identifier: AGPL-3.0-or-later
                <P class="card-content">{{ embeddableCode }}</P>
             </div>
 
-            <Button center :value="$t('views.charts.save')">
+            <Button center :value="t('views.charts.save')">
                <SaveIcon />
             </Button>
          </div>
@@ -109,6 +120,7 @@ import SelectPopover from '../components/ui/popover/SelectPopover.vue'
 import IconCheck from '../components/ui/svg/IconCheck.vue'
 import { randomId } from '../components/utils/useRandomId'
 import { useRoute } from 'vue-router'
+import RangeDatePicker from '../components/ui/input/RangeDatePicker.vue'
 
 const { t } = useI18n()
 const { timeSeriesList, getTimeSeriesForEmbedCode } = useTimeSeriesStore()
@@ -122,12 +134,15 @@ enum filtersTimeEnum {
    WEEK = 'WEEK',
    MONTH = 'MONTH',
    SIX_MONTHS = '6_MONTHS',
+   CUSTOM = 'CUSTOM',
 }
 
 const loading = ref(false)
 
+const rangeCustom = ref([new Date(), new Date()])
+
 const selectedTimeId = ref<filtersTimeEnum>(filtersTimeEnum.DAY)
-const selectedPlotHeightIdx = ref<number>(0)
+const selectedPlotHeight = ref<number>(0)
 const updatedAt = new Date().toISOString()
 
 const randomDivider = computed(() => {
@@ -185,6 +200,11 @@ const selectedTime = computed(() => {
             from: subMonths(date, 6),
             to: date,
          }
+      case filtersTimeEnum.CUSTOM:
+         return {
+            from: rangeCustom.value[0],
+            to: rangeCustom.value[1],
+         }
 
       default: // DAY
          return {
@@ -193,10 +213,6 @@ const selectedTime = computed(() => {
          }
    }
 })
-
-const handleSelectPlotHeight = (idx: number) => {
-   selectedPlotHeightIdx.value = idx
-}
 
 const getTimeseriesData = async () => {
    loading.value = true
@@ -208,7 +224,7 @@ const getTimeseriesData = async () => {
       const dataUrl = `${import.meta.env.VITE_ODH_MOBILITY_API_URI}/flat/${encodeURIComponent(element.dataset)}/${encodeURIComponent(element.datatype)}/${from}/${to}?limit=-1&offset=0&select=mvalue,mvalidtime,mperiod&where=sname.eq.${encodeURIComponent(element.station)},sorigin.eq.${encodeURIComponent(element.provider)},mperiod.eq.${element.period},sactive.eq.true&shownull=false&distinct=true`
       const { data } = await useFetch(dataUrl).json()
 
-      element.data = data.value.data.map(
+      element.data = (data.value || { data: [] }).data.map(
          (item: { mvalue: number }) => item.mvalue
       )
    }
@@ -231,6 +247,10 @@ const onCopy = () => {
 const setSavedTimeseries = () => {
    const { query } = useRoute()
    console.log(query)
+}
+
+const onSaveRangeCustom = () => {
+   selectedTimeId.value = filtersTimeEnum.CUSTOM
 }
 
 watch(selectedTime, (newVal) => {
