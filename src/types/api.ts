@@ -4,14 +4,14 @@
 import { Layer } from './map-layer.js'
 
 export type DataMarker = {
-   x: number
-   y: number
    alarm?: boolean
    selected?: boolean
+   coordinates: [number, number]
 } & Pick<Layer, 'color'> &
    Pick<DataPoint, 'stype' | 'scode'>
 
 export type DataPoint = {
+   sname: string
    scode: string
    scoordinate?: {
       x: number

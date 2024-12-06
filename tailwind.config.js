@@ -16,6 +16,7 @@ export default {
             grey: '#F6F8FA',
             stroke: '#D8DEE4',
             'grey-2': '#9A9A9A',
+            'grey-3': '#687182',
             'green-light': '#EDF1EA',
             yellow: '#FFC000',
          },
