@@ -5,6 +5,7 @@
          hover,
          reverse,
          grow,
+         'small-gap': smallGap,
          'no-padding': noPadding,
          'no-padding-x': noPaddingX,
          'no-padding-y': noPaddingY,
@@ -25,6 +26,7 @@ type Props = {
    small?: boolean
    grow?: boolean
    reverse?: boolean
+   smallGap?: boolean
    noPadding?: boolean
    noPaddingX?: boolean
    noPaddingY?: boolean
@@ -41,6 +43,11 @@ const props = withDefaults(defineProps<Props>(), {
    &.grow {
       @apply w-full justify-between;
    }
+
+   &.small-gap {
+      @apply gap-1;
+   }
+
    &.no-padding {
       @apply p-0;
    }

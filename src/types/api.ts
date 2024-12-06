@@ -23,13 +23,25 @@ export type DataPoint = {
 }
 
 export type MarkerInfo = {
-   [key: string]: {
-      stations: {
-         [key: string]: {
-            sname: string
-         }
-      }
+   sactive: boolean
+   savailable: boolean
+   scode: string
+   sname: string
+   scoordinate: {
+      c: number
+      y: number
    }
+   smetadata:
+      | {
+           [key: string]: any
+        }
+      | {}
 }
 
-export type MarkerData = {}
+export type MarkerMeasurements = {
+   mperiod: number
+   tname: string
+   tunit: string
+   mvalue: number
+   _timestamp: string
+}

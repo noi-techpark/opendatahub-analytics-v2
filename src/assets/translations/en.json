@@ -6,10 +6,13 @@
       "back": "Back",
       "all": "All",
       "updated-at": "last updated on {time}",
+      "last-update": "last update: {time}",
       "auto": "Auto",
       "cancel": "Cancel",
       "search": "Search",
-      "save": "Save"
+      "save": "Save",
+      "no-data": "No data available",
+      "more-details:": "More details"
    },
    "auth": {
       "login": "Login",
@@ -32,18 +35,7 @@
       "marker-card": {
          "measurements": "Measurements",
          "alarms": "Alarms",
-         "metadata": {
-            "title": "Metadata",
-            "code": "Code",
-            "name": "Name",
-            "latitude": "Latitude",
-            "longitude": "Longitude",
-            "epsg": "EPSG",
-            "origin": "origin",
-            "name-de": "Name_DE",
-            "name-en": "Name_EN",
-            "name-it": "Name_IT"
-         }
+         "metadata": "Metadata"
       },
       "time-selector": {
          "day": "Day",
