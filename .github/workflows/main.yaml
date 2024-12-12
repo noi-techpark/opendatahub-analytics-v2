@@ -1,0 +1,76 @@
+# SPDX-FileCopyrightText: 2024 NOI Techpark <digital@noi.bz.it>
+#
+# SPDX-License-Identifier: AGPL-3.0-or-later
+name: CI/CD
+
+on:
+  push:
+
+env:
+  NODE_VERSION: 20.x
+  PROJECT_NAME: opendatahub-analytics-v2
+  DOCKER_IMAGE: ghcr.io/${{ github.repository }}/analytics
+
+
+jobs:
+  test:
+    runs-on: ubuntu-22.04
+    steps:
+      - name: Checkout source code
+        uses: actions/checkout@v2
+      # - name: REUSE Compliance Check
+      #   uses: fsfe/reuse-action@v1
+
+  deploy-test:
+    runs-on: ubuntu-22.04
+    if: github.ref == 'refs/heads/infrastructure-v2'
+    needs: test
+    concurrency: deploy-test
+    env:
+      SERVER_PORT: 8999
+      DOCKER_TAG: ${{ github.sha }}-test
+      VALUES_YAML: infrastructure/helm/values.yaml
+      K8S_NAME: analytics-v2
+    steps:
+      - name: Checkout source code
+        uses: actions/checkout@v2
+      - name: Create .env file
+        uses: noi-techpark/github-actions/env-file@v2
+        with:
+          destination-file: .env.build
+        env:
+          X_COMPOSE_PROJECT_NAME: ${{ env.PROJECT_NAME }}
+          X_DOCKER_IMAGE: ${{ env.DOCKER_IMAGE }}
+          X_DOCKER_TAG: ${{ env.DOCKER_TAG }}
+          X_VITE_ENDPOINT_URL: https://analytics.opendatahub.com/v2
+          X_VITE_ODH_MOBILITY_API_URI: https://mobility.api.opendatahub.com/v2
+          X_VITE_LOG_APPLICATION_NAME: opendatahub-analytics
+          X_VITE_KEYCLOAK_AUTHORIZATION_URI: https://auth.opendatahub.com/auth
+          X_VITE_KEYCLOAK_REALM: noi
+          X_VITE_KEYCLOAK_CLIENT_ID: odh-mobility-analytics
+          X_VITE_KEYCLOAK_REDIRECT_URI: http://localhost:8999
+          X_VITE_KEYCLOAK_SILENT_CHECK_SSO_REDIRECT_URI: http://localhost:8999
+
+      - name: Build and push images
+        uses: noi-techpark/github-actions/docker-build-and-push@v2
+        with:
+          working-directory: infrastructure
+          docker-username: ${{ github.actor }}
+          docker-password: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Customize values.yaml    
+        run: | 
+          yq -i '.image.tag="${{ env.DOCKER_TAG }}"' ${{ env.VALUES_YAML }}          
+          
+      - name: Deploy on cluster  
+        uses: noi-techpark/github-actions/helm-deploy@v2
+        with:
+          k8s-name: ${{ env.K8S_NAME }}
+          k8s-namespace: core
+          chart-path: infrastructure/helm/analytics-v2
+          values-file: ${{ env.VALUES_YAML }}
+          aws-access-key-id: ${{ secrets.AWS_DEV_ACCESS_KEY_ID }}
+          aws-secret-access-key: ${{ secrets.AWS_DEV_ACCESS_KEY_SECRET }}
+          aws-eks-cluster-name: aws-main-eu-01
+          aws-region: eu-west-1
+
