@@ -10,7 +10,7 @@ COPY package*.json ./
 RUN yarn install
 
 COPY . .
-RUN source .env
+RUN . .env
 RUN yarn build-only
 
 # Stage 2: Serve the application using nginx
