@@ -4,25 +4,19 @@ SPDX-FileCopyrightText: NOI Techpark <digital@noi.bz.it>
 SPDX-License-Identifier: AGPL-3.0-or-later
 -->
 <template>
-   <Popover class="relative">
-      <PopoverButton
-         ref="popoverButton"
+   <Popover v-slot="{ open }" class="relative">
+      <PopoverButtonCustom
+         ref="popoverButtonCustom"
+         :open="open"
          :disabled="disabled"
-         class="relative z-10 flex cursor-pointer items-center rounded border bg-grey"
-         :class="{ 'cursor-not-allowed opacity-70': disabled }"
-      >
-         <span
-            class="max-w-[220px] select-none truncate border-r px-3 py-1 text-sm font-semibold"
-            >{{ text }}</span
-         >
-         <ArrowDownIcon class="mx-1" />
-      </PopoverButton>
+         :text="text"
+      />
 
       <PopoverTransition>
          <PopoverPanel
             class="absolute left-auto right-0 z-20 mt-2 w-full rounded border bg-white md:w-[300px]"
          >
-            <header class="border-b p-2">
+            <header v-if="showSearch" class="border-b p-2">
                <label
                   for="search"
                   class="mb-2 block text-sm font-semibold text-gray-700"
@@ -61,13 +55,19 @@ SPDX-License-Identifier: AGPL-3.0-or-later
                </ListboxOptions>
             </Listbox>
 
+            <span
+               v-if="!loading && !filteredOptions.length"
+               class="inline-block p-2 text-sm"
+               >{{ t('components.select.no-option-found') }}</span
+            >
+
             <div class="flex justify-between gap-2 border-t p-2">
-               <Button grow center outline @click="onCancel">{{
-                  $t('common.cancel')
-               }}</Button>
-               <Button grow center @click="onSave">{{
-                  $t('common.save')
-               }}</Button>
+               <Button grow center outline @click="onCancel">
+                  {{ $t('common.cancel') }}
+               </Button>
+               <Button grow center @click="onSave">
+                  {{ $t('common.save') }}
+               </Button>
             </div>
          </PopoverPanel>
       </PopoverTransition>
@@ -76,16 +76,18 @@ SPDX-License-Identifier: AGPL-3.0-or-later
 
 <script lang="ts" setup>
 import { ref, computed, watch } from 'vue'
-import { Popover, PopoverButton, PopoverPanel } from '@headlessui/vue'
+import { Popover, PopoverPanel } from '@headlessui/vue'
 import { Listbox, ListboxOptions, ListboxOption } from '@headlessui/vue'
-import ArrowDownIcon from '../svg/ArrowDownIcon.vue'
 import PopoverTransition from './PopoverTransition.vue'
+import PopoverButtonCustom from './PopoverButtonCustom.vue'
 import { SelectOption } from '../../../types/select'
 import InputSearch from '../input/InputSearch.vue'
 import { useI18n } from 'vue-i18n'
 import Button from '../Button.vue'
 
 import { useDebounceFn } from '@vueuse/core'
+
+const popoverButtonCustom = ref()
 
 const { t } = useI18n()
 
@@ -100,6 +102,7 @@ type Props = {
    searchLocally?: boolean
    loading?: boolean
    disabled?: boolean
+   showSearch?: boolean
 }
 
 const props = defineProps<Props>()
@@ -107,7 +110,6 @@ const props = defineProps<Props>()
 const emit = defineEmits(['save', 'cancel', 'search'])
 
 const searchQuery = ref('')
-const popoverButton = ref()
 
 const filteredOptions = computed(() => {
    if (props.loading) {
@@ -133,11 +135,13 @@ const emitSearch = useDebounceFn((value: string) => {
 
 const onSave = () => {
    emit('save')
-   popoverButton.value.$el.click()
+
+   popoverButtonCustom.value.clickPopover()
 }
 
 const onCancel = () => {
    emit('cancel')
-   popoverButton.value.$el.click()
+
+   popoverButtonCustom.value.clickPopover()
 }
 </script>

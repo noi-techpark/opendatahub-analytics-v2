@@ -6,10 +6,13 @@
       "back": "Back",
       "all": "All",
       "updated-at": "last updated on {time}",
+      "last-update": "last update: {time}",
       "auto": "Auto",
       "cancel": "Cancel",
       "search": "Search",
-      "save": "Save"
+      "save": "Save",
+      "no-data": "No data available",
+      "more-details": "More Details"
    },
    "auth": {
       "login": "Login",
@@ -25,21 +28,21 @@
          "deselect": "Deselect all",
          "deselect-group": "Deselect group"
       },
+      "sidebar-events-content": {
+         "events": "Events",
+         "weather": "Weather"
+      },
       "marker-card": {
          "measurements": "Measurements",
          "alarms": "Alarms",
-         "metadata": {
-            "title": "Metadata",
-            "code": "Code",
-            "name": "Name",
-            "latitude": "Latitude",
-            "longitude": "Longitude",
-            "epsg": "EPSG",
-            "origin": "origin",
-            "name-de": "Name_DE",
-            "name-en": "Name_EN",
-            "name-it": "Name_IT"
-         }
+         "metadata": "Metadata"
+      },
+      "time-selector": {
+         "day": "Day",
+         "week": "Week",
+         "month": "Month",
+         "6-months": "6 Months",
+         "custom": "Custom"
       },
       "sidebar-charts-content": {
          "add": "Add new Time series"
@@ -50,11 +53,19 @@
          "station": "Station",
          "datatype": "Datatype",
          "period": "Period"
+      },
+      "map": {
+         "search": "Search for station",
+         "selected": "Selected station"
+      },
+      "select": {
+         "no-option-found": "No option found"
       }
    },
    "views": {
       "charts": {
          "title": "Headline for Charts",
+         "timeseries-data": "Timeseries data",
          "time": {
             "day": "Day",
             "week": "Week",
@@ -62,7 +73,7 @@
             "6-months": "6 Months",
             "custom": "Custom"
          },
-         "plot-height": "Plot height:",
+         "plot-height": "Plot height: {value}",
          "export": {
             "title": "Export Details",
             "xls": "Export data as XLS",
@@ -72,6 +83,7 @@
          "save": "Save configured charts"
       },
       "charts-add": {
+         "no-time-series": "Please, add a time series to load.",
          "title": "Add a new Time series",
          "provider": "Dataprovider",
          "provider-description": "Here is a short description",
@@ -96,7 +108,14 @@
          "search-for-datatype": "Search for datatype",
          "search-for-period": "Search for period",
          "your-selected-provider": "Your selected provider: {provider}",
-         "your-selected-dataset": "Your selected dataset: {dataset}"
+         "your-selected-dataset": "Your selected dataset: {dataset}",
+         "map-tooltip": "To make your selection, you can simply click on the pins on the map or use the search!"
+      },
+      "events": {
+         "title": "Headline for Tables"
+      },
+      "events-weather": {
+         "title": "Headline for Tables"
       }
    },
    "layouts": {

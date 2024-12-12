@@ -6,10 +6,10 @@ SPDX-License-Identifier: AGPL-3.0-or-later
 <template>
    <main class="charts-view">
       <div class="chart-title">
-         <H tag="h1">{{ $t('views.charts.title') }}</H>
+         <H tag="h1">{{ t('views.charts.title') }}</H>
          <P>
             {{
-               $t('common.updated-at', {
+               t('common.updated-at', {
                   time: updatedAt,
                })
             }}
@@ -19,34 +19,52 @@ SPDX-License-Identifier: AGPL-3.0-or-later
       <div class="chart-content-ct">
          <div class="chart-content">
             <div class="chart-control">
-               <div class="chart-time-ct">
-                  <MenuButtons :links :selected-id="selectedTimeId" />
-                  <Select :text="$t('views.charts.time.custom')"></Select>
-               </div>
+               <TimeSelector
+                  v-model="selectedTimeId"
+                  v-model:range="rangeCustom"
+               />
 
-               <Select
-                  :text="$t('views.charts.plot-height')"
-                  :selectedIdx="selectedPlotHeightIdx"
-                  :values="plotHeights"
+               <SelectPopover
+                  v-model="selectedPlotHeight"
+                  :text="
+                     t('views.charts.plot-height', {
+                        value: selectedPlotHeight
+                           ? selectedPlotHeight + 'px'
+                           : t('common.auto'),
+                     })
+                  "
+                  :options="plotHeights"
                   type="list"
-                  @selected="handleSelectPlotHeight"
                />
             </div>
             <Chart
                v-if="timeSeriesList.length"
-               title="Timeseries data"
+               :key="`chart_${selectedPlotHeight}`"
+               ref="chartEl"
+               :title="t('views.charts.timeseries-data')"
                :updatedAt="updatedAt"
-               :plotHeight="plotHeights[selectedPlotHeightIdx].value"
+               :plotHeight="selectedPlotHeight"
             />
+            <P v-else bold large class="pt-4">{{
+               t('views.charts-add.no-time-series')
+            }}</P>
          </div>
 
          <div class="chart-side">
             <div class="card">
-               <P bold>{{ $t('views.charts.export.title') }}</P>
-               <Button secondary :value="$t('views.charts.export.xls')">
+               <P bold>{{ t('views.charts.export.title') }}</P>
+               <Button
+                  secondary
+                  :value="t('views.charts.export.xls')"
+                  @click="onExportAsXLS()"
+               >
                   <DownloadIcon />
                </Button>
-               <Button secondary :value="$t('views.charts.export.image')">
+               <Button
+                  secondary
+                  :value="t('views.charts.export.image')"
+                  @click="onExportAsImage()"
+               >
                   <DownloadIcon />
                </Button>
             </div>
@@ -55,18 +73,45 @@ SPDX-License-Identifier: AGPL-3.0-or-later
                <IconText
                   class="justify-between"
                   bold
-                  :text="$t('views.charts.embed')"
+                  :text="t('views.charts.embed')"
                   reverse
                   noPadding
                   :hover="false"
                >
-                  <ContentCopyIcon />
+                  <IconCheck
+                     class="transition-all"
+                     :class="{
+                        'pointer-events-none absolute opacity-0': !copied,
+                     }"
+                  />
+                  <ContentCopyIcon
+                     class="transition-all"
+                     :class="{ 'absolute opacity-0': copied }"
+                     @click="onCopy()"
+                  />
                </IconText>
-               <P class="card-content">EMBED CODE</P>
+               <P class="card-content"
+                  ><span class="line-clamp-3">{{ embeddableCode }}</span></P
+               >
             </div>
 
-            <Button center :value="$t('views.charts.save')">
-               <SaveIcon />
+            <Button
+               center
+               :value="t('views.charts.save')"
+               :class="{ 'pointer-events-none': configurationSaved }"
+               @click="onSaveConfiguration()"
+            >
+               <IconCheck
+                  class="transition-all"
+                  :class="{
+                     'pointer-events-none absolute opacity-0':
+                        !configurationSaved,
+                  }"
+               />
+               <SaveIcon
+                  class="transition-all"
+                  :class="{ 'absolute opacity-0': configurationSaved }"
+               />
             </Button>
          </div>
       </div>
@@ -75,7 +120,6 @@ SPDX-License-Identifier: AGPL-3.0-or-later
 
 <script setup lang="ts">
 import { useI18n } from 'vue-i18n'
-import MenuButtons from '../components/ui/MenuButtons.vue'
 import H from '../components/ui/tags/H.vue'
 import P from '../components/ui/tags/P.vue'
 import { computed, onMounted, ref, watch } from 'vue'
@@ -85,74 +129,86 @@ import SaveIcon from '../components/ui/svg/SaveIcon.vue'
 import IconText from '../components/ui/IconText.vue'
 import ContentCopyIcon from '../components/ui/svg/ContentCopyIcon.vue'
 import Chart from '../components/ui/chart/Chart.vue'
-import Select from '../components/ui/Select.vue'
 
 import { startOfDay, subDays, subMonths } from 'date-fns'
 import { useTimeSeriesStore } from '../stores/time-series'
-import { useFetch } from '@vueuse/core'
+import { useClipboard, useFetch } from '@vueuse/core'
+import SelectPopover from '../components/ui/popover/SelectPopover.vue'
+import IconCheck from '../components/ui/svg/IconCheck.vue'
+import { randomId } from '../components/utils/useRandomId'
+import { useRoute } from 'vue-router'
+import TimeSelector from '../components/ui/TimeSelector.vue'
+import { TimeEnum, TimeRange, TimeSeries } from '../types/time-series'
+
+import XLSX from 'xlsx'
+import { getReadableDateWithTime } from '../utils/date-utils'
+import { storeToRefs } from 'pinia'
 
 const { t } = useI18n()
-const { timeSeriesList } = useTimeSeriesStore()
+const {
+   getTimeSeriesForEmbedCode,
+   embeddableKeys,
+   addTimeSeries,
+   getBaseTimeSeriesObj,
+} = useTimeSeriesStore()
 
-enum filtersTimeEnum {
-   DAY = 'DAY',
-   WEEK = 'WEEK',
-   MONTH = 'MONTH',
-   SIX_MONTHS = '6_MONTHS',
-}
+const { hasToLoad, timeSeriesList } = storeToRefs(useTimeSeriesStore())
+
+const { copy, copied } = useClipboard()
+
+const chartEl = ref()
+const lastUpdateOn = ref(new Date())
+
+const LOCAL_STORAGE_CONFIG_KEY = 'savedChartConfiguration'
 
 const loading = ref(false)
+const configurationSaved = ref(false)
 
-const selectedTimeId = ref<filtersTimeEnum>(filtersTimeEnum.DAY)
-const selectedPlotHeightIdx = ref<number>(0)
-const updatedAt = new Date().toISOString()
+const selectedTimeId = ref<TimeEnum>(TimeEnum.DAY)
+const rangeCustom = ref<TimeRange>([new Date(), new Date()])
+
+const selectedPlotHeight = ref<number>(0)
+
+const updatedAt = computed(() => {
+   return getReadableDateWithTime(lastUpdateOn.value)
+})
+
+const embeddableCode = computed(() => {
+   return `${window.location.origin}/charts?${queryStringToEmbed.value}`
+})
+
+const queryStringToEmbed = computed(() => {
+   return `from=${selectedTime.value.from.toJSON()}&to=${selectedTime.value.to.toJSON()}&selectedTimeId=${selectedTimeId.value}&${getTimeSeriesForEmbedCode().join('&')}`
+})
 
 const plotHeights = computed(() => [
-   { title: t('common.auto'), value: 0 },
-   { title: '500px', value: 500 },
-])
-
-const links = computed(() => [
-   {
-      id: filtersTimeEnum.DAY,
-      title: t('views.charts.time.day'),
-      action: () => (selectedTimeId.value = filtersTimeEnum.DAY),
-   },
-   {
-      id: filtersTimeEnum.WEEK,
-      title: t('views.charts.time.week'),
-      action: () => (selectedTimeId.value = filtersTimeEnum.WEEK),
-   },
-   {
-      id: filtersTimeEnum.MONTH,
-      title: t('views.charts.time.month'),
-      action: () => (selectedTimeId.value = filtersTimeEnum.MONTH),
-   },
-   {
-      id: filtersTimeEnum.SIX_MONTHS,
-      title: t('views.charts.time.6-months'),
-      action: () => (selectedTimeId.value = filtersTimeEnum.SIX_MONTHS),
-   },
+   { label: t('common.auto'), value: 0 },
+   { label: '500px', value: 500 },
 ])
 
 const selectedTime = computed(() => {
    const date = new Date()
 
    switch (selectedTimeId.value) {
-      case filtersTimeEnum.WEEK:
+      case TimeEnum.WEEK:
          return {
             from: subDays(date, 7),
             to: date,
          }
-      case filtersTimeEnum.MONTH:
+      case TimeEnum.MONTH:
          return {
             from: subMonths(date, 1),
             to: date,
          }
-      case filtersTimeEnum.SIX_MONTHS:
+      case TimeEnum.SIX_MONTHS:
          return {
             from: subMonths(date, 6),
             to: date,
+         }
+      case TimeEnum.CUSTOM:
+         return {
+            from: rangeCustom.value[0],
+            to: rangeCustom.value[1],
          }
 
       default: // DAY
@@ -163,35 +219,170 @@ const selectedTime = computed(() => {
    }
 })
 
-const handleSelectPlotHeight = (idx: number) => {
-   selectedPlotHeightIdx.value = idx
-}
-
 const getTimeseriesData = async () => {
    loading.value = true
 
    const from = selectedTime.value.from.toJSON()
    const to = selectedTime.value.to.toJSON()
-   // https://mobility.api.opendatahub.com/v2/flat/ParkingStation%2CParkingSensor%2CParkingFacility/free/2024-11-09T23:00:00.000Z/2024-11-10T23:00:00.000Z?limit=-1&distinct=true&select=mvalue,mvalidtime,mperiod&where=scode.eq.%22103%22,mperiod.eq.300,sactive.eq.true
-   for (const element of timeSeriesList) {
+
+   for (const element of timeSeriesList.value) {
       const dataUrl = `${import.meta.env.VITE_ODH_MOBILITY_API_URI}/flat/${encodeURIComponent(element.dataset)}/${encodeURIComponent(element.datatype)}/${from}/${to}?limit=-1&offset=0&select=mvalue,mvalidtime,mperiod&where=sname.eq.${encodeURIComponent(element.station)},sorigin.eq.${encodeURIComponent(element.provider)},mperiod.eq.${element.period},sactive.eq.true&shownull=false&distinct=true`
       const { data } = await useFetch(dataUrl).json()
+      const labels = []
+      const values = []
 
-      element.data = data.value.data.map(
-         (item: { mvalue: number }) => item.mvalue
-      )
+      for (const element of (data.value || { data: [] }).data) {
+         values.push(element.mvalue)
+         labels.push(element.mvalidtime)
+      }
+
+      element.data = values
+      element.labels = labels
    }
 
+   lastUpdateOn.value = new Date()
+
+   hasToLoad.value = false
    loading.value = false
 }
 
+const onExportAsXLS = () => {
+   const chartData = chartEl.value.chart.chart.data
+
+   const workbook = XLSX.utils.book_new()
+
+   chartData.datasets.forEach(
+      (chartDataset: Record<string, any>, index: number) => {
+         const exportData = [
+            ['Datetime', 'Value'],
+            ...chartDataset.data.map((label: string, i: number) => [
+               timeSeriesList.value[index].labels[i],
+               chartDataset.data[i],
+            ]),
+         ]
+
+         const worksheet = XLSX.utils.aoa_to_sheet(exportData)
+
+         const { id, provider, dataset, station, datatype } =
+            timeSeriesList.value[index]
+
+         const sheetName = `${provider}_${dataset}_${station}_${datatype}`
+         XLSX.utils.book_append_sheet(
+            workbook,
+            worksheet,
+            `${sheetName.slice(0, 26)}_${id.slice(0, 4)}`
+         )
+      }
+   )
+
+   XLSX.writeFile(workbook, `chart-data-${new Date().getTime()}.xlsx`)
+}
+
+const onExportAsImage = () => {
+   const a = document.createElement('a')
+   a.href = chartEl.value.chart.chart.toBase64Image()
+   a.download = `export-${new Date().toJSON()}.png`
+
+   a.click()
+}
+
+const onCopy = () => {
+   copy(embeddableCode.value)
+}
+
+const getConfigFromLocalStorage = () => {
+   const params = localStorage.getItem(LOCAL_STORAGE_CONFIG_KEY)
+      ? new URLSearchParams(
+           new URL(
+              `${window.origin}?${localStorage.getItem(LOCAL_STORAGE_CONFIG_KEY)}`
+           ).search
+        )
+      : undefined
+
+   if (!params) return params
+
+   const obj: Record<string, string> = {}
+
+   params.forEach((value, key) => {
+      if (params.get(key)) {
+         obj[key] = params.get(key) || ''
+      }
+   })
+
+   return obj
+}
+
+const setSavedTimeseries = async () => {
+   const { query } = useRoute()
+
+   const configToLoad = getConfigFromLocalStorage() || query
+
+   if (!configToLoad.selectedTimeId) return { hasLoadedNewData: false }
+
+   const data: Partial<TimeSeries>[] = []
+
+   for (const key of Object.keys(configToLoad)) {
+      if (embeddableKeys.findIndex((item) => key.startsWith(item)) === -1) {
+         continue
+      }
+
+      const indexSeparatorIndex = key.lastIndexOf('_')
+
+      const index = key.slice(indexSeparatorIndex + 1)
+
+      if (index === undefined) {
+         return { hasLoadedNewData: false }
+      }
+
+      const timeSeriesKey = key.slice(
+         0,
+         indexSeparatorIndex
+      ) as keyof TimeSeries
+
+      ;(data[+index] ??= getBaseTimeSeriesObj())[timeSeriesKey] = configToLoad[
+         key
+      ] as string & number[]
+   }
+
+   for (const item of data) {
+      if (timeSeriesList.value.find((el) => el.id === item.id)) continue
+
+      addTimeSeries({ id: randomId(), data: [], ...item } as TimeSeries)
+   }
+
+   const hasLoadedNewData = selectedTimeId.value !== configToLoad.selectedTimeId // triggers selectedTime watch
+
+   if (configToLoad.selectedTimeId === TimeEnum.CUSTOM) {
+      rangeCustom.value = [
+         new Date(configToLoad.from?.toString() || ''),
+         new Date(configToLoad.to?.toString() || ''),
+      ]
+   }
+
+   selectedTimeId.value = configToLoad.selectedTimeId as TimeEnum
+
+   return { hasLoadedNewData }
+}
+
+const onSaveConfiguration = () => {
+   localStorage.setItem(LOCAL_STORAGE_CONFIG_KEY, queryStringToEmbed.value)
+   configurationSaved.value = true
+
+   setTimeout(() => {
+      configurationSaved.value = false
+   }, 2000)
+}
+
 watch(selectedTime, (newVal) => {
-   console.log(newVal)
    getTimeseriesData()
 })
 
-onMounted(() => {
-   getTimeseriesData()
+onMounted(async () => {
+   const { hasLoadedNewData } = await setSavedTimeseries()
+
+   if (!hasLoadedNewData) {
+      getTimeseriesData()
+   }
 })
 </script>
 
@@ -207,10 +398,6 @@ onMounted(() => {
 
          & .chart-control {
             @apply flex justify-between gap-6;
-
-            & .chart-time-ct {
-               @apply flex gap-2;
-            }
          }
       }
 

@@ -10,4 +10,15 @@ export type TimeSeries = {
    period: string
    color: string
    data: number[]
+   labels: string[]
 }
+
+export enum TimeEnum {
+   DAY = 'DAY',
+   WEEK = 'WEEK',
+   MONTH = 'MONTH',
+   SIX_MONTHS = '6_MONTHS',
+   CUSTOM = 'CUSTOM',
+}
+
+export type TimeRange = [Date, Date]

@@ -10,12 +10,15 @@ SPDX-License-Identifier: AGPL-3.0-or-later
       :class="{
          hover,
          reverse,
+         grow,
+         'small-gap': smallGap,
          'no-padding': noPadding,
          'no-padding-x': noPaddingX,
+         'no-padding-y': noPaddingY,
       }"
    >
       <slot />
-      <P :bold v-if="text">{{ text }}</P>
+      <P :bold :small v-if="text">{{ text }}</P>
    </div>
 </template>
 
@@ -26,9 +29,13 @@ type Props = {
    text?: string
    hover?: boolean
    bold?: boolean
+   small?: boolean
+   grow?: boolean
    reverse?: boolean
+   smallGap?: boolean
    noPadding?: boolean
    noPaddingX?: boolean
+   noPaddingY?: boolean
 }
 const props = withDefaults(defineProps<Props>(), {
    hover: true,
@@ -39,12 +46,24 @@ const props = withDefaults(defineProps<Props>(), {
 .icon-text-component {
    @apply inline-flex select-none items-center gap-2 rounded px-3 py-[6px] text-sm transition-colors;
 
+   &.grow {
+      @apply w-full justify-between;
+   }
+
+   &.small-gap {
+      @apply gap-1;
+   }
+
    &.no-padding {
       @apply p-0;
    }
 
    &.no-padding-x {
       @apply px-0;
+   }
+
+   &.no-padding-y {
+      @apply py-0;
    }
 
    &.reverse {

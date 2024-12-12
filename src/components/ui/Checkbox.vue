@@ -7,7 +7,12 @@ SPDX-License-Identifier: AGPL-3.0-or-later
 <template>
    <label class="checkbox-component __clickable">
       <div class="checkbox-ct">
-         <input class="checkbox" type="checkbox" :checked="props.checked" />
+         <input
+            class="checkbox"
+            :class="{ 'rounded-full': rounded }"
+            type="checkbox"
+            :checked="props.checked"
+         />
          <CheckIcon v-if="props.checked" class="check-icon" />
       </div>
       <span class="checkbox-text">{{ label }}</span>
@@ -19,6 +24,7 @@ import CheckIcon from './svg/CheckIcon.vue'
 
 type Props = {
    checked: boolean
+   rounded?: boolean
    label: string
 }
 const props = withDefaults(defineProps<Props>(), {})
@@ -29,7 +35,7 @@ const props = withDefaults(defineProps<Props>(), {})
    @apply inline-flex select-none items-center gap-2 py-[6px] text-sm;
 
    & .checkbox-ct {
-      @apply relative h-fit w-fit;
+      @apply relative flex h-fit w-fit items-center;
 
       & .checkbox {
          @apply size-5 appearance-none border transition-colors;
@@ -40,7 +46,7 @@ const props = withDefaults(defineProps<Props>(), {})
       }
 
       & .check-icon {
-         @apply absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-[70%] transform;
+         @apply absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 transform;
       }
    }
 

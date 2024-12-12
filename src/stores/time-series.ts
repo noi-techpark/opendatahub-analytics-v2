@@ -4,25 +4,27 @@
 import { defineStore } from 'pinia'
 import { ref, computed } from 'vue'
 import { TimeSeries } from '../types/time-series'
+import { randomId } from '../components/utils/useRandomId'
 
 export const useTimeSeriesStore = defineStore('time-series', () => {
    // State
    const colors = [
       '#114189',
-      '# 9a5dd',
-      '#757fa0',
-      '#66e266',
+      '#2695ef',
+      '#f988a7',
+      '#2e9bc1',
+      '#9f81cd',
+      '#6868f1',
       '#27fd10',
+      '#ae1319',
+      '#4df2a0',
+      '#66e266',
       '#5df6f8',
       '#f11c6b',
-      '#2e9bc1',
-      '#6868f1',
       '#aa147f',
       '#80c5d0',
       '#59cd56',
       '# c806f',
-      '#9f81cd',
-      '#2695ef',
       '#939bc6',
       '#cee390',
       '#4daeda',
@@ -31,9 +33,7 @@ export const useTimeSeriesStore = defineStore('time-series', () => {
       '#ef9196',
       '#f74991',
       '#c71bb9',
-      '#ae1319',
-      '#f988a7',
-      '#4df2a0',
+
       '#3169c1',
       '#c60511',
       '#1876e5',
@@ -60,7 +60,19 @@ export const useTimeSeriesStore = defineStore('time-series', () => {
       '# f3f8d',
    ]
 
+   const embeddableKeys = [
+      'id',
+      'provider',
+      'dataset',
+      'station',
+      'datatype',
+      'period',
+      'color',
+   ]
+
    const timeSeriesList = ref<TimeSeries[]>([])
+
+   const hasToLoad = ref(false)
 
    // Actions
    const addTimeSeries = (timeSeries: TimeSeries) => {
@@ -71,12 +83,47 @@ export const useTimeSeriesStore = defineStore('time-series', () => {
       timeSeriesList.value = timeSeriesList.value.filter((_, i) => i !== index)
    }
 
+   const getTimeSeriesForEmbedCode = () => {
+      const data = [...timeSeriesList.value].map((item, index) => {
+         return Object.keys(item)
+            .map((key: string) =>
+               embeddableKeys.includes(key)
+                  ? `${key}_${index}=${encodeURIComponent(item[key])}`
+                  : ''
+            )
+            .filter((item) => item)
+            .join('&')
+      })
+
+      return data
+   }
+
+   const getBaseTimeSeriesObj = () => {
+      return {
+         id: randomId(),
+         provider: '',
+         dataset: '',
+         station: '',
+         datatype: '',
+         period: '',
+         color: colors[timeSeriesList.value.length],
+         data: [],
+         labels: [],
+      }
+   }
+
    return {
       timeSeriesList,
       colors,
+      embeddableKeys,
+      hasToLoad,
 
       // Actions
       addTimeSeries,
       removeTimeSeries,
+
+      // Getters
+      getTimeSeriesForEmbedCode,
+      getBaseTimeSeriesObj,
    }
 })
