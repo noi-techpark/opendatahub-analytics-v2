@@ -7,11 +7,10 @@ FROM node:20 AS builder
 WORKDIR /app
 
 COPY package*.json ./
-
 RUN yarn install
 
 COPY . .
-
+RUN source .env
 RUN yarn build-only
 
 # Stage 2: Serve the application using nginx
