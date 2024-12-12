@@ -6,12 +6,11 @@ FROM node:20 AS builder
 
 WORKDIR /app
 
-COPY package*.json ./
-RUN yarn install
-
 COPY . .
-SHELL [ "/bin/bash", "-c" ]
-RUN source .env.build
+# explicit copy due to .dockerignore
+COPY .env.build .env
+
+RUN yarn install
 RUN yarn build-only
 
 # Stage 2: Serve the application using nginx
@@ -19,7 +18,3 @@ FROM nginx:stable-alpine
 
 # Copy the built files from the builder stage
 COPY --from=builder /app/dist /usr/share/nginx/html
-
-EXPOSE 80
-
-CMD ["nginx", "-g", "daemon off;"]
