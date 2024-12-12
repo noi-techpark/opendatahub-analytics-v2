@@ -10,7 +10,7 @@ env:
   NODE_VERSION: 20.x
   PROJECT_NAME: opendatahub-analytics-v2
   DOCKER_IMAGE: ghcr.io/${{ github.repository }}/analytics
-  WORKING_DIRECTORY: .
+
 
 jobs:
   test:
@@ -37,10 +37,9 @@ jobs:
       - name: Create .env file
         uses: noi-techpark/github-actions/env-file@v2
         with:
-          working-directory: ${{ env.WORKING_DIRECTORY }}
+          destination-file: .env.build
         env:
           X_COMPOSE_PROJECT_NAME: ${{ env.PROJECT_NAME }}
-          X_SERVER_PORT: ${{ env.SERVER_PORT }}
           X_DOCKER_IMAGE: ${{ env.DOCKER_IMAGE }}
           X_DOCKER_TAG: ${{ env.DOCKER_TAG }}
           X_VITE_ENDPOINT_URL: https://analytics.opendatahub.com/v2
@@ -55,12 +54,11 @@ jobs:
       - name: Build and push images
         uses: noi-techpark/github-actions/docker-build-and-push@v2
         with:
-          working-directory: ${{ env.WORKING_DIRECTORY }}/infrastructure
+          working-directory: infrastructure
           docker-username: ${{ github.actor }}
           docker-password: ${{ secrets.GITHUB_TOKEN }}
 
-      - name: Customize values.yaml
-        working-directory: ${{ env.WORKING_DIRECTORY }}      
+      - name: Customize values.yaml    
         run: | 
           yq -i '.image.tag="${{ env.DOCKER_TAG }}"' ${{ env.VALUES_YAML }}          
           
@@ -69,7 +67,7 @@ jobs:
         with:
           k8s-name: ${{ env.K8S_NAME }}
           k8s-namespace: core
-          chart-path: ${{ env.WORKING_DIRECTORY}}/infrastructure/helm/analytics-v2
+          chart-path: infrastructure/helm/analytics-v2
           values-file: ${{ env.VALUES_YAML }}
           aws-access-key-id: ${{ secrets.AWS_DEV_ACCESS_KEY_ID }}
           aws-secret-access-key: ${{ secrets.AWS_DEV_ACCESS_KEY_SECRET }}

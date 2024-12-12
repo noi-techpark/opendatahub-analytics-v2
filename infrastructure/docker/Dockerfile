@@ -10,7 +10,9 @@ COPY package*.json ./
 RUN yarn install
 
 COPY . .
-RUN . .env
+COPY .env .env.build
+SHELL [ "/bin/bash", "-c" ]
+RUN source .env.build
 RUN yarn build-only
 
 # Stage 2: Serve the application using nginx
