@@ -23,7 +23,7 @@ jobs:
 
   deploy-test:
     runs-on: ubuntu-22.04
-    if: github.ref == 'refs/heads/infrastructure-v2'
+    if: github.ref == 'refs/heads/main'
     needs: test
     concurrency: deploy-test
     env:
