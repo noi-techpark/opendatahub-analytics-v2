@@ -10,7 +10,6 @@ COPY package*.json ./
 RUN yarn install
 
 COPY . .
-COPY .env .env.build
 SHELL [ "/bin/bash", "-c" ]
 RUN source .env.build
 RUN yarn build-only
