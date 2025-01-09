@@ -169,8 +169,8 @@ const toggleOpen = () => {
 }
 
 const onDuplicateTimeSeries = () => {
-   const { color } = getBaseTimeSeriesObj()
-   addTimeSeries({ ...timeSeries.value, data: [], labels: [], color })
+   const { id, color } = getBaseTimeSeriesObj()
+   addTimeSeries({ ...timeSeries.value, id, data: [], labels: [], color })
    popoverButton.value.$el.click()
 }
 

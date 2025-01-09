@@ -188,6 +188,7 @@ const queryStringToEmbed = computed(() => {
 const plotHeights = computed(() => [
    { label: t('common.auto'), value: 0 },
    { label: '500px', value: 500 },
+   { label: '700px', value: 700 },
 ])
 
 const selectedTime = computed(() => {
@@ -321,7 +322,8 @@ const setSavedTimeseries = async () => {
 
    const configToLoad = getConfigFromLocalStorage() || query
 
-   if (!configToLoad.selectedTimeId) return { hasLoadedNewData: false }
+   if (!configToLoad.selectedTimeId || timeSeriesList.value.length)
+      return { hasLoadedNewData: false }
 
    const data: Partial<TimeSeries>[] = []
 
@@ -380,6 +382,15 @@ const onSaveConfiguration = () => {
 watch(selectedTime, (newVal) => {
    getTimeseriesData()
 })
+
+watch(
+   () => timeSeriesList.value.length,
+   (newVal) => {
+      if (!newVal) return
+
+      getTimeseriesData()
+   }
+)
 
 onMounted(async () => {
    const { hasLoadedNewData } = await setSavedTimeseries()

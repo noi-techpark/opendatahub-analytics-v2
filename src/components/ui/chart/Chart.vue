@@ -30,7 +30,6 @@ import P from '../tags/P.vue'
 import { useTimeSeriesStore } from '../../../stores/time-series'
 import { getReadableDateWithTime } from '../../../utils/date-utils'
 
-// Register required Chart.js components
 ChartJS.register(
    Title,
    Tooltip,
@@ -41,7 +40,6 @@ ChartJS.register(
    PointElement
 )
 
-// Register the background plugin globally
 ChartJS.register({
    id: 'background',
    beforeDraw: (chart) => {
@@ -53,6 +51,28 @@ ChartJS.register({
       ctx.fillStyle = bgColor
       ctx.fillRect(0, 0, width, height)
       ctx.restore()
+   },
+})
+
+ChartJS.register({
+   id: 'verticalLine',
+   afterDraw: (chart) => {
+      if (chart.tooltip?._active && chart.tooltip._active.length) {
+         const ctx = chart.ctx
+         const activePoint = chart.tooltip._active[0]
+         const x = activePoint.element.x
+         const topY = chart.scales.y.top
+         const bottomY = chart.scales.y.bottom
+
+         ctx.save()
+         ctx.beginPath()
+         ctx.moveTo(x, topY)
+         ctx.lineTo(x, bottomY)
+         ctx.lineWidth = 1
+         ctx.strokeStyle = '#50742F'
+         ctx.stroke()
+         ctx.restore()
+      }
    },
 })
 
@@ -76,6 +96,8 @@ const chartData = computed(() => ({
       data: item.data,
       borderColor: item.color,
       fill: false,
+      pointRadius: 1.5,
+      pointHoverRadius: 1,
    })),
 }))
 
@@ -88,10 +110,16 @@ const chartOptions = computed(() => ({
       },
       tooltip: {
          enabled: true,
+         mode: 'index',
+         intersect: false,
       },
       background: {
-         color: '#fff', // Set white background
+         color: '#fff',
       },
+   },
+   interaction: {
+      mode: 'index',
+      intersect: false,
    },
    scales: {
       x: {

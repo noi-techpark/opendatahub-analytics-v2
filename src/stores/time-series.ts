@@ -10,6 +10,8 @@ export const useTimeSeriesStore = defineStore('time-series', () => {
    // State
    const colors = [
       '#114189',
+      '#aa147f',
+      '#80c5d0',
       '#2695ef',
       '#f988a7',
       '#2e9bc1',
@@ -21,8 +23,7 @@ export const useTimeSeriesStore = defineStore('time-series', () => {
       '#66e266',
       '#5df6f8',
       '#f11c6b',
-      '#aa147f',
-      '#80c5d0',
+
       '#59cd56',
       '# c806f',
       '#939bc6',
