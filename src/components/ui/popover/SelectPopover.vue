@@ -9,6 +9,7 @@ SPDX-License-Identifier: AGPL-3.0-or-later
          ref="popoverButtonCustom"
          :open="open"
          :disabled="disabled"
+         :loading="loading"
          :text="text"
       />
 

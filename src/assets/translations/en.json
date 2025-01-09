@@ -12,7 +12,11 @@
       "search": "Search",
       "save": "Save",
       "no-data": "No data available",
-      "more-details": "More Details"
+      "more-details": "More Details",
+      "delete": "Delete",
+      "edit": "Edit",
+      "confirm": "Confirm",
+      "duplicate": "Duplicate"
    },
    "auth": {
       "login": "Login",
@@ -80,9 +84,13 @@
             "image": "Export chart as image"
          },
          "embed": "Embed code",
-         "save": "Save configured charts"
+         "save": "Save configured charts",
+         "delete-dialog": {
+            "title": "Delete Time series",
+            "content": "Are you sure you want to delete this Time series?"
+         }
       },
-      "charts-add": {
+      "charts-add-edit": {
          "no-time-series": "Please, add a time series to load.",
          "title": "Add a new Time series",
          "provider": "Dataprovider",
@@ -102,6 +110,7 @@
          "period-description": "Here is a short description",
          "period-select": "Select period",
          "save": "Create Time series",
+         "update": "Update Time series",
          "search-for-dataprovider": "Search for dataprovider",
          "search-for-dataset": "Search for dataset",
          "search-for-station": "Search for station",

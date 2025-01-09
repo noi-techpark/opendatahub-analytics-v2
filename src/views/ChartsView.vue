@@ -46,7 +46,7 @@ SPDX-License-Identifier: AGPL-3.0-or-later
                :plotHeight="selectedPlotHeight"
             />
             <P v-else bold large class="pt-4">{{
-               t('views.charts-add.no-time-series')
+               t('views.charts-add-edit.no-time-series')
             }}</P>
          </div>
 
@@ -174,10 +174,14 @@ const updatedAt = computed(() => {
 })
 
 const embeddableCode = computed(() => {
-   return `${window.location.origin}/charts?${queryStringToEmbed.value}`
+   return `${window.location.origin}/charts${queryStringToEmbed.value ? '?' + queryStringToEmbed.value : ''}`
 })
 
 const queryStringToEmbed = computed(() => {
+   const seriesToEmbed = getTimeSeriesForEmbedCode()
+
+   if (!seriesToEmbed.length) return ''
+
    return `from=${selectedTime.value.from.toJSON()}&to=${selectedTime.value.to.toJSON()}&selectedTimeId=${selectedTimeId.value}&${getTimeSeriesForEmbedCode().join('&')}`
 })
 

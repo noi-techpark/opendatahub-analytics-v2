@@ -62,7 +62,9 @@ const { t } = useI18n()
 const showAlarms = ref<boolean>(false)
 
 const showFooter = ref<boolean>(true)
-const page = ref<'map' | 'charts' | 'charts-add' | 'events' | 'about'>()
+const page = ref<
+   'map' | 'charts' | 'charts-add' | 'charts-edit' | 'events' | 'about'
+>()
 
 const mapLayerSelection = computed(() => route.path === '/' && !!route.hash)
 
@@ -97,11 +99,12 @@ watch(route, () => {
          showFooter.value = true
          break
       }
-      case '/charts/add': {
-         page.value = 'charts-add'
+      case '/charts/add':
+      case '/charts/edit':
+         page.value =
+            route.path === '/charts/add' ? 'charts-add' : 'charts-edit'
          showFooter.value = false
          break
-      }
       case '/events': {
          showFooter.value = true
          page.value = 'events'

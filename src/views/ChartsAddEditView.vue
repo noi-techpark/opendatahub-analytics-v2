@@ -5,24 +5,24 @@ SPDX-License-Identifier: AGPL-3.0-or-later
 
 <template>
    <main class="charts-add-view">
-      <H tag="h1">{{ $t('views.charts-add.title') }}</H>
+      <H tag="h1">{{ t('views.charts-add-edit.title') }}</H>
 
       <div class="input-cards-ct">
          <div class="input-card first">
             <div class="input-card-header">
                <div class="input-card-text">
-                  <H tag="h2">{{ $t('views.charts-add.provider') }}</H>
-                  <P>{{ $t('views.charts-add.provider-description') }}</P>
+                  <H tag="h2">{{ t('views.charts-add-edit.provider') }}</H>
+                  <P>{{ t('views.charts-add-edit.provider-description') }}</P>
                </div>
                <ChardAddSelectWrapper>
                   <SelectPopover
                      v-model="selection.provider"
                      :text="
                         selection.provider ||
-                        $t('views.charts-add.provider-select')
+                        t('views.charts-add-edit.provider-select')
                      "
                      :search-label-placeholder="
-                        $t('views.charts-add.search-for-dataprovider')
+                        t('views.charts-add-edit.search-for-dataprovider')
                      "
                      :loading="loadingState.provider"
                      :options="providerOptions"
@@ -36,19 +36,20 @@ SPDX-License-Identifier: AGPL-3.0-or-later
          <div class="input-card">
             <div class="input-card-header">
                <div class="input-card-text">
-                  <H tag="h2">{{ $t('views.charts-add.dataset') }}</H>
-                  <P>{{ $t('views.charts-add.dataset-description') }}</P>
+                  <H tag="h2">{{ t('views.charts-add-edit.dataset') }}</H>
+                  <P>{{ t('views.charts-add-edit.dataset-description') }}</P>
                </div>
                <SelectPopover
                   v-model="selection.dataset"
                   :disabled="!selection.provider"
                   :text="
-                     selection.dataset || $t('views.charts-add.dataset-select')
+                     selection.dataset ||
+                     t('views.charts-add-edit.dataset-select')
                   "
                   :options="datasetOptions"
                   :loading="loadingState.dataset"
                   :search-label-placeholder="
-                     $t('views.charts-add.search-for-dataset')
+                     t('views.charts-add-edit.search-for-dataset')
                   "
                   show-search
                   @search="useFetchDatasetOptions"
@@ -59,31 +60,32 @@ SPDX-License-Identifier: AGPL-3.0-or-later
          <div class="input-card">
             <div class="input-card-header">
                <div class="input-card-text">
-                  <H tag="h2">{{ $t('views.charts-add.station') }}</H>
-                  <P>{{ $t('views.charts-add.station-description') }}</P>
+                  <H tag="h2">{{ t('views.charts-add-edit.station') }}</H>
+                  <P>{{ t('views.charts-add-edit.station-description') }}</P>
                </div>
                <SelectPopover
                   v-model="selection.station"
                   :disabled="!selection.dataset || stationFromMap"
                   :text="
-                     selection.station || $t('views.charts-add.station-select')
+                     selection.station ||
+                     t('views.charts-add-edit.station-select')
                   "
                   :options="stationOptions"
                   :loading="loadingState.station"
                   :search-label-placeholder="
-                     $t('views.charts-add.search-for-station')
+                     t('views.charts-add-edit.search-for-station')
                   "
                   show-search
                   @search="useFetchStationOptions"
                />
             </div>
             <Switch v-model="stationFromMap" :disabled="!selection.dataset">
-               <P>{{ $t('views.charts-add.station-map') }}</P>
+               <P>{{ t('views.charts-add-edit.station-map') }}</P>
             </Switch>
 
             <template v-if="stationFromMap">
                <IconText
-                  :text="$t('views.charts-add.map-tooltip')"
+                  :text="t('views.charts-add-edit.map-tooltip')"
                   class="map-tooltip"
                >
                   <LightbulbIcon class="text-grey-3" />
@@ -105,20 +107,20 @@ SPDX-License-Identifier: AGPL-3.0-or-later
          <div class="input-card">
             <div class="input-card-header">
                <div class="input-card-text">
-                  <H tag="h2">{{ $t('views.charts-add.datatype') }}</H>
-                  <P>{{ $t('views.charts-add.datatype-description') }}</P>
+                  <H tag="h2">{{ t('views.charts-add-edit.datatype') }}</H>
+                  <P>{{ t('views.charts-add-edit.datatype-description') }}</P>
                </div>
                <SelectPopover
                   v-model="selection.datatype"
                   :disabled="!selection.station"
                   :text="
                      selection.datatype ||
-                     $t('views.charts-add.datatype-select')
+                     t('views.charts-add-edit.datatype-select')
                   "
                   :options="datatypeOptions"
                   :loading="loadingState.datatype"
                   :search-label-placeholder="
-                     $t('views.charts-add.search-for-datatype')
+                     t('views.charts-add-edit.search-for-datatype')
                   "
                   show-search
                   @search="useFetchDatatypeOptions"
@@ -129,19 +131,20 @@ SPDX-License-Identifier: AGPL-3.0-or-later
          <div class="input-card last">
             <div class="input-card-header">
                <div class="input-card-text">
-                  <H tag="h2">{{ $t('views.charts-add.period') }}</H>
-                  <P>{{ $t('views.charts-add.period-description') }}</P>
+                  <H tag="h2">{{ t('views.charts-add-edit.period') }}</H>
+                  <P>{{ t('views.charts-add-edit.period-description') }}</P>
                </div>
                <SelectPopover
                   v-model="selection.period"
                   :disabled="!selection.datatype"
                   :text="
-                     selection.period || $t('views.charts-add.period-select')
+                     selection.period ||
+                     t('views.charts-add-edit.period-select')
                   "
                   :options="periodOptions"
                   :loading="loadingState.period"
                   :search-label-placeholder="
-                     $t('views.charts-add.search-for-period')
+                     t('views.charts-add-edit.search-for-period')
                   "
                   show-search
                />
@@ -149,39 +152,57 @@ SPDX-License-Identifier: AGPL-3.0-or-later
          </div>
 
          <div class="buttons-ct">
-            <Button outline @click="cancel">{{ $t('common.cancel') }}</Button>
-            <Button @click="save">{{ $t('views.charts-add.save') }}</Button>
+            <Button outline @click="cancel">{{ t('common.cancel') }}</Button>
+            <Button :disabled="isSaveUpdateDisabled" @click="save">{{
+               isEdit
+                  ? t('views.charts-add-edit.update')
+                  : t('views.charts-add-edit.save')
+            }}</Button>
          </div>
       </div>
    </main>
 </template>
 
 <script setup lang="ts">
-import { useRouter } from 'vue-router'
+import { useRoute, useRouter } from 'vue-router'
 import Button from '../components/ui/Button.vue'
 import H from '../components/ui/tags/H.vue'
 import P from '../components/ui/tags/P.vue'
 import Switch from '../components/ui/Switch.vue'
-import { computed, onMounted, ref, watch } from 'vue'
+import { computed, nextTick, onMounted, ref, watch } from 'vue'
 import SelectPopover from '../components/ui/popover/SelectPopover.vue'
-import { useFetch } from '@vueuse/core'
+import { useFetch, useSessionStorage } from '@vueuse/core'
 import { SelectOption } from '../types/select'
 import ChardAddSelectWrapper from '../components/ui/chart/ChardAddSelectWrapper.vue'
 import { TimeSeries } from '../types/time-series'
 import { useTimeSeriesStore } from '../stores/time-series'
-import { randomId } from '../components/utils/useRandomId'
 import IconText from '../components/ui/IconText.vue'
 import LightbulbIcon from '../components/ui/svg/LightbulbIcon.vue'
 import Map from '../components/ui/map/Map.vue'
 import { MapMarkerDetails } from '../types/map-layer'
 import { DataMarker, DataPoint } from '../types/api'
 import { storeToRefs } from 'pinia'
+import { useI18n } from 'vue-i18n'
 
-const { addTimeSeries, getBaseTimeSeriesObj } = useTimeSeriesStore()
+const {
+   addTimeSeries,
+   updateTimeSeries,
+   getBaseTimeSeriesObj,
+   timeSeriesList,
+} = useTimeSeriesStore()
+
+const seriesToEditFromStorage = useSessionStorage(
+   'series-to-edit',
+   getBaseTimeSeriesObj()
+)
+
+const { t } = useI18n()
 
 const { hasToLoad } = storeToRefs(useTimeSeriesStore())
 
 const router = useRouter()
+const route = useRoute()
+const isSettingSelectionToEdit = ref<boolean>(false)
 const stationFromMap = ref<boolean>(false)
 const loadingState = ref({
    provider: false,
@@ -198,6 +219,16 @@ const datatypes = ref<{ tname: string; tdescription: string }[]>([])
 const markers = ref<DataMarker[]>([])
 
 const selection = ref<TimeSeries>(getBaseTimeSeriesObj())
+
+const isEdit = computed(() => {
+   return route.name === 'charts-edit'
+})
+
+const isSaveUpdateDisabled = computed(() => {
+   const { provider, dataset, station, datatype, period } = selection.value
+
+   return !provider || !dataset || !station || !datatype || !period
+})
 
 const providerOptions = computed<SelectOption[]>(() => {
    return providers.value.map((item) => ({
@@ -239,9 +270,12 @@ const cancel = () => {
 }
 
 const save = () => {
-   // TODO: save the time series
+   if (isEdit.value) {
+      updateTimeSeries(selection.value)
+   } else {
+      addTimeSeries(selection.value)
+   }
 
-   addTimeSeries(selection.value)
    hasToLoad.value = true
    router.push({ name: 'charts' })
 }
@@ -339,14 +373,50 @@ const useFetchDatatypeOptions = async (searchVal?: string) => {
    loadingState.value.datatype = false
 }
 
-onMounted(() => {
-   useFetchProviderOptions()
+const setSelectionToEdit = () => {
+   const seriesId = route.query.id
+   const timeSeriesFromStore = timeSeriesList.find(
+      (item) => item.id === route.query.id
+   )
+
+   const selectionToEdit = timeSeriesFromStore
+      ? { ...timeSeriesFromStore, data: [], labels: [] }
+      : seriesToEditFromStorage.value.id === seriesId
+        ? { ...seriesToEditFromStorage.value, data: [], labels: [] }
+        : undefined
+
+   if (!selectionToEdit) {
+      router.push({ name: 'charts' })
+      return
+   }
+
+   isSettingSelectionToEdit.value = true
+   selection.value = selectionToEdit
+   seriesToEditFromStorage.value = selectionToEdit
+
+   nextTick(() => {
+      isSettingSelectionToEdit.value = false
+   })
+}
+
+onMounted(async () => {
+   await useFetchProviderOptions()
+
+   if (route.query.id) {
+      setSelectionToEdit()
+   }
 })
 
 watch(
    () => selection.value.provider,
    (newVal) => {
-      if (!newVal) return
+      if (!isSettingSelectionToEdit.value) {
+         selection.value.dataset = ''
+      }
+
+      if (!newVal) {
+         return
+      }
 
       useFetchDatasetOptions()
    }
@@ -355,8 +425,13 @@ watch(
 watch(
    () => selection.value.dataset,
    (newVal) => {
-      if (!newVal) return
+      if (!isSettingSelectionToEdit.value) {
+         selection.value.station = ''
+      }
 
+      if (!newVal) {
+         return
+      }
       useFetchStationOptions()
    }
 )
@@ -364,9 +439,27 @@ watch(
 watch(
    () => selection.value.station,
    (newVal) => {
-      if (!newVal) return
+      if (!isSettingSelectionToEdit.value) {
+         selection.value.datatype = ''
+      }
 
+      if (!newVal) {
+         return
+      }
       useFetchDatatypeOptions()
+   }
+)
+
+watch(
+   () => selection.value.datatype,
+   (newVal) => {
+      if (!isSettingSelectionToEdit.value) {
+         selection.value.period = ''
+      }
+
+      if (!newVal) {
+         return
+      }
    }
 )
 </script>
@@ -394,7 +487,7 @@ watch(
          }
 
          & .map-tooltip {
-            @apply border-grey-3 bg-grey-3/10 border py-2;
+            @apply border border-grey-3 bg-grey-3/10 py-2;
          }
 
          & .map-ct {
