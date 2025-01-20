@@ -88,11 +88,16 @@
          "delete-dialog": {
             "title": "Delete Time series",
             "content": "Are you sure you want to delete this Time series?"
+         },
+         "tooltip": {
+            "zoom": "Use scroll wheel or hold {shift} and drag to zoom.",
+            "pan": "Click and drag to pan."
          }
       },
       "charts-add-edit": {
          "no-time-series": "Please, add a time series to load.",
-         "title": "Add a new Time series",
+         "title-add": "Add a new Time series",
+         "title-edit": "Edit Time series",
          "provider": "Dataprovider",
          "provider-description": "Here is a short description",
          "provider-select": "Select dataprovider",

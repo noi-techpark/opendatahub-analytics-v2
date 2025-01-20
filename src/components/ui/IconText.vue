@@ -1,10 +1,11 @@
 <template>
    <div
-      class="icon-text-component __clickable"
+      class="icon-text-component"
       :class="{
          hover,
          reverse,
          grow,
+         __clickable: clickable,
          'small-gap': smallGap,
          'no-padding': noPadding,
          'no-padding-x': noPaddingX,
@@ -26,6 +27,7 @@ type Props = {
    small?: boolean
    grow?: boolean
    reverse?: boolean
+   clickable?: boolean
    smallGap?: boolean
    noPadding?: boolean
    noPaddingX?: boolean
@@ -33,6 +35,7 @@ type Props = {
 }
 const props = withDefaults(defineProps<Props>(), {
    hover: true,
+   clickable: true,
 })
 </script>
 

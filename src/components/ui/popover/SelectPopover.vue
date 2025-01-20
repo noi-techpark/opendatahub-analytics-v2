@@ -5,7 +5,7 @@ SPDX-License-Identifier: AGPL-3.0-or-later
 -->
 <template>
    <Popover v-slot="{ open }" class="relative">
-      <PopoverButtonCustom
+      <SelectPopoverButtonCustom
          ref="popoverButtonCustom"
          :open="open"
          :disabled="disabled"
@@ -32,6 +32,7 @@ SPDX-License-Identifier: AGPL-3.0-or-later
             </header>
             <Listbox v-model="selectedOption" :disabled="loading">
                <ListboxOptions
+                  ref="listboxRef"
                   class="max-h-60 overflow-y-auto overflow-x-hidden"
                   static
                >
@@ -80,15 +81,16 @@ import { ref, computed, watch } from 'vue'
 import { Popover, PopoverPanel } from '@headlessui/vue'
 import { Listbox, ListboxOptions, ListboxOption } from '@headlessui/vue'
 import PopoverTransition from './PopoverTransition.vue'
-import PopoverButtonCustom from './PopoverButtonCustom.vue'
+import SelectPopoverButtonCustom from './SelectPopoverButtonCustom.vue'
 import { SelectOption } from '../../../types/select'
 import InputSearch from '../input/InputSearch.vue'
 import { useI18n } from 'vue-i18n'
 import Button from '../Button.vue'
 
-import { useDebounceFn } from '@vueuse/core'
+import { useDebounceFn, useEventListener } from '@vueuse/core'
 
 const popoverButtonCustom = ref()
+const listboxRef = ref()
 
 const { t } = useI18n()
 
@@ -108,13 +110,18 @@ type Props = {
 
 const props = defineProps<Props>()
 
-const emit = defineEmits(['save', 'cancel', 'search'])
+const emit = defineEmits(['save', 'cancel', 'search', 'scrollEnd'])
 
 const searchQuery = ref('')
 
 const filteredOptions = computed(() => {
+   const options = props.options || []
    if (props.loading) {
-      return Array(5).fill({ label: '...', value: '...' })
+      const placeholderItems = options.length ? 1 : 5
+      return [
+         ...options,
+         ...Array(placeholderItems).fill({ label: '...', value: '...' }),
+      ]
    }
 
    return props.searchLocally
@@ -145,4 +152,19 @@ const onCancel = () => {
 
    popoverButtonCustom.value.clickPopover()
 }
+
+const handleScroll = () => {
+   if (props.loading || props.disabled) return
+
+   const listbox = listboxRef.value
+
+   if (listbox) {
+      const { scrollTop, scrollHeight, clientHeight } = listbox.$el
+      if (scrollTop + clientHeight >= scrollHeight - 100) {
+         emit('scrollEnd')
+      }
+   }
+}
+
+useEventListener(listboxRef, 'scroll', handleScroll)
 </script>

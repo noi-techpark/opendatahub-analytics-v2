@@ -4,10 +4,8 @@
          <P bold>{{ title }}</P>
          <P>{{ $t('common.updated-at', { time: updatedAt }) }}</P>
       </div>
-      <div
-         class="flex-grow"
-         :style="plotHeight ? { height: `${plotHeight}px` } : undefined"
-      >
+
+      <div class="flex-grow" :style="{ height: `${plotHeight || 350}px` }">
          <Line ref="chart" :data="chartData" :options="chartOptions" />
       </div>
    </div>
@@ -15,6 +13,7 @@
 
 <script lang="ts" setup>
 import { Line } from 'vue-chartjs'
+import zoomPlugin from 'chartjs-plugin-zoom'
 import {
    Chart as ChartJS,
    Title,
@@ -39,6 +38,8 @@ ChartJS.register(
    LinearScale,
    PointElement
 )
+
+ChartJS.register(zoomPlugin)
 
 ChartJS.register({
    id: 'background',
@@ -115,6 +116,27 @@ const chartOptions = computed(() => ({
       },
       background: {
          color: '#fff',
+      },
+      zoom: {
+         zoom: {
+            wheel: {
+               enabled: true,
+            },
+            drag: {
+               enabled: true,
+               backgroundColor: 'rgba(0, 123, 255, 0.3)',
+               modifierKey: 'shift',
+            },
+            mode: 'x',
+         },
+         pan: {
+            enabled: true,
+            mode: 'x',
+         },
+         limits: {
+            x: { min: 'original', max: 'original' },
+            y: { min: 'original', max: 'original' },
+         },
       },
    },
    interaction: {

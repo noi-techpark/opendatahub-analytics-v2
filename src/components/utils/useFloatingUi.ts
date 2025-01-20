@@ -23,8 +23,6 @@ export interface UseFloatingUi {
 export const useFloatingUi = (
    options: UseFloatingUi
 ): [Ref<any>, Ref<any>, Ref<Placement>] => {
-   console.log(options)
-
    const reference = ref<any>(null)
    const tooltip = ref<any>(null)
    const placement = ref<Placement>(options.placement)

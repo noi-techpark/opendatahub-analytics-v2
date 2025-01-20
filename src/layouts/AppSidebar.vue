@@ -26,13 +26,13 @@ SPDX-License-Identifier: AGPL-3.0-or-later
                reverse
                :hover="false"
             >
-               <IconInfo />
+               <InfoIcon />
             </IconText>
          </Switch>
 
          <RouterLink to="/about" v-else>
             <IconText :text="$t('common.about')">
-               <IconInfo />
+               <InfoIcon />
             </IconText>
          </RouterLink>
       </div>
@@ -46,7 +46,7 @@ import SidebarMapContent from '../components/nav/SidebarMapContent.vue'
 import SidebarChartsContent from '../components/nav/SidebarChartsContent.vue'
 import SidebarEventsContent from '../components/nav/SidebarEventsContent.vue'
 import IconText from '../components/ui/IconText.vue'
-import IconInfo from '../components/tmp/components/svg/IconInfo.vue'
+import InfoIcon from '../components/ui/svg/InfoIcon.vue'
 import SidebarMapHeader from '../components/nav/SidebarMapHeader.vue'
 import Divider from '../components/ui/Divider.vue'
 import { useMapLayerStore } from '../stores/map-layers'
@@ -71,11 +71,14 @@ const mapLayerSelection = computed(() => route.path === '/' && !!route.hash)
 const back = computed(() => {
    const isVisible =
       !['/', '/charts', '/events', '/events/weather'].includes(route.path) ||
-      route.hash
+      !!route.hash
    const title = route.hash
       ? layerStore.getSelectedLayer?.title || t('common.back')
       : t('common.back')
-   const previousRoute = router?.options.history?.state?.back || '/'
+
+   const routerState = router.options.history.state
+   const previousRoute =
+      routerState && routerState.back ? routerState.back.toString() : '/'
 
    return {
       title,

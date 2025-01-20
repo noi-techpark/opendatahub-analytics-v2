@@ -12,8 +12,8 @@ SPDX-License-Identifier: AGPL-3.0-or-later
             </RouterLink>
 
             <div class="header-menu-icon">
-               <IconClose v-if="props.isMenuOpen" @click="toggleMenu" />
-               <IconMenu v-else @click="toggleMenu" />
+               <CloseIcon v-if="props.isMenuOpen" @click="toggleMenu" />
+               <MenuIcon v-else @click="toggleMenu" />
             </div>
          </div>
 
@@ -55,11 +55,11 @@ SPDX-License-Identifier: AGPL-3.0-or-later
 <script lang="ts" setup>
 import { useI18n } from 'vue-i18n'
 
-import IconMenu from '../components/tmp/components/svg/IconMenu.vue'
-import IconClose from '../components/tmp/components/svg/IconClose.vue'
 import H from '../components/ui/tags/H.vue'
 import OpenInNewIcon from '../components/ui/svg/OpenInNewIcon.vue'
 import MenuUserSection from '../domain/auth/MenuUserSection.vue'
+import MenuIcon from '../components/ui/svg/MenuIcon.vue'
+import CloseIcon from '../components/ui/svg/CloseIcon.vue'
 
 type Props = {
    isMenuOpen: boolean
@@ -80,7 +80,7 @@ function toggleMenu() {
 
 <style lang="postcss" scoped>
 .app-header-ct {
-   @apply sticky inset-x-0 top-0 z-[999] w-full select-none border-b bg-grey;
+   @apply sticky inset-x-0 top-0 z-[1] w-full select-none border-b bg-grey;
 
    & .app-header {
       @apply m-auto mx-auto flex w-full gap-4 px-6;

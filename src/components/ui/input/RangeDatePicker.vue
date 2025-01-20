@@ -6,7 +6,7 @@ SPDX-License-Identifier: AGPL-3.0-or-later
 
 <template>
    <Popover v-slot="{ open }" class="relative">
-      <PopoverButtonCustom
+      <SelectPopoverButtonCustom
          ref="popoverButtonCustom"
          :open="open"
          :disabled="disabled"
@@ -56,7 +56,7 @@ SPDX-License-Identifier: AGPL-3.0-or-later
 <script lang="ts" setup>
 import { onMounted, ref } from 'vue'
 import { Popover, PopoverPanel } from '@headlessui/vue'
-import PopoverButtonCustom from '../popover/PopoverButtonCustom.vue'
+import SelectPopoverButtonCustom from '../popover/SelectPopoverButtonCustom.vue'
 import VueDatePicker from '@vuepic/vue-datepicker'
 import '@vuepic/vue-datepicker/dist/main.css'
 import Button from '../Button.vue'

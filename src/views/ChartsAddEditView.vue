@@ -5,7 +5,11 @@ SPDX-License-Identifier: AGPL-3.0-or-later
 
 <template>
    <main class="charts-add-view">
-      <H tag="h1">{{ t('views.charts-add-edit.title') }}</H>
+      <H tag="h1">{{
+         isEdit
+            ? t('views.charts-add-edit.title-edit')
+            : t('views.charts-add-edit.title-add')
+      }}</H>
 
       <div class="input-cards-ct">
          <div class="input-card first">
@@ -77,6 +81,7 @@ SPDX-License-Identifier: AGPL-3.0-or-later
                   "
                   show-search
                   @search="useFetchStationOptions"
+                  @scrollEnd="onScrollEndStations()"
                />
             </div>
             <Switch v-model="stationFromMap" :disabled="!selection.dataset">
@@ -124,6 +129,7 @@ SPDX-License-Identifier: AGPL-3.0-or-later
                   "
                   show-search
                   @search="useFetchDatatypeOptions"
+                  @scrollEnd="onScrollEndDatatypes()"
                />
             </div>
          </div>
@@ -212,11 +218,24 @@ const loadingState = ref({
    period: false,
 })
 
+const pagination = ref({
+   stations: {
+      lastSearchVal: '',
+      lastPage: 1,
+   },
+   datatypes: {
+      lastSearchVal: '',
+      lastPage: 1,
+   },
+})
+
 const providers = ref<{ sorigin: string }[]>([])
 const datasets = ref<{ stype: string }[]>([])
 const stations = ref<DataPoint[]>([])
 const datatypes = ref<{ tname: string; tdescription: string }[]>([])
 const markers = ref<DataMarker[]>([])
+
+const DEFAULT_LIMIT = 100
 
 const selection = ref<TimeSeries>(getBaseTimeSeriesObj())
 
@@ -266,7 +285,10 @@ const periodOptions = computed(() => {
 })
 
 const cancel = () => {
-   router.replace(router?.options.history?.state?.back || '/')
+   const routerState = router.options.history.state
+   const backRoute =
+      routerState && routerState.back ? routerState.back.toString() : '/'
+   router.replace(backRoute)
 }
 
 const save = () => {
@@ -327,22 +349,77 @@ const useFetchDatasetOptions = async (searchVal?: string) => {
    loadingState.value.dataset = false
 }
 
-const useFetchStationOptions = async (searchVal?: string) => {
-   // TODO: implement infinite scroll
+const useFetchStationOptions = async (searchVal?: string, page = 1) => {
    loadingState.value.station = true
 
    if (searchVal) {
       selection.value.station = ''
    }
 
+   if ((searchVal || '') !== pagination.value.stations.lastSearchVal) {
+      pagination.value.stations.lastPage = 1
+      page = 1
+   }
+
+   const { limit, offset } = useComputePagination(page)
+
    const searchString = useComputeILIKESearch('sname', searchVal)
 
-   const dataUrl = `${import.meta.env.VITE_ODH_MOBILITY_API_URI}/flat/${selection.value.dataset}?limit=100&offset=0&select=sname,scode,scoordinate,stype&where=and(${searchString ? searchString + ',' : ''}sorigin.eq.${selection.value.provider})&shownull=false&distinct=true`
+   const dataUrl = `${import.meta.env.VITE_ODH_MOBILITY_API_URI}/flat/${selection.value.dataset}?limit=${limit}&offset=${offset}&select=sname,scode,scoordinate,stype&where=and(${searchString ? searchString + ',' : ''}sorigin.eq.${selection.value.provider})&shownull=false&distinct=true`
 
    const { data } = await useFetch(dataUrl).json()
-   stations.value = data.value.data
+   const stationsData = data.value.data
 
-   markers.value = data.value.data.map(
+   if (offset > 0) {
+      stations.value = [...stations.value, ...stationsData]
+      markers.value = [
+         ...markers.value,
+         ...getMarkersFromStations(stationsData),
+      ]
+   } else {
+      stations.value = stationsData
+      markers.value = getMarkersFromStations(stationsData)
+   }
+
+   pagination.value.stations.lastSearchVal = searchVal || ''
+   loadingState.value.station = false
+}
+
+const useFetchDatatypeOptions = async (searchVal?: string, page = 1) => {
+   loadingState.value.datatype = true
+
+   if (searchVal) {
+      selection.value.datatype = ''
+   }
+
+   if ((searchVal || '') !== pagination.value.datatypes.lastSearchVal) {
+      pagination.value.datatypes.lastPage = 1
+      page = 1
+   }
+
+   const { limit, offset } = useComputePagination(page)
+
+   const searchString = useComputeILIKESearch('tdescription', searchVal)
+
+   const dataUrl = `${import.meta.env.VITE_ODH_MOBILITY_API_URI}/flat/${selection.value.dataset}/*?limit=${limit}&offset=${offset}&select=tname,tdescription&where=and(${searchString ? searchString + ',' : ''}sorigin.eq.${selection.value.provider})&shownull=false&distinct=true`
+
+   const { data } = await useFetch(dataUrl).json()
+
+   const datatypesData = data.value.data
+
+   if (offset > 0) {
+      datatypes.value = [...datatypes.value, ...datatypesData]
+   } else {
+      datatypes.value = datatypesData
+   }
+
+   pagination.value.datatypes.lastSearchVal = searchVal || ''
+
+   loadingState.value.datatype = false
+}
+
+const getMarkersFromStations = (data: DataPoint[]) => {
+   return [...data].map(
       (d): DataMarker => ({
          scode: d.scode,
          sname: d.sname,
@@ -351,26 +428,13 @@ const useFetchStationOptions = async (searchVal?: string) => {
          coordinates: [d.scoordinate?.x || 0, d.scoordinate?.y || 0],
       })
    )
-
-   loadingState.value.station = false
 }
 
-const useFetchDatatypeOptions = async (searchVal?: string) => {
-   // TODO: implement infinite scroll
-   loadingState.value.datatype = true
-
-   if (searchVal) {
-      selection.value.datatype = ''
+const useComputePagination = (page: number) => {
+   return {
+      limit: page * DEFAULT_LIMIT,
+      offset: (page - 1) * DEFAULT_LIMIT,
    }
-
-   const searchString = useComputeILIKESearch('tdescription', searchVal)
-
-   const dataUrl = `${import.meta.env.VITE_ODH_MOBILITY_API_URI}/flat/${selection.value.dataset}/*?limit=100&offset=0&select=tname,tdescription&where=and(${searchString ? searchString + ',' : ''}sorigin.eq.${selection.value.provider})&shownull=false&distinct=true`
-
-   const { data } = await useFetch(dataUrl).json()
-   datatypes.value = data.value.data
-
-   loadingState.value.datatype = false
 }
 
 const setSelectionToEdit = () => {
@@ -397,6 +461,20 @@ const setSelectionToEdit = () => {
    nextTick(() => {
       isSettingSelectionToEdit.value = false
    })
+}
+
+const onScrollEndStations = () => {
+   pagination.value.stations.lastPage += 1
+   const { lastPage, lastSearchVal } = pagination.value.stations
+
+   useFetchStationOptions(lastSearchVal, lastPage)
+}
+
+const onScrollEndDatatypes = () => {
+   pagination.value.datatypes.lastPage += 1
+   const { lastPage, lastSearchVal } = pagination.value.datatypes
+
+   useFetchDatatypeOptions(lastSearchVal, lastPage)
 }
 
 onMounted(async () => {
@@ -432,6 +510,10 @@ watch(
       if (!newVal) {
          return
       }
+
+      pagination.value.stations.lastPage = 1
+      pagination.value.stations.lastSearchVal = ''
+
       useFetchStationOptions()
    }
 )
@@ -446,6 +528,10 @@ watch(
       if (!newVal) {
          return
       }
+
+      pagination.value.datatypes.lastPage = 1
+      pagination.value.datatypes.lastSearchVal = ''
+
       useFetchDatatypeOptions()
    }
 )
