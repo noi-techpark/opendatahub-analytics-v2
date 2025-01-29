@@ -20,6 +20,7 @@
       "@vuepic/vue-datepicker": "^10.0.0",
       "@vueuse/core": "^11.1.0",
       "chart.js": "^4.4.4",
+      "chartjs-plugin-zoom": "^2.2.0",
       "date-fns": "^4.1.0",
       "jwt-decode": "^4.0.0",
       "keycloak-js": "^26.0.0",

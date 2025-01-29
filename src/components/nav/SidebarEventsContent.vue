@@ -27,7 +27,6 @@ SPDX-License-Identifier: AGPL-3.0-or-later
 
 <script lang="ts" setup>
 import { ref, watch } from 'vue'
-import RadioCustom from '../tmp/components/radio/RadioCustom.vue'
 import Checkbox from '../ui/Checkbox.vue'
 import { useRoute } from 'vue-router'
 import Divider from '../ui/Divider.vue'

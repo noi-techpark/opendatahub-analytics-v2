@@ -6,7 +6,7 @@ import MapView from '../views/MapView.vue'
 import ChartsView from '../views/ChartsView.vue'
 import EventsView from '../views/EventsView.vue'
 import AboutView from '../views/AboutView.vue'
-import ChartsAddView from '../views/ChartsAddView.vue'
+import ChartsAddEditView from '../views/ChartsAddEditView.vue'
 import EventsWeatherView from '../views/EventsWeatherView.vue'
 
 const router = createRouter({
@@ -25,7 +25,12 @@ const router = createRouter({
       {
          path: '/charts/add',
          name: 'charts-add',
-         component: ChartsAddView,
+         component: ChartsAddEditView,
+      },
+      {
+         path: '/charts/edit',
+         name: 'charts-edit',
+         component: ChartsAddEditView,
       },
       {
          path: '/events',

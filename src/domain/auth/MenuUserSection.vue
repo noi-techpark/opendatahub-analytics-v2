@@ -64,7 +64,7 @@ SPDX-License-Identifier: AGPL-3.0-or-later
             </PopoverCustomButton>
          </template>
          <template #container>
-            <PopoverCustomPanel class="mt-1 w-56" :has-close-button="false">
+            <PopoverCustomPanel class="mt-1 w-56">
                <button
                   class="flex w-full rounded p-4 hover:bg-gray-50 focus-visible:outline-offset-2"
                   @click="onLogin"
@@ -86,16 +86,16 @@ SPDX-License-Identifier: AGPL-3.0-or-later
 
 <script setup lang="ts">
 import { keycloak } from './keycloak'
-import HeaderButton from '../../components/tmp/components/header/HeaderButton.vue'
+import HeaderButton from '../../components/ui/header/HeaderButton.vue'
 import { useAuth } from './store/auth'
 import ProfileButton from './ProfileButton.vue'
 import { useI18n } from 'vue-i18n'
-import PopoverCustomButton from '../../components/tmp/components/popover/PopoverCustomButton.vue'
-import ExternalLink from '../../components/tmp/components/link/ExternalLink.vue'
-import PopoverCustomPanel from '../../components/tmp/components/popover/PopoverCustomPanel.vue'
-import PopoverContentDivider from '../../components/tmp/components/popover/PopoverContentDivider.vue'
-import HeaderExternalLink from '../../components/tmp/components/header/HeaderExternalLink.vue'
-import PopoverCustom from '../../components/tmp/components/popover/PopoverCustom.vue'
+import PopoverCustomButton from '../../components/ui/popover/PopoverCustomButton.vue'
+import ExternalLink from '../../components/ui/link/ExternalLink.vue'
+import PopoverCustomPanel from '../../components/ui/popover/PopoverCustomPanel.vue'
+import PopoverContentDivider from '../../components/ui/popover/PopoverContentDivider.vue'
+import HeaderExternalLink from '../../components/ui/header/HeaderExternalLink.vue'
+import PopoverCustom from '../../components/ui/popover/PopoverCustom.vue'
 
 const { t } = useI18n()
 

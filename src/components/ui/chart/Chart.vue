@@ -4,10 +4,8 @@
          <P bold>{{ title }}</P>
          <P>{{ $t('common.updated-at', { time: updatedAt }) }}</P>
       </div>
-      <div
-         class="flex-grow"
-         :style="plotHeight ? { height: `${plotHeight}px` } : undefined"
-      >
+
+      <div class="flex-grow" :style="{ height: `${plotHeight || 350}px` }">
          <Line ref="chart" :data="chartData" :options="chartOptions" />
       </div>
    </div>
@@ -15,6 +13,7 @@
 
 <script lang="ts" setup>
 import { Line } from 'vue-chartjs'
+import zoomPlugin from 'chartjs-plugin-zoom'
 import {
    Chart as ChartJS,
    Title,
@@ -30,7 +29,6 @@ import P from '../tags/P.vue'
 import { useTimeSeriesStore } from '../../../stores/time-series'
 import { getReadableDateWithTime } from '../../../utils/date-utils'
 
-// Register required Chart.js components
 ChartJS.register(
    Title,
    Tooltip,
@@ -41,7 +39,8 @@ ChartJS.register(
    PointElement
 )
 
-// Register the background plugin globally
+ChartJS.register(zoomPlugin)
+
 ChartJS.register({
    id: 'background',
    beforeDraw: (chart) => {
@@ -53,6 +52,28 @@ ChartJS.register({
       ctx.fillStyle = bgColor
       ctx.fillRect(0, 0, width, height)
       ctx.restore()
+   },
+})
+
+ChartJS.register({
+   id: 'verticalLine',
+   afterDraw: (chart) => {
+      if (chart.tooltip?._active && chart.tooltip._active.length) {
+         const ctx = chart.ctx
+         const activePoint = chart.tooltip._active[0]
+         const x = activePoint.element.x
+         const topY = chart.scales.y.top
+         const bottomY = chart.scales.y.bottom
+
+         ctx.save()
+         ctx.beginPath()
+         ctx.moveTo(x, topY)
+         ctx.lineTo(x, bottomY)
+         ctx.lineWidth = 1
+         ctx.strokeStyle = '#50742F'
+         ctx.stroke()
+         ctx.restore()
+      }
    },
 })
 
@@ -76,6 +97,8 @@ const chartData = computed(() => ({
       data: item.data,
       borderColor: item.color,
       fill: false,
+      pointRadius: 1.5,
+      pointHoverRadius: 1,
    })),
 }))
 
@@ -88,10 +111,37 @@ const chartOptions = computed(() => ({
       },
       tooltip: {
          enabled: true,
+         mode: 'index',
+         intersect: false,
       },
       background: {
-         color: '#fff', // Set white background
+         color: '#fff',
       },
+      zoom: {
+         zoom: {
+            wheel: {
+               enabled: true,
+            },
+            drag: {
+               enabled: true,
+               backgroundColor: 'rgba(0, 123, 255, 0.3)',
+               modifierKey: 'shift',
+            },
+            mode: 'x',
+         },
+         pan: {
+            enabled: true,
+            mode: 'x',
+         },
+         limits: {
+            x: { min: 'original', max: 'original' },
+            y: { min: 'original', max: 'original' },
+         },
+      },
+   },
+   interaction: {
+      mode: 'index',
+      intersect: false,
    },
    scales: {
       x: {

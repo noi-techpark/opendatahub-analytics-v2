@@ -24,18 +24,36 @@ SPDX-License-Identifier: AGPL-3.0-or-later
                   v-model:range="rangeCustom"
                />
 
-               <SelectPopover
-                  v-model="selectedPlotHeight"
-                  :text="
-                     t('views.charts.plot-height', {
-                        value: selectedPlotHeight
-                           ? selectedPlotHeight + 'px'
-                           : t('common.auto'),
-                     })
-                  "
-                  :options="plotHeights"
-                  type="list"
-               />
+               <div class="chart-hint">
+                  <TooltipCustom>
+                     <template #default>
+                        <InfoIcon class="info-icon" />
+                     </template>
+                     <template #container>
+                        <div class="info-content">
+                           <i18n-t tag="p" keypath="views.charts.tooltip.zoom">
+                              <template #shift>
+                                 <span>Shift</span>
+                              </template>
+                           </i18n-t>
+                           <p>{{ t('views.charts.tooltip.pan') }}</p>
+                        </div>
+                     </template>
+                  </TooltipCustom>
+
+                  <SelectPopover
+                     v-model="selectedPlotHeight"
+                     :text="
+                        t('views.charts.plot-height', {
+                           value: selectedPlotHeight
+                              ? selectedPlotHeight + 'px'
+                              : t('common.auto'),
+                        })
+                     "
+                     :options="plotHeights"
+                     type="list"
+                  />
+               </div>
             </div>
             <Chart
                v-if="timeSeriesList.length"
@@ -46,7 +64,7 @@ SPDX-License-Identifier: AGPL-3.0-or-later
                :plotHeight="selectedPlotHeight"
             />
             <P v-else bold large class="pt-4">{{
-               t('views.charts-add.no-time-series')
+               t('views.charts-add-edit.no-time-series')
             }}</P>
          </div>
 
@@ -75,18 +93,19 @@ SPDX-License-Identifier: AGPL-3.0-or-later
                   bold
                   :text="t('views.charts.embed')"
                   reverse
-                  noPadding
+                  no-padding
                   :hover="false"
+                  :clickable="false"
                >
                   <IconCheck
-                     class="transition-all"
+                     class="action-icon"
                      :class="{
-                        'pointer-events-none absolute opacity-0': !copied,
+                        'icon-hidden': !copied,
                      }"
                   />
                   <ContentCopyIcon
-                     class="transition-all"
-                     :class="{ 'absolute opacity-0': copied }"
+                     class="action-icon __clickable"
+                     :class="{ 'icon-hidden': copied }"
                      @click="onCopy()"
                   />
                </IconText>
@@ -102,15 +121,14 @@ SPDX-License-Identifier: AGPL-3.0-or-later
                @click="onSaveConfiguration()"
             >
                <IconCheck
-                  class="transition-all"
+                  class="action-icon"
                   :class="{
-                     'pointer-events-none absolute opacity-0':
-                        !configurationSaved,
+                     'icon-hidden': !configurationSaved,
                   }"
                />
                <SaveIcon
-                  class="transition-all"
-                  :class="{ 'absolute opacity-0': configurationSaved }"
+                  class="action-icon __clickable"
+                  :class="{ 'icon-hidden': configurationSaved }"
                />
             </Button>
          </div>
@@ -143,6 +161,8 @@ import { TimeEnum, TimeRange, TimeSeries } from '../types/time-series'
 import XLSX from 'xlsx'
 import { getReadableDateWithTime } from '../utils/date-utils'
 import { storeToRefs } from 'pinia'
+import TooltipCustom from '../components/ui/tooltip/TooltipCustom.vue'
+import InfoIcon from '../components/ui/svg/InfoIcon.vue'
 
 const { t } = useI18n()
 const {
@@ -174,16 +194,21 @@ const updatedAt = computed(() => {
 })
 
 const embeddableCode = computed(() => {
-   return `${window.location.origin}/charts?${queryStringToEmbed.value}`
+   return `${window.location.origin}/charts${queryStringToEmbed.value ? '?' + queryStringToEmbed.value : ''}`
 })
 
 const queryStringToEmbed = computed(() => {
+   const seriesToEmbed = getTimeSeriesForEmbedCode()
+
+   if (!seriesToEmbed.length) return ''
+
    return `from=${selectedTime.value.from.toJSON()}&to=${selectedTime.value.to.toJSON()}&selectedTimeId=${selectedTimeId.value}&${getTimeSeriesForEmbedCode().join('&')}`
 })
 
 const plotHeights = computed(() => [
    { label: t('common.auto'), value: 0 },
    { label: '500px', value: 500 },
+   { label: '700px', value: 700 },
 ])
 
 const selectedTime = computed(() => {
@@ -317,7 +342,8 @@ const setSavedTimeseries = async () => {
 
    const configToLoad = getConfigFromLocalStorage() || query
 
-   if (!configToLoad.selectedTimeId) return { hasLoadedNewData: false }
+   if (!configToLoad.selectedTimeId || timeSeriesList.value.length)
+      return { hasLoadedNewData: false }
 
    const data: Partial<TimeSeries>[] = []
 
@@ -377,6 +403,15 @@ watch(selectedTime, (newVal) => {
    getTimeseriesData()
 })
 
+watch(
+   () => timeSeriesList.value.length,
+   (newVal) => {
+      if (!newVal) return
+
+      getTimeseriesData()
+   }
+)
+
 onMounted(async () => {
    const { hasLoadedNewData } = await setSavedTimeseries()
 
@@ -398,6 +433,22 @@ onMounted(async () => {
 
          & .chart-control {
             @apply flex justify-between gap-6;
+
+            & .chart-hint {
+               @apply flex items-center gap-2;
+
+               & .info-icon {
+                  @apply h-5 cursor-help text-green;
+               }
+
+               & .info-content {
+                  @apply text-sm text-grey-3;
+
+                  & span {
+                     @apply font-semibold;
+                  }
+               }
+            }
          }
       }
 
@@ -406,6 +457,14 @@ onMounted(async () => {
 
          & .card {
             @apply flex w-[300px] flex-col gap-3 rounded border p-4;
+
+            & .action-icon {
+               @apply transition-all;
+            }
+
+            & .icon-hidden {
+               @apply pointer-events-none absolute opacity-0;
+            }
 
             & .card-content {
                @apply break-words text-xs text-green underline;

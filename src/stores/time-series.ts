@@ -10,6 +10,8 @@ export const useTimeSeriesStore = defineStore('time-series', () => {
    // State
    const colors = [
       '#114189',
+      '#aa147f',
+      '#80c5d0',
       '#2695ef',
       '#f988a7',
       '#2e9bc1',
@@ -21,8 +23,7 @@ export const useTimeSeriesStore = defineStore('time-series', () => {
       '#66e266',
       '#5df6f8',
       '#f11c6b',
-      '#aa147f',
-      '#80c5d0',
+
       '#59cd56',
       '# c806f',
       '#939bc6',
@@ -79,8 +80,16 @@ export const useTimeSeriesStore = defineStore('time-series', () => {
       timeSeriesList.value.push(timeSeries)
    }
 
-   const removeTimeSeries = (index: number) => {
-      timeSeriesList.value = timeSeriesList.value.filter((_, i) => i !== index)
+   const updateTimeSeries = (timeSeries: TimeSeries) => {
+      const index = timeSeriesList.value.findIndex(
+         (item) => item.id === timeSeries.id
+      )
+      timeSeriesList.value.splice(index, 1, timeSeries)
+   }
+
+   const deleteTimeSeries = (id: string) => {
+      const index = timeSeriesList.value.findIndex((item) => item.id === id)
+      timeSeriesList.value.splice(index, 1)
    }
 
    const getTimeSeriesForEmbedCode = () => {
@@ -107,8 +116,8 @@ export const useTimeSeriesStore = defineStore('time-series', () => {
          datatype: '',
          period: '',
          color: colors[timeSeriesList.value.length],
-         data: [],
-         labels: [],
+         data: [] as number[],
+         labels: [] as string[],
       }
    }
 
@@ -120,7 +129,8 @@ export const useTimeSeriesStore = defineStore('time-series', () => {
 
       // Actions
       addTimeSeries,
-      removeTimeSeries,
+      updateTimeSeries,
+      deleteTimeSeries,
 
       // Getters
       getTimeSeriesForEmbedCode,

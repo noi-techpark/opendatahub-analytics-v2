@@ -9,7 +9,10 @@ SPDX-License-Identifier: AGPL-3.0-or-later
          v-model="model"
          :disabled="disabled"
          class="switch-custom relative inline-flex h-5 w-9 items-center rounded-full bg-grey-2 p-[2px]"
-         :class="{ '!bg-green': model, 'opacity-80': disabled }"
+         :class="{
+            '!bg-green': model,
+            'pointer-events-none opacity-80': disabled,
+         }"
       >
          <span
             aria-hidden="true"
@@ -17,7 +20,13 @@ SPDX-License-Identifier: AGPL-3.0-or-later
             :class="{ 'translate-x-[100%]': model }"
          />
       </Switch>
-      <div class="__clickable" @click="model = !model">
+      <div
+         class="__clickable"
+         :class="{
+            'pointer-events-none opacity-80': disabled,
+         }"
+         @click="model = !model"
+      >
          <slot />
       </div>
    </div>
