@@ -160,7 +160,7 @@ const onMoreDetails = (measurement: MarkerMeasurements) => {
       dataset: measurement.stype,
       station: measurement.sname,
       datatype: measurement.tname,
-      period: measurement.mperiod,
+      period: measurement.mperiod.toString(),
    }
 
    clearTimeSeriesList()

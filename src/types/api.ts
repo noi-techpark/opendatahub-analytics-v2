@@ -43,5 +43,8 @@ export type MarkerMeasurements = {
    tname: string
    tunit: string
    mvalue: number
+   sorigin: string
+   stype: string
+   sname: string
    _timestamp: string
 }
