@@ -68,7 +68,12 @@ SPDX-License-Identifier: AGPL-3.0-or-later
                            })
                         }}
                      </P>
-                     <P class="text-green" label bold>
+                     <P
+                        class="__clickable text-green"
+                        label
+                        bold
+                        @click="onMoreDetails(item)"
+                     >
                         {{ $t('common.more-details') }}
                      </P>
                   </div>
@@ -96,9 +101,14 @@ import CloseIcon from './svg/CloseIcon.vue'
 import H from './tags/H.vue'
 import { useI18n } from 'vue-i18n'
 import { MapMarkerDetails } from '../../types/map-layer'
+import { TimeSeries } from '../../types/time-series'
 import { MarkerInfo, MarkerMeasurements } from '../../types/api'
 import { asyncComputed, formatDate, useFetch } from '@vueuse/core'
 import { useMapLayerStore } from '../../stores/map-layers'
+import { useTimeSeriesStore } from '../../stores/time-series'
+import { subMonths } from 'date-fns'
+import { useRouter } from 'vue-router'
+
 import P from './tags/P.vue'
 import { typeOf } from 'maplibre-gl'
 import NoData from './NoData.vue'
@@ -112,9 +122,12 @@ type Props = {
 
 const props = withDefaults(defineProps<Props>(), {})
 
+const router = useRouter()
 const { t } = useI18n()
 const selectedId = ref<'metadata' | 'measurements' | 'alarms'>('metadata')
 const layerStore = useMapLayerStore()
+const { getBaseTimeSeriesObj, addTimeSeries, clearTimeSeriesList } =
+   useTimeSeriesStore()
 
 const hasMeasurements = computed(() => !!data.value?.measurements.length)
 const hasAlarms = computed(() => !!data.value?.alarms.length)
@@ -139,6 +152,31 @@ const links = computed(() => [
       action: () => (selectedId.value = 'alarms'),
    },
 ])
+
+const onMoreDetails = (measurement: MarkerMeasurements) => {
+   const timeSeries = {
+      ...getBaseTimeSeriesObj(),
+      provider: measurement.sorigin,
+      dataset: measurement.stype,
+      station: measurement.sname,
+      datatype: measurement.tname,
+      period: measurement.mperiod,
+   }
+
+   clearTimeSeriesList()
+   addTimeSeries(timeSeries)
+
+   const toDate = new Date(measurement._timestamp)
+   const fromDate = subMonths(toDate, 1)
+
+   router.push({
+      name: 'charts',
+      query: {
+         from: fromDate.toJSON(),
+         to: toDate.toJSON(),
+      },
+   })
+}
 
 const data = asyncComputed(async () => {
    const dataUrl = `${import.meta.env.VITE_ODH_MOBILITY_API_URI}/flat%2Cnode/${props.marker.stype}/?where=scode.eq.%22${props.marker.scode}%22`

@@ -165,6 +165,7 @@ import TooltipCustom from '../components/ui/tooltip/TooltipCustom.vue'
 import InfoIcon from '../components/ui/svg/InfoIcon.vue'
 
 const { t } = useI18n()
+const route = useRoute()
 const {
    getTimeSeriesForEmbedCode,
    embeddableKeys,
@@ -338,7 +339,7 @@ const getConfigFromLocalStorage = () => {
 }
 
 const setSavedTimeseries = async () => {
-   const { query } = useRoute()
+   const query = route.query
 
    const configToLoad = getConfigFromLocalStorage() || query
 
@@ -399,6 +400,15 @@ const onSaveConfiguration = () => {
    }, 2000)
 }
 
+const setRangeFromQueryParams = () => {
+   const query = route.query
+
+   if (!query.from || !query.to) return
+
+   rangeCustom.value = [new Date(query.from), new Date(query.to)]
+   selectedTimeId.value = TimeEnum.CUSTOM
+}
+
 watch(selectedTime, (newVal) => {
    getTimeseriesData()
 })
@@ -416,6 +426,7 @@ onMounted(async () => {
    const { hasLoadedNewData } = await setSavedTimeseries()
 
    if (!hasLoadedNewData) {
+      setRangeFromQueryParams()
       getTimeseriesData()
    }
 })
