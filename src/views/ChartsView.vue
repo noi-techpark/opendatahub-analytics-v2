@@ -62,6 +62,7 @@ SPDX-License-Identifier: AGPL-3.0-or-later
                :title="t('views.charts.timeseries-data')"
                :updatedAt="updatedAt"
                :plotHeight="selectedPlotHeight"
+               :loading="loading"
             />
             <P v-else bold large class="pt-4">{{
                t('views.charts-add-edit.no-time-series')

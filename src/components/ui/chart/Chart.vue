@@ -1,5 +1,7 @@
 <template>
    <div class="chart-ct">
+      <Loader :active="loading" />
+
       <div class="chart-title">
          <P bold>{{ title }}</P>
          <P>{{ $t('common.updated-at', { time: updatedAt }) }}</P>
@@ -28,6 +30,7 @@ import { computed, onMounted, ref } from 'vue'
 import P from '../tags/P.vue'
 import { useTimeSeriesStore } from '../../../stores/time-series'
 import { getReadableDateWithTime } from '../../../utils/date-utils'
+import Loader from '../Loader.vue'
 
 ChartJS.register(
    Title,
@@ -83,6 +86,7 @@ type Props = {
    title: string
    updatedAt: string
    plotHeight?: number
+   loading?: boolean
 }
 const props = withDefaults(defineProps<Props>(), {})
 
@@ -160,7 +164,7 @@ defineExpose({ chart })
 
 <style lang="postcss" scoped>
 .chart-ct {
-   @apply flex flex-grow flex-col gap-2 rounded border px-4 py-2;
+   @apply relative flex flex-grow flex-col gap-2 rounded border px-4 py-2;
 }
 
 @media (max-width: theme('screens.md')) {

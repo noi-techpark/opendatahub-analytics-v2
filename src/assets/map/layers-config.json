@@ -167,6 +167,15 @@
                   "metaDataImgData": "signalAsBase64"
                }
             ]
+         },
+         {
+            "id": "Traffic Events",
+            "stationType": ["PROVINCE_BZ"],
+            "format": "road_events",
+            "projection": "xxx",
+            "custom-function": null,
+            "color": "#A5ABB7",
+            "main-data": []
          }
       ]
    },

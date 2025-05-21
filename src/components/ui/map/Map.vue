@@ -5,9 +5,7 @@ SPDX-License-Identifier: AGPL-3.0-or-later
 
 <template>
    <div class="map-component">
-      <div class="loading-ct" :class="{ active: loading || !mapLoaded }">
-         <SpinnerIcon class="loading-indicator animate-spin" />
-      </div>
+      <Loader :active="loading || !mapLoaded" />
       <div class="search-ct" v-if="showSearch">
          <InputSearch
             id="search"
@@ -57,12 +55,12 @@ import {
    initMap,
 } from '../../../utils/map-utils'
 import { Map, Marker } from 'maplibre-gl'
-import SpinnerIcon from '../svg/SpinnerIcon.vue'
 import { MapMarkerDetails } from '../../../types/map-layer'
 import InputSearch from '../input/InputSearch.vue'
 import IconText from '../IconText.vue'
 import CloseIcon from '../svg/CloseIcon.vue'
 import P from '../tags/P.vue'
+import Loader from '../Loader.vue'
 
 type Props = {
    loading?: boolean
@@ -385,18 +383,6 @@ watch(
 <style lang="postcss" scoped>
 .map-component {
    @apply relative;
-
-   & .loading-ct {
-      @apply pointer-events-none absolute inset-0 z-[999] flex items-center justify-center bg-black-2/50 opacity-0 transition-all;
-
-      & .loading-indicator {
-         @apply size-10 text-white;
-      }
-
-      &.active {
-         @apply pointer-events-auto opacity-100;
-      }
-   }
 
    & .search-ct {
       @apply absolute left-4 top-4 z-[999] flex flex-col gap-1;

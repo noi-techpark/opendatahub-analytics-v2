@@ -72,7 +72,13 @@ const fetchStationData = async (layer: Layer) => {
    try {
       const currentMarkers = [...markers.value]
       const newMarkers: DataMarker[] = []
-      const url = `${import.meta.env.VITE_ODH_MOBILITY_API_URI}/flat/${layer.stationType}/?limit=-1&distinct=true&select=scoordinate%2Cscode%2Cstype&where=sactive.eq.true`
+      let datasetType = 'node'
+      let query = 'select=scoordinate%2Cscode%2Cstype&where=sactive.eq.true'
+      if (layer.id === 'Traffic Events') {
+         datasetType = 'edge'
+         query = 'select=egeometry,ecode,etype&where=eactive.eq.true'
+      }
+      const url = `${import.meta.env.VITE_ODH_MOBILITY_API_URI}/flat,${datasetType}/${layer.stationType}/?limit=-1&distinct=true&${query}`
 
       const flatData: DataPoint[] = JSON.parse(
          (await useFetch(url).text()).data.value || '{}'

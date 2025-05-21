@@ -8,7 +8,9 @@ import { MapLayer, MapMarkerDetails } from '../types/map-layer.js'
 
 export const useMapLayerStore = defineStore('map-layers', () => {
    // State
-   const allLayers = ref<MapLayer>(layers as MapLayer)
+   const allLayers = ref<MapLayer>(
+      layers.filter((l) => l.id !== 'linear' && l.id !== 'maps') as MapLayer
+   )
    const selectedLayers = ref<{ [key: string]: boolean }>({})
    const selectedLayerId = ref<string | null>(null)
    const selectedMarker = ref<MapMarkerDetails>()
