@@ -101,7 +101,6 @@ import CloseIcon from './svg/CloseIcon.vue'
 import H from './tags/H.vue'
 import { useI18n } from 'vue-i18n'
 import { MapMarkerDetails } from '../../types/map-layer'
-import { TimeSeries } from '../../types/time-series'
 import { MarkerInfo, MarkerMeasurements } from '../../types/api'
 import { asyncComputed, formatDate, useFetch } from '@vueuse/core'
 import { useMapLayerStore } from '../../stores/map-layers'
@@ -110,11 +109,9 @@ import { subMonths } from 'date-fns'
 import { useRouter } from 'vue-router'
 
 import P from './tags/P.vue'
-import { typeOf } from 'maplibre-gl'
 import NoData from './NoData.vue'
 import IconText from './IconText.vue'
 import AirIcon from './svg/AirIcon.vue'
-import HydroIcon from './svg/HydroIcon.vue'
 
 type Props = {
    marker: MapMarkerDetails

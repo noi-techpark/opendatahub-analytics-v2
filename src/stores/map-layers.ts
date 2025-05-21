@@ -2,7 +2,7 @@
 // SPDX-License-Identifier: AGPL-3.0-or-later
 
 import { defineStore } from 'pinia'
-import { ref, computed } from 'vue'
+import { ref, computed, nextTick } from 'vue'
 import layers from '../assets/map/layers-config.json'
 import { MapLayer, MapMarkerDetails } from '../types/map-layer.js'
 
@@ -12,6 +12,7 @@ export const useMapLayerStore = defineStore('map-layers', () => {
    const selectedLayers = ref<{ [key: string]: boolean }>({})
    const selectedLayerId = ref<string | null>(null)
    const selectedMarker = ref<MapMarkerDetails>()
+   const isTogglingAll = ref<boolean>(false)
 
    // Getters
    const getAllLayers = computed(() => allLayers.value)
@@ -90,9 +91,9 @@ export const useMapLayerStore = defineStore('map-layers', () => {
    const toggleAllInGroup = (layerId: string) => {
       const currentLayer = getSelectedLayer.value
       if (!currentLayer) return
-
+      isTogglingAll.value = true
       const shouldSelect = !areAllLayersInGroupSelected(layerId)
-      currentLayer.layers.forEach((_, index) => {
+      currentLayer.layers.forEach(async (_, index) => {
          setLayerState(layerId, index, shouldSelect)
       })
    }
@@ -114,6 +115,9 @@ export const useMapLayerStore = defineStore('map-layers', () => {
    initializeLayers()
 
    return {
+      // State
+      isTogglingAll,
+
       // Getters
       getAllLayers,
       getSelectedLayer,

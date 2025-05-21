@@ -1,0 +1,19 @@
+<?xml version="1.0" encoding="UTF-8" standalone="no"?>
+<svg xmlns="http://www.w3.org/2000/svg" width="21" height="21" viewBox="0 0 21 21" version="1.1" id="svg55">
+    <g transform="translate(-587.4,-336.1)">
+        <g transform="translate(-316.47685,-256.72367)">
+            <g transform="translate(904.051,593.051)" style="fill:#a5abb7;stroke:#ffffff;stroke-width:1">
+                <circle cx="10.5" cy="10.5" r="10.5" style="stroke:none"/>
+                <circle cx="10.5" cy="10.5" r="10" style="fill:none"/>
+            </g>
+            <text font-size="11" font-weight="700"
+                  style="font-weight:700;font-size:11px;font-family:SegoeUI-Bold, 'Segoe UI';text-align:center;text-anchor:middle;fill:#ffffff"
+                  x="917.63202" y="607.05103">
+                <tspan x="914.80463" y="608.55103" class="cluster-size"
+                       style="text-align:center;text-anchor:middle; font: normal normal normal 14px/18px 'Roboto', sans-serif">
+                    40
+                </tspan>
+            </text>
+        </g>
+    </g>
+</svg>

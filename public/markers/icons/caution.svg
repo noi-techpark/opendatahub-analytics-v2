@@ -1,0 +1,47 @@
+<?xml version="1.0" encoding="UTF-8" standalone="no"?>
+<svg
+   width="32"
+   height="32"
+   version="1.1"
+   id="svg127"
+   sodipodi:docname="caution.svg"
+   inkscape:version="1.2.1 (9c6d41e410, 2022-07-14, custom)"
+   xmlns:inkscape="http://www.inkscape.org/namespaces/inkscape"
+   xmlns:sodipodi="http://sodipodi.sourceforge.net/DTD/sodipodi-0.dtd"
+   xmlns="http://www.w3.org/2000/svg"
+   xmlns:svg="http://www.w3.org/2000/svg">
+  <defs
+     id="defs131" />
+  <sodipodi:namedview
+     id="namedview129"
+     pagecolor="#505050"
+     bordercolor="#ffffff"
+     borderopacity="1"
+     inkscape:showpageshadow="0"
+     inkscape:pageopacity="0"
+     inkscape:pagecheckerboard="1"
+     inkscape:deskcolor="#505050"
+     showgrid="false"
+     inkscape:zoom="34.625"
+     inkscape:cx="16"
+     inkscape:cy="16"
+     inkscape:window-width="1718"
+     inkscape:window-height="1409"
+     inkscape:window-x="1720"
+     inkscape:window-y="29"
+     inkscape:window-maximized="1"
+     inkscape:current-layer="svg127" />
+  <path
+     fill="#fff945"
+     stroke="#000"
+     stroke-width="2"
+     d="m1,31c0,0 15,-30.5 15,-30l15,30c0.5,0 -30.5,0 -30,0z"
+     id="path123"
+     style="fill:#ffffff;fill-opacity:1" />
+  <path
+     fill="none"
+     stroke="#000"
+     stroke-width="3"
+     d="m16,13l0,10m0,2l0,2"
+     id="path125" />
+</svg>

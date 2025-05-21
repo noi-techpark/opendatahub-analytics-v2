@@ -28,7 +28,7 @@ SPDX-License-Identifier: AGPL-3.0-or-later
 </template>
 
 <script setup lang="ts">
-import { ref, watch, onMounted } from 'vue'
+import { ref, watch, onMounted, nextTick } from 'vue'
 import Map from '../components/ui/map/Map.vue'
 import { useMapLayerStore } from '../stores/map-layers'
 import { useFetch } from '@vueuse/core'
@@ -36,12 +36,14 @@ import { DataMarker, DataPoint } from '../types/api'
 import MarkerCard from '../components/ui/MarkerCard.vue'
 import MapFilter from '../components/ui/map/MapFilter.vue'
 import { MapMarkerDetails, Layer } from '../types/map-layer'
+import { storeToRefs } from 'pinia'
 
 const layerStore = useMapLayerStore()
 const loading = ref<number>(0)
 const markers = ref<DataMarker[]>([])
 const selectedScode = ref<string>()
 const selectedMarker = ref<MapMarkerDetails>()
+const { isTogglingAll } = storeToRefs(layerStore)
 
 const handleSelectMarker = async (data?: MapMarkerDetails) => {
    selectedScode.value = data?.scode
@@ -53,43 +55,79 @@ const handleSelectMarker = async (data?: MapMarkerDetails) => {
 watch(
    () => layerStore.getSelectedLayers,
    async (curr, old) => {
+      if (isTogglingAll.value) return
       await setLayersToMap(curr, old)
    },
    { deep: true }
 )
 
+watch(isTogglingAll, (newVal) => {
+   if (newVal) {
+      markers.value = []
+      setLayersToMap(layerStore.getSelectedLayers, [])
+   }
+})
+
+const fetchStationData = async (layer: Layer) => {
+   try {
+      const currentMarkers = [...markers.value]
+      const newMarkers: DataMarker[] = []
+      const url = `${import.meta.env.VITE_ODH_MOBILITY_API_URI}/flat/${layer.stationType}/?limit=-1&distinct=true&select=scoordinate%2Cscode%2Cstype&where=sactive.eq.true`
+
+      const flatData: DataPoint[] = JSON.parse(
+         (await useFetch(url).text()).data.value || '{}'
+      ).data
+
+      if (flatData) {
+         const newPoints = flatData.map(
+            (d): DataMarker => ({
+               scode: d.scode,
+               sname: d.sname,
+               color: layer.color,
+               stype: d.stype,
+               coordinates: [d.scoordinate?.x || 0, d.scoordinate?.y || 0],
+            })
+         )
+
+         const uniquePoints = new Set(currentMarkers.map((p) => p.scode))
+         newMarkers.push(
+            ...currentMarkers,
+            ...newPoints.filter((point) => !uniquePoints.has(point.scode))
+         )
+      }
+
+      return newMarkers
+   } catch (err) {
+      console.error('An error occurred while processing the data:', err)
+   }
+}
+
 const setLayersToMap = async (curr: Layer[], old: Layer[]) => {
    loading.value += 1
+
+   if (isTogglingAll.value) {
+      const newMarkers: DataMarker[] = []
+
+      for (const layer of curr) {
+         newMarkers.push(...((await fetchStationData(layer)) || []))
+         await nextTick()
+      }
+
+      isTogglingAll.value = false
+
+      markers.value = newMarkers
+
+      loading.value -= 1
+
+      return
+   }
 
    const latestSelected = curr.at(-1)
 
    if (latestSelected && curr.length > old.length) {
-      try {
-         const url = `${import.meta.env.VITE_ODH_MOBILITY_API_URI}/flat/${latestSelected.stationType[0]}/?limit=-1&distinct=true&select=scoordinate%2Cscode%2Cstype&where=sactive.eq.true`
-
-         const flatData: DataPoint[] = JSON.parse(
-            (await useFetch(url).text()).data.value || '{}'
-         ).data
-
-         if (flatData) {
-            const newPoints = flatData.map(
-               (d): DataMarker => ({
-                  scode: d.scode,
-                  sname: d.sname,
-                  color: latestSelected.color,
-                  stype: d.stype,
-                  coordinates: [d.scoordinate?.x || 0, d.scoordinate?.y || 0],
-               })
-            )
-
-            const uniquePoints = new Set(markers.value.map((p) => p.scode))
-            markers.value = [
-               ...markers.value,
-               ...newPoints.filter((point) => !uniquePoints.has(point.scode)),
-            ]
-         }
-      } catch (err) {
-         console.error('An error occurred while processing the data:', err)
+      const newMarkers = await fetchStationData(latestSelected)
+      if (newMarkers) {
+         markers.value = [...markers.value, ...newMarkers]
       }
    } else {
       const newTypes = new Set(curr.map((n) => n.stationType[0]))

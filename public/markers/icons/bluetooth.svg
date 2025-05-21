@@ -1,0 +1,17 @@
+<?xml version="1.0" encoding="UTF-8" standalone="no"?>
+<svg
+        xmlns="http://www.w3.org/2000/svg"
+        width="16.447"
+        height="45"
+        viewBox="0 0 16.447 45"
+        version="1.1">
+  <g
+          transform="matrix(0.9999854,0,0,1.0000003,-113.72233,-78.830997)">
+    <path
+            d="m 126.55,106.3 3.021,1.887 -10.911,5.543 v -24.8 l 10.911,6.513 -15.02,9.258"
+            style="fill:none;stroke:#ffffff;stroke-width:1.20000005;stroke-linecap:round;stroke-linejoin:round" />
+    <path
+            d="m 114.551,98.806 9.272,5.792"
+            style="fill:none;stroke:#ffffff;stroke-width:1.20000005;stroke-linecap:round;stroke-linejoin:round" />
+  </g>
+</svg>

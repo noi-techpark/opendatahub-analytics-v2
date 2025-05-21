@@ -3,6 +3,14 @@
 
 import { Layer } from './map-layer.js'
 
+export type StationMapMarker = {
+   scode: string
+   color: string
+   stype: string
+   coordinates: [number, number]
+   selected?: boolean
+}
+
 export type DataMarker = {
    alarm?: boolean
    sname?: string
