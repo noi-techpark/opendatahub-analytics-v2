@@ -69,7 +69,8 @@
          "no-option-found": "No option found"
       },
       "map-origin-filter": {
-         "search-for-origin": "Search for origin"
+         "search-for-datatype": "Search for datatype",
+         "search-for-dataprovider": "Search for dataprovider"
       }
    },
    "views": {
@@ -136,6 +137,9 @@
       },
       "events-weather": {
          "title": "Headline for Tables"
+      },
+      "map": {
+         "noDataFor": "No data for {name}"
       }
    },
    "layouts": {

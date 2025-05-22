@@ -9,6 +9,7 @@ SPDX-License-Identifier: AGPL-3.0-or-later
          <div class="main-ct">
             <RouterView />
          </div>
+         <Notifications />
       </AppLayout>
    </div>
 </template>
@@ -16,6 +17,7 @@ SPDX-License-Identifier: AGPL-3.0-or-later
 <script setup lang="ts">
 import { RouterView } from 'vue-router'
 import AppLayout from './layouts/AppLayout.vue'
+import Notifications from './components/ui/Notifications.vue'
 </script>
 
 <style lang="postcss" scoped>

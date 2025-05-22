@@ -42,9 +42,17 @@ import { DataMarker, DataPoint } from '../types/api'
 import MapOriginFilterCard from '../components/ui/map/MapOriginFilterCard.vue'
 import MarkerCard from '../components/ui/MarkerCard.vue'
 import MapFilter from '../components/ui/map/MapFilter.vue'
-import { MapMarkerDetails, Layer } from '../types/map-layer'
+import {
+   MapMarkerDetails,
+   Layer,
+   SelectedFilterOrigins,
+} from '../types/map-layer'
 import { storeToRefs } from 'pinia'
 import { useI18n } from 'vue-i18n'
+import { useNotificationsStore } from '../stores/notifications'
+import { watchDebounced } from '@vueuse/core'
+
+const { showNotification } = useNotificationsStore()
 
 const { t } = useI18n()
 const layerStore = useMapLayerStore()
@@ -71,6 +79,18 @@ const setCurrentFilter = (filter: string) => {
    currentFilter.value = filter
 }
 
+watchDebounced(
+   selectedFilterOrigins,
+   (newVal, oldVal) => {
+      if (!oldVal.stype || newVal.stype !== oldVal.stype) {
+         return
+      }
+
+      refetchForDataTypeWithFilters(newVal)
+   },
+   { deep: true, debounce: 500, maxWait: 1000 }
+)
+
 watch(
    () => layerStore.getSelectedLayers,
    async (curr, old) => {
@@ -95,8 +115,6 @@ watch(isTogglingAll, (newVal) => {
       (a, b) => a.id === b.id
    )
 
-   toggleAllLayers(arrayDiff.value)
-
    if (arrayDiff.value.length > 0) {
       toggleAllLayers(arrayDiff.value)
    } else {
@@ -104,25 +122,65 @@ watch(isTogglingAll, (newVal) => {
    }
 })
 
-const fetchStationData = async (layer: Layer) => {
+const refetchForDataTypeWithFilters = async (newVal: SelectedFilterOrigins) => {
+   const layer = layerStore.getSelectedLayers.find((l) =>
+      l.stationType.includes(newVal.stype)
+   )
+   if (!layer || !newVal.sorigin[newVal.stype]) {
+      return
+   }
+
+   let filterString = newVal.sorigin[newVal.stype]
+      .map((s) => `sorigin.ire.${s}`)
+      .join(',')
+
+   if (newVal.sorigin[newVal.stype].length > 1) {
+      filterString = `or(${filterString})`
+   }
+
+   const newMarkers = await fetchStationData(layer, {
+      stype: newVal.stype,
+      filterString,
+   })
+
+   if (!newMarkers) {
+      return
+   }
+
+   markers.value = newMarkers
+}
+
+const fetchStationData = async (
+   layer: Layer,
+   filter?: { stype: string; filterString: string }
+) => {
    try {
-      const currentMarkers = [...markers.value]
+      const currentMarkers = filter?.filterString
+         ? [...markers.value.filter((item) => item.stype !== filter.stype)]
+         : [...markers.value]
       const newMarkers: DataMarker[] = []
       let datasetType = 'node'
-      let query =
-         'select=scoordinate%2Cscode%2Cstype%2Csorigin&where=sactive.eq.true'
+      let activeQuery = 'sactive.eq.true'
+      let query = 'select=scoordinate%2Cscode%2Cstype%2Csorigin&where='
       if (layer.id === 'Traffic Events') {
          datasetType = 'edge'
-         query =
-            'select=egeometry%2Cecode%2Cetype%2Ceorigin&where=eactive.eq.true'
+         query = 'select=egeometry%2Cecode%2Cetype%2Ceorigin&where='
+         activeQuery = 'eactive.eq.true'
       }
+
+      if (filter?.filterString) {
+         query += `and(${activeQuery},${filter.filterString})`
+      } else {
+         query += activeQuery
+      }
+
       const url = `${import.meta.env.VITE_ODH_MOBILITY_API_URI}/flat,${datasetType}/${layer.stationType}/?limit=-1&distinct=true&${query}`
 
       const flatData: DataPoint[] = JSON.parse(
          (await useFetch(url).text()).data.value || '{}'
       ).data
 
-      if (flatData) {
+      if (flatData && flatData.length > 0) {
          const newPoints: DataMarker[] = []
          for (const d of flatData) {
             if (!uniqueOrigins.value[d.stype]) {
@@ -145,6 +203,13 @@ const fetchStationData = async (layer: Layer) => {
             ...currentMarkers,
             ...newPoints.filter((point) => !uniquePoints.has(point.scode))
          )
+      } else {
+         showNotification({
+            type: 'error',
+            message: t('views.map.noDataFor', {
+               name: layer.stationType.join(', '),
+            }),
+         })
       }
 
       return newMarkers

@@ -56,3 +56,8 @@ export type MapMarkerDetails = {
    scode: string
    stype: string
 }
+
+export type SelectedFilterOrigins = {
+   stype: string
+   sorigin: Record<string, string[]>
+}

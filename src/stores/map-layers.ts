@@ -4,7 +4,11 @@
 import { defineStore } from 'pinia'
 import { ref, computed, nextTick } from 'vue'
 import layers from '../assets/map/layers-config.json'
-import { MapLayer, MapMarkerDetails } from '../types/map-layer.js'
+import {
+   MapLayer,
+   MapMarkerDetails,
+   SelectedFilterOrigins,
+} from '../types/map-layer.js'
 
 export const useMapLayerStore = defineStore('map-layers', () => {
    // State
@@ -16,10 +20,7 @@ export const useMapLayerStore = defineStore('map-layers', () => {
    const selectedMarker = ref<MapMarkerDetails>()
    const isTogglingAll = ref<boolean>(false)
    const uniqueOrigins = ref<Record<string, Set<string>>>({}) // { [key: stype]: Set<sorigin> }
-   const selectedFilterOrigins = ref<{
-      stype: string
-      sorigin: Record<string, string[]>
-   }>({
+   const selectedFilterOrigins = ref<SelectedFilterOrigins>({
       stype: '',
       sorigin: {},
    })

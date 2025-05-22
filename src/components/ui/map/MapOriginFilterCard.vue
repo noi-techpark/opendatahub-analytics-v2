@@ -19,7 +19,7 @@ SPDX-License-Identifier: AGPL-3.0-or-later
                   :text="selectedFilterOrigins.stype"
                   :options="stypeOptions"
                   :search-label-placeholder="
-                     t('components.map-origin-filter.search-for-origin')
+                     t('components.map-origin-filter.search-for-datatype')
                   "
                   show-search
                />
@@ -39,7 +39,7 @@ SPDX-License-Identifier: AGPL-3.0-or-later
                   "
                   :options="originOptions"
                   :search-label-placeholder="
-                     t('components.map-origin-filter.search-for-origin')
+                     t('components.map-origin-filter.search-for-dataprovider')
                   "
                   show-search
                   multiple
