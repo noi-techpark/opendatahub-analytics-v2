@@ -213,7 +213,7 @@ const fetchStationData = async (
                fetchedEvents[d.stype] = JSON.parse(
                   (
                      await useFetch(
-                        `${import.meta.env.VITE_ODH_MOBILITY_API_URI}/flat/${d.stype}/*/${subHours(now, getMaxHoursForInfoIcon(d.stype)).toISOString()}/${now.toISOString()}?select=scode,mvalidtime&limit=-1`
+                        `${import.meta.env.VITE_ODH_MOBILITY_API_URI}/flat,${datasetType}/${d.stype}/*/${subHours(now, getMaxHoursForInfoIcon(d.stype)).toISOString()}/${now.toISOString()}?select=scode,mvalidtime&limit=-1`
                      ).text()
                   ).data.value || '{}'
                ).data
