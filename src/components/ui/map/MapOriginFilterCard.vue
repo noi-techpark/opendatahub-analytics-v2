@@ -11,7 +11,7 @@ SPDX-License-Identifier: AGPL-3.0-or-later
          <CloseIcon class="marker-close __clickable" @click="emit('close')" />
       </div>
       <div class="map-origin-filter-card-content">
-         <div>
+         <div class="filters-content">
             <div>
                <P bold>{{ t('common.datatype') }}</P>
                <SelectPopover
@@ -46,6 +46,12 @@ SPDX-License-Identifier: AGPL-3.0-or-later
                />
             </div>
          </div>
+
+         <div class="continue-ct">
+            <Button center @click="emit('close')">
+               {{ t('common.continue') }}
+            </Button>
+         </div>
       </div>
    </div>
 </template>
@@ -60,6 +66,7 @@ import P from '../tags/P.vue'
 import { storeToRefs } from 'pinia'
 import { useMapLayerStore } from '../../../stores/map-layers'
 import { onClickOutside } from '@vueuse/core'
+import Button from '../Button.vue'
 
 const emit = defineEmits(['close'])
 const { t } = useI18n()
@@ -114,10 +121,14 @@ onMounted(() => {
    }
 
    & .map-origin-filter-card-content {
-      @apply flex-grow flex-col gap-3 overflow-y-auto rounded-b border border-t-0 p-4;
+      @apply flex flex-grow flex-col justify-between gap-3 overflow-y-auto rounded-b border border-t-0 p-4;
 
-      & > div {
+      & .filters-content {
          @apply w-[300px] space-y-3;
+      }
+
+      & .continue-ct {
+         @apply flex border-t pt-4;
       }
    }
 }

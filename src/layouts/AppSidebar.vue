@@ -19,14 +19,20 @@ SPDX-License-Identifier: AGPL-3.0-or-later
       <div class="sidebar-footer" v-if="showFooter">
          <Divider />
 
-         <Switch v-if="mapLayerSelection" v-model="showAlarms">
+         <Switch
+            v-if="mapLayerSelection"
+            v-model="showAlarms"
+            expand
+            expand-slot
+         >
             <IconText
                :text="$t('layouts.app-sidebar.alarms')"
                noPaddingX
                reverse
+               class="grow"
                :hover="false"
             >
-               <InfoIcon />
+               <InfoIcon class="size-5" />
             </IconText>
          </Switch>
 

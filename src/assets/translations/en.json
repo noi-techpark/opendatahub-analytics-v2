@@ -19,7 +19,8 @@
       "duplicate": "Duplicate",
       "datatype": "Datatype",
       "dataprovider": "Dataprovider",
-      "station": "Station"
+      "station": "Station",
+      "continue": "Continue"
    },
    "auth": {
       "login": "Login",

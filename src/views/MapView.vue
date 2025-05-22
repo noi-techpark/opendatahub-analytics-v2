@@ -65,7 +65,7 @@ const loading = ref<number>(0)
 const markers = ref<DataMarker[]>([])
 const selectedScode = ref<string>()
 const selectedMarker = ref<MapMarkerDetails>()
-const { isTogglingAll, uniqueOrigins, selectedFilterOrigins } =
+const { isTogglingAll, uniqueOrigins, selectedFilterOrigins, lastMarkersSet } =
    storeToRefs(layerStore)
 const lastLayers = ref<Layer[]>([])
 const currentFilter = ref<string>('')
@@ -123,9 +123,18 @@ watch(isTogglingAll, (newVal) => {
    if (arrayDiff.value.length > 0) {
       toggleAllLayers(arrayDiff.value)
    } else {
+      markers.value = []
       uniqueOrigins.value = {}
    }
 })
+
+watch(
+   markers,
+   (newVal) => {
+      lastMarkersSet.value = newVal
+   },
+   { deep: true }
+)
 
 const refetchForDataTypeWithFilters = async (newVal: SelectedFilterOrigins) => {
    const layer = layerStore.getSelectedLayers.find((l) =>
@@ -204,7 +213,7 @@ const fetchStationData = async (
                fetchedEvents[d.stype] = JSON.parse(
                   (
                      await useFetch(
-                        `${import.meta.env.VITE_ODH_MOBILITY_API_URI}/flat%2Cnode/${d.stype}/*/${subHours(now, getMaxHoursForInfoIcon(d.stype)).toISOString()}/${now.toISOString()}?select=scode,mvalidtime&distinct=true&limit=-1`
+                        `${import.meta.env.VITE_ODH_MOBILITY_API_URI}/flat/${d.stype}/*/${subHours(now, getMaxHoursForInfoIcon(d.stype)).toISOString()}/${now.toISOString()}?select=scode,mvalidtime&limit=-1`
                      ).text()
                   ).data.value || '{}'
                ).data
@@ -297,8 +306,8 @@ const setLayersToMap = async (curr: Layer[], old: Layer[]) => {
 }
 
 onMounted(() => {
-   if (layerStore.getSelectedLayers.length > 0) {
-      setLayersToMap(layerStore.getSelectedLayers, [])
+   if (lastMarkersSet.value.length > 0) {
+      markers.value = lastMarkersSet.value
    }
 })
 </script>

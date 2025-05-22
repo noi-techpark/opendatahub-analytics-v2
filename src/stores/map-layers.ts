@@ -9,6 +9,7 @@ import {
    MapMarkerDetails,
    SelectedFilterOrigins,
 } from '../types/map-layer.js'
+import { DataMarker } from '../types/api'
 
 export const useMapLayerStore = defineStore('map-layers', () => {
    // State
@@ -24,6 +25,8 @@ export const useMapLayerStore = defineStore('map-layers', () => {
       stype: '',
       sorigin: {},
    })
+
+   const lastMarkersSet = ref<DataMarker[]>([])
 
    // Getters
    const getAllLayers = computed(() => allLayers.value)
@@ -136,6 +139,7 @@ export const useMapLayerStore = defineStore('map-layers', () => {
       isTogglingAll,
       uniqueOrigins,
       selectedFilterOrigins,
+      lastMarkersSet,
 
       // Getters
       getAllLayers,

@@ -199,7 +199,7 @@ const data = asyncComputed(async () => {
 
 <style lang="postcss" scoped>
 .marker-card-component {
-   @apply flex h-[400px] max-w-[350px] flex-col rounded bg-white;
+   @apply flex h-[400px] w-[350px] flex-col rounded bg-white;
 
    & .marker-card-header {
       @apply sticky top-0 flex items-center justify-between gap-2 rounded-t border bg-white p-4;
@@ -259,7 +259,7 @@ const data = asyncComputed(async () => {
                   }
 
                   & .value {
-                     @apply text-4xl font-semibold;
+                     @apply truncate text-4xl font-semibold;
                   }
                   & .unit {
                      @apply text-lg font-semibold;
