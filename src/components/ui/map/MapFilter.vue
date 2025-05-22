@@ -4,7 +4,7 @@ SPDX-License-Identifier: AGPL-3.0-or-later
 -->
 
 <template>
-   <div class="map-filter __clickable">
+   <div class="map-filter __clickable" :class="{ disabled }">
       <div class="map-filter-title">
          <InstantMixIcon />
          <span>{{ title }}</span>
@@ -21,6 +21,7 @@ import InstantMixIcon from '../svg/InstantMixIcon.vue'
 type Props = {
    title: string
    value: string
+   disabled?: boolean
 }
 
 const props = withDefaults(defineProps<Props>(), {})
@@ -36,6 +37,10 @@ const props = withDefaults(defineProps<Props>(), {})
 
    & .map-filter-value {
       @apply rounded-md rounded-l-none border border-l-0 bg-grey px-2 py-1;
+   }
+
+   &.disabled {
+      @apply pointer-events-none opacity-70;
    }
 }
 </style>

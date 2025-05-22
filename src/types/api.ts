@@ -28,6 +28,7 @@ export type DataPoint = {
       srid: number
    }
    stype: string
+   sorigin: string
 }
 
 export type MarkerInfo = {

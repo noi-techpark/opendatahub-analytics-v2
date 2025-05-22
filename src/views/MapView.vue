@@ -6,18 +6,24 @@ SPDX-License-Identifier: AGPL-3.0-or-later
 <template>
    <main class="map-view">
       <div class="map-filters-ct">
-         <MapFilter title="filtername1" value="3" />
-         <MapFilter title="filtername2" value="3" />
-         <MapFilter title="filtername3" value="2" />
+         <MapFilter
+            :title="t('common.dataprovider')"
+            :value="totalOriginsFilters.toString()"
+            :disabled="Object.keys(uniqueOrigins).length === 0"
+            @click="setCurrentFilter('origin')"
+         />
       </div>
 
+      <MapOriginFilterCard
+         v-if="currentFilter === 'origin'"
+         @close="setCurrentFilter('')"
+      />
       <MarkerCard
          v-if="selectedMarker && selectedScode"
          :marker="selectedMarker"
          @close="handleSelectMarker()"
       />
    </main>
-
    <Map
       class="map-ct"
       :loading="loading > 0"
@@ -28,23 +34,32 @@ SPDX-License-Identifier: AGPL-3.0-or-later
 </template>
 
 <script setup lang="ts">
-import { ref, watch, onMounted, nextTick } from 'vue'
+import { ref, watch, onMounted, nextTick, computed } from 'vue'
 import Map from '../components/ui/map/Map.vue'
 import { useMapLayerStore } from '../stores/map-layers'
 import { useArrayDifference, useFetch } from '@vueuse/core'
 import { DataMarker, DataPoint } from '../types/api'
+import MapOriginFilterCard from '../components/ui/map/MapOriginFilterCard.vue'
 import MarkerCard from '../components/ui/MarkerCard.vue'
 import MapFilter from '../components/ui/map/MapFilter.vue'
 import { MapMarkerDetails, Layer } from '../types/map-layer'
 import { storeToRefs } from 'pinia'
+import { useI18n } from 'vue-i18n'
 
+const { t } = useI18n()
 const layerStore = useMapLayerStore()
 const loading = ref<number>(0)
 const markers = ref<DataMarker[]>([])
 const selectedScode = ref<string>()
 const selectedMarker = ref<MapMarkerDetails>()
-const { isTogglingAll } = storeToRefs(layerStore)
+const { isTogglingAll, uniqueOrigins, selectedFilterOrigins } =
+   storeToRefs(layerStore)
 const lastLayers = ref<Layer[]>([])
+const currentFilter = ref<string>('')
+
+const totalOriginsFilters = computed(
+   () => Object.values(selectedFilterOrigins.value.sorigin).flat().length
+)
 
 const handleSelectMarker = async (data?: MapMarkerDetails) => {
    selectedScode.value = data?.scode
@@ -52,7 +67,10 @@ const handleSelectMarker = async (data?: MapMarkerDetails) => {
    layerStore.selectMarker(data)
 }
 
-// TODO: better handling of layer selection
+const setCurrentFilter = (filter: string) => {
+   currentFilter.value = filter
+}
+
 watch(
    () => layerStore.getSelectedLayers,
    async (curr, old) => {
@@ -76,7 +94,14 @@ watch(isTogglingAll, (newVal) => {
       lastLayers.value,
       (a, b) => a.id === b.id
    )
+
    toggleAllLayers(arrayDiff.value)
+
+   if (arrayDiff.value.length > 0) {
+      toggleAllLayers(arrayDiff.value)
+   } else {
+      uniqueOrigins.value = {}
+   }
 })
 
 const fetchStationData = async (layer: Layer) => {
@@ -84,10 +109,12 @@ const fetchStationData = async (layer: Layer) => {
       const currentMarkers = [...markers.value]
       const newMarkers: DataMarker[] = []
       let datasetType = 'node'
-      let query = 'select=scoordinate%2Cscode%2Cstype&where=sactive.eq.true'
+      let query =
+         'select=scoordinate%2Cscode%2Cstype%2Csorigin&where=sactive.eq.true'
       if (layer.id === 'Traffic Events') {
          datasetType = 'edge'
-         query = 'select=egeometry,ecode,etype&where=eactive.eq.true'
+         query =
+            'select=egeometry%2Cecode%2Cetype%2Ceorigin&where=eactive.eq.true'
       }
       const url = `${import.meta.env.VITE_ODH_MOBILITY_API_URI}/flat,${datasetType}/${layer.stationType}/?limit=-1&distinct=true&${query}`
 
@@ -96,15 +123,22 @@ const fetchStationData = async (layer: Layer) => {
       ).data
 
       if (flatData) {
-         const newPoints = flatData.map(
-            (d): DataMarker => ({
+         const newPoints: DataMarker[] = []
+         for (const d of flatData) {
+            if (!uniqueOrigins.value[d.stype]) {
+               uniqueOrigins.value[d.stype] = new Set()
+            }
+
+            uniqueOrigins.value[d.stype].add(d.sorigin)
+
+            newPoints.push({
                scode: d.scode,
                sname: d.sname,
                color: layer.color,
                stype: d.stype,
                coordinates: [d.scoordinate?.x || 0, d.scoordinate?.y || 0],
             })
-         )
+         }
 
          const uniquePoints = new Set(currentMarkers.map((p) => p.scode))
          newMarkers.push(
@@ -154,9 +188,9 @@ const setLayersToMap = async (curr: Layer[], old: Layer[]) => {
       const newTypes = new Set(curr.flatMap((n) => n.stationType))
       const oldTypes = old.flatMap((o) => o.stationType)
       const diff = oldTypes.filter((ot) => !newTypes.has(ot))
-
       diff.forEach((d) => {
          markers.value = markers.value.filter((p) => p.stype !== d)
+         delete uniqueOrigins.value[d]
       })
    }
 

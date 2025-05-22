@@ -153,6 +153,10 @@ const setMapClusterSource = async () => {
    await clearCurrentClusterSource()
 
    for (const [key, value] of Object.entries(stationMarkers.value)) {
+      if (map.value.getSource(key)) {
+         continue
+      }
+
       map.value.addSource(key, {
          type: 'geojson',
          data: {

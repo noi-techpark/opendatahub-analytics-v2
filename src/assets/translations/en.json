@@ -16,7 +16,10 @@
       "delete": "Delete",
       "edit": "Edit",
       "confirm": "Confirm",
-      "duplicate": "Duplicate"
+      "duplicate": "Duplicate",
+      "datatype": "Datatype",
+      "dataprovider": "Dataprovider",
+      "station": "Station"
    },
    "auth": {
       "login": "Login",
@@ -64,6 +67,9 @@
       },
       "select": {
          "no-option-found": "No option found"
+      },
+      "map-origin-filter": {
+         "search-for-origin": "Search for origin"
       }
    },
    "views": {

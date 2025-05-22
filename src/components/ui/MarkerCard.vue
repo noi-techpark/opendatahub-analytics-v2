@@ -143,11 +143,11 @@ const links = computed(() => [
       title: t('components.marker-card.measurements'),
       action: () => (selectedId.value = 'measurements'),
    },
-   {
-      id: 'alarms',
-      title: t('components.marker-card.alarms'),
-      action: () => (selectedId.value = 'alarms'),
-   },
+   // {
+   //    id: 'alarms',
+   //    title: t('components.marker-card.alarms'),
+   //    action: () => (selectedId.value = 'alarms'),
+   // },
 ])
 
 const onMoreDetails = (measurement: MarkerMeasurements) => {

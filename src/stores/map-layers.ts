@@ -15,6 +15,14 @@ export const useMapLayerStore = defineStore('map-layers', () => {
    const selectedLayerId = ref<string | null>(null)
    const selectedMarker = ref<MapMarkerDetails>()
    const isTogglingAll = ref<boolean>(false)
+   const uniqueOrigins = ref<Record<string, Set<string>>>({}) // { [key: stype]: Set<sorigin> }
+   const selectedFilterOrigins = ref<{
+      stype: string
+      sorigin: Record<string, string[]>
+   }>({
+      stype: '',
+      sorigin: {},
+   })
 
    // Getters
    const getAllLayers = computed(() => allLayers.value)
@@ -125,6 +133,8 @@ export const useMapLayerStore = defineStore('map-layers', () => {
    return {
       // State
       isTogglingAll,
+      uniqueOrigins,
+      selectedFilterOrigins,
 
       // Getters
       getAllLayers,
