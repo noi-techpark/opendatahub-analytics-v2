@@ -141,8 +141,8 @@ const setLayersToMap = async (curr: Layer[], old: Layer[]) => {
          ]
       }
    } else {
-      const newTypes = new Set(curr.map((n) => n.stationType[0]))
-      const oldTypes = old.map((o) => o.stationType[0])
+      const newTypes = new Set(curr.flatMap((n) => n.stationType))
+      const oldTypes = old.flatMap((o) => o.stationType)
       const diff = oldTypes.filter((ot) => !newTypes.has(ot))
 
       diff.forEach((d) => {

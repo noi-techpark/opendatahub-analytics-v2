@@ -47,7 +47,6 @@ import 'maplibre-gl/dist/maplibre-gl.css'
 import { computed, h, nextTick, onMounted, ref, render, watch } from 'vue'
 import { DataMarker, StationMapMarker } from '../../../types/api'
 import {
-   coordinatesInRange,
    createMarkerIcon,
    getBaseMarkerSvgUrl,
    getIconForStationType,
@@ -75,10 +74,6 @@ type Emit = {
 
 const props = withDefaults(defineProps<Props>(), {})
 const emit = defineEmits<Emit>()
-
-let localMarkers: Marker[] = []
-const currentSource = ref<string | undefined>()
-const currentLayer = ref<string | undefined>()
 
 const mapLoaded = ref<boolean>()
 const map = ref<Map>()
@@ -130,21 +125,24 @@ const clustersInMap = ref<Record<string, string[]>>({})
 
 const clearCurrentClusterSource = async () => {
    if (!map.value) return
-   for (const source in clustersInMap.value) {
-      for (const layer of clustersInMap.value[source]) {
-         if (map.value.getLayer(layer)) {
-            map.value.removeLayer(layer)
-            await nextTick()
+
+   try {
+      for (const source in clustersInMap.value) {
+         for (const layer of clustersInMap.value[source]) {
+            if (map.value.getLayer(layer)) {
+               map.value.removeLayer(layer)
+            }
+         }
+
+         if (map.value.getSource(source)) {
+            map.value.removeSource(source)
          }
       }
 
-      if (map.value.getSource(source)) {
-         map.value.removeSource(source)
-         await nextTick()
-      }
+      clustersInMap.value = {}
+   } catch (e) {
+      console.error('Error during map cleanup:', e)
    }
-
-   clustersInMap.value = {}
 }
 
 const setMapClusterSource = async () => {
@@ -174,8 +172,6 @@ const setMapClusterSource = async () => {
          clusterMaxZoom: 14, // Max zoom to cluster points on
          clusterRadius: 60,
       })
-
-      await nextTick()
 
       const clusterLayerId = `${key}-cluster`
       const unclusteredLayerId = `${key}-unclustered`
@@ -323,9 +319,6 @@ onMounted(() => {
    map.value.on('load', (e) => {
       mapLoaded.value = e.target.loaded()
    })
-   map.value.on('marker-click', (v) => {
-      handleMarkerSelected(v.eventData)
-   })
 })
 
 watch(
@@ -346,9 +339,6 @@ watch(
 
       if (currentMapLoaded) {
          stationMarkers.value = {}
-
-         localMarkers.forEach((marker) => marker.remove())
-         localMarkers = []
 
          currentProps
             ?.sort((p1, p2) => p2.coordinates[1] - (p1.coordinates[1] || 0))
