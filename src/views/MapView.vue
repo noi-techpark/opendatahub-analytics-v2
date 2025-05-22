@@ -31,7 +31,7 @@ SPDX-License-Identifier: AGPL-3.0-or-later
 import { ref, watch, onMounted, nextTick } from 'vue'
 import Map from '../components/ui/map/Map.vue'
 import { useMapLayerStore } from '../stores/map-layers'
-import { useFetch } from '@vueuse/core'
+import { useArrayDifference, useFetch } from '@vueuse/core'
 import { DataMarker, DataPoint } from '../types/api'
 import MarkerCard from '../components/ui/MarkerCard.vue'
 import MapFilter from '../components/ui/map/MapFilter.vue'
@@ -110,7 +110,6 @@ const fetchStationData = async (layer: Layer) => {
 
 const setLayersToMap = async (curr: Layer[], old: Layer[]) => {
    loading.value += 1
-
    if (isTogglingAll.value) {
       const newMarkers: DataMarker[] = []
 
@@ -128,12 +127,18 @@ const setLayersToMap = async (curr: Layer[], old: Layer[]) => {
       return
    }
 
-   const latestSelected = curr.at(-1)
+   const arrayDiff = useArrayDifference(curr, old, (a, b) => a.id === b.id)
+   const latestSelected = arrayDiff.value[0]
 
    if (latestSelected && curr.length > old.length) {
       const newMarkers = await fetchStationData(latestSelected)
+      const uniquePoints = new Set(markers.value.map((p) => p.scode))
+
       if (newMarkers) {
-         markers.value = [...markers.value, ...newMarkers]
+         markers.value = [
+            ...markers.value,
+            ...newMarkers.filter((point) => !uniquePoints.has(point.scode)),
+         ]
       }
    } else {
       const newTypes = new Set(curr.map((n) => n.stationType[0]))
