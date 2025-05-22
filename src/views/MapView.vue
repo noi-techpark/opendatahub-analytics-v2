@@ -51,6 +51,11 @@ import { storeToRefs } from 'pinia'
 import { useI18n } from 'vue-i18n'
 import { useNotificationsStore } from '../stores/notifications'
 import { watchDebounced } from '@vueuse/core'
+import { differenceInHours, subHours } from 'date-fns'
+import {
+   getInfoMarkerColorDifferenceThreshold,
+   getMaxHoursForInfoIcon,
+} from '../utils/map-utils'
 
 const { showNotification } = useNotificationsStore()
 
@@ -181,6 +186,12 @@ const fetchStationData = async (
       ).data
 
       if (flatData && flatData.length > 0) {
+         const now = new Date()
+         const fetchedEvents: Record<
+            string,
+            { scode: string; mvalidtime: string }[]
+         > = {}
+
          const newPoints: DataMarker[] = []
          for (const d of flatData) {
             if (!uniqueOrigins.value[d.stype]) {
@@ -189,12 +200,35 @@ const fetchStationData = async (
 
             uniqueOrigins.value[d.stype].add(d.sorigin)
 
+            if (!fetchedEvents[d.stype]) {
+               fetchedEvents[d.stype] = JSON.parse(
+                  (
+                     await useFetch(
+                        `${import.meta.env.VITE_ODH_MOBILITY_API_URI}/flat%2Cnode/${d.stype}/*/${subHours(now, getMaxHoursForInfoIcon(d.stype)).toISOString()}/${now.toISOString()}?select=scode,mvalidtime&distinct=true&limit=-1`
+                     ).text()
+                  ).data.value || '{}'
+               ).data
+            }
+
+            const lastEvent = fetchedEvents[d.stype]?.findLast(
+               (e) => e.scode === d.scode
+            )
+            const lastDiffHours = lastEvent?.mvalidtime
+               ? differenceInHours(now, new Date(lastEvent.mvalidtime))
+               : undefined
             newPoints.push({
                scode: d.scode,
                sname: d.sname,
                color: layer.color,
                stype: d.stype,
                coordinates: [d.scoordinate?.x || 0, d.scoordinate?.y || 0],
+               infoColor:
+                  lastDiffHours === undefined
+                     ? 'grey'
+                     : getInfoMarkerColorDifferenceThreshold(
+                          d.stype,
+                          lastDiffHours
+                       ),
             })
          }
 

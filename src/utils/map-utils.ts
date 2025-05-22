@@ -4,6 +4,107 @@
 
 import { Map } from 'maplibre-gl'
 
+const infoIconHoursThresholds: Record<
+   string,
+   { green: number; yellow: number; red: number }
+> = {
+   MeteoStation: {
+      green: 2,
+      yellow: 4,
+      red: 6,
+   },
+   EnvironmentStation: {
+      green: 2,
+      yellow: 4,
+      red: 6,
+   },
+   ParkingStation: {
+      green: 2,
+      yellow: 4,
+      red: 6,
+   },
+   ParkingSensor: {
+      green: 2,
+      yellow: 4,
+      red: 6,
+   },
+   ParkingFacility: {
+      green: 2,
+      yellow: 4,
+      red: 6,
+   },
+   BikeParking: {
+      green: 2,
+      yellow: 4,
+      red: 6,
+   },
+   BluetoothStation: {
+      green: 2,
+      yellow: 4,
+      red: 6,
+   },
+   TrafficSensor: {
+      green: 2,
+      yellow: 4,
+      red: 6,
+   },
+   TrafficDirection: {
+      green: 2,
+      yellow: 4,
+      red: 6,
+   },
+   BikeCounter: {
+      green: 2,
+      yellow: 4,
+      red: 6,
+   },
+   RWISstation: {
+      green: 2,
+      yellow: 4,
+      red: 6,
+   },
+   CarsharingStation: {
+      green: 2,
+      yellow: 4,
+      red: 6,
+   },
+   BikesharingStation: {
+      green: 2,
+      yellow: 4,
+      red: 6,
+   },
+   Bicycle: {
+      green: 2,
+      yellow: 4,
+      red: 6,
+   },
+   EChargingStation: {
+      green: 2,
+      yellow: 4,
+      red: 6,
+   },
+   BIKE_CHARGER: {
+      green: 2,
+      yellow: 4,
+      red: 6,
+   },
+   VMS: {
+      green: 2,
+      yellow: 4,
+      red: 6,
+   },
+   LinkStation: {
+      green: 2,
+      yellow: 4,
+      red: 6,
+   },
+   PROVINCE_BZ: {
+      green: 2,
+      yellow: 4,
+      red: 6,
+   },
+}
+
 /**
  * Returns the PNG icon path for a given station type.
  * This is a basic mapping based on the provided JSON config and available PNGs in public/markers/icons.
@@ -32,6 +133,28 @@ export function getIconForStationType(stationType: string): string {
       PROVINCE_BZ: '/markers/icons/caution-multiple.svg',
    }
    return map[stationType] || '/markers/icons/gear.svg'
+}
+
+export const getMaxHoursForInfoIcon = (stationType: string): number => {
+   const threshold = infoIconHoursThresholds[stationType]
+
+   if (!threshold) return 0
+
+   return Math.max(...Object.values(threshold))
+}
+
+export const getInfoMarkerColorDifferenceThreshold = (
+   stationType: string,
+   hoursFromNow: number
+): string => {
+   const threshold = infoIconHoursThresholds[stationType]
+   if (!threshold) return ''
+
+   if (hoursFromNow < threshold.green) return '#34c759'
+   if (hoursFromNow < threshold.yellow) return '#ffd600'
+   if (hoursFromNow < threshold.red) return '#ff4d4f'
+
+   return '#ddd'
 }
 
 export const coordinatesInRange = (coordinates: number[]) => {

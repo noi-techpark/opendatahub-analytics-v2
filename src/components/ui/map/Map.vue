@@ -182,17 +182,13 @@ const setMapClusterSource = async () => {
       const unclusteredIconLayerId = `${key}-unclustered-icon`
       const clusterCountLayerId = `${key}-cluster-count`
       const unclusteredMarkerLayerId = `${key}-unclustered-marker`
+      const unclusteredMarkerInfoLayerId = `${key}-unclustered-marker-info`
       map.value.addLayer({
          id: clusterLayerId,
          type: 'circle',
          source: key,
          filter: ['has', 'point_count'],
          paint: {
-            // Use step expressions (https://maplibre.org/maplibre-style-spec/#expressions-step)
-            // with three steps to implement three types of circles:
-            //   * Blue, 20px circles when point count is less than 100
-            //   * Yellow, 30px circles when point count is between 100 and 750
-            //   * Pink, 40px circles when point count is greater than or equal to 750
             'circle-color': [
                'step',
                ['get', 'point_count'],
@@ -233,7 +229,7 @@ const setMapClusterSource = async () => {
          },
       })
 
-      const iconId = `custom-marker-${key}`
+      const iconId = `custom-marker-${key}-value`
       const iconUrl = getIconForStationType(value[0].stype)
 
       const svgUrl = getBaseMarkerSvgUrl(value[0].color)
@@ -260,12 +256,29 @@ const setMapClusterSource = async () => {
          },
       })
 
+      map.value?.addLayer({
+         id: unclusteredMarkerInfoLayerId,
+         type: 'circle',
+         source: key,
+         filter: ['!', ['has', 'point_count']],
+         paint: {
+            'circle-radius': 8,
+            'circle-color': ['get', 'infoColor'],
+            'circle-stroke-width': 2,
+            'circle-stroke-color': '#fff',
+            'circle-blur': 0,
+            'circle-translate': [18, -30],
+            'circle-translate-anchor': 'map',
+         },
+      })
+
       clustersInMap.value[key] = [
          clusterLayerId,
          unclusteredLayerId,
          unclusteredIconLayerId,
          clusterCountLayerId,
          unclusteredMarkerLayerId,
+         unclusteredMarkerInfoLayerId,
       ]
 
       map.value?.on('click', clusterLayerId, async (e) => {
@@ -332,7 +345,6 @@ watch(
    }
 )
 
-// TODO: reload markers when map reloads
 watch(
    [() => props.markers, () => mapLoaded.value, () => localSelected.value],
    ([currentProps, currentMapLoaded, currentSelected]) => {
@@ -359,6 +371,7 @@ watch(
                      stype: data.stype,
                      coordinates: data.coordinates,
                      selected,
+                     infoColor: data.infoColor,
                   },
                ]
             })
