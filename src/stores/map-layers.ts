@@ -90,14 +90,20 @@ export const useMapLayerStore = defineStore('map-layers', () => {
       )
    }
 
-   const toggleAllInGroup = (layerId: string) => {
+   const toggleAllInGroup = async (layerId: string) => {
       const currentLayer = getSelectedLayer.value
       if (!currentLayer) return
+
       isTogglingAll.value = true
+      await nextTick()
+
       const shouldSelect = !areAllLayersInGroupSelected(layerId)
       currentLayer.layers.forEach(async (_, index) => {
          setLayerState(layerId, index, shouldSelect)
       })
+
+      await nextTick()
+      isTogglingAll.value = false
    }
 
    const deselectAll = () => {

@@ -44,6 +44,7 @@ const markers = ref<DataMarker[]>([])
 const selectedScode = ref<string>()
 const selectedMarker = ref<MapMarkerDetails>()
 const { isTogglingAll } = storeToRefs(layerStore)
+const lastLayers = ref<Layer[]>([])
 
 const handleSelectMarker = async (data?: MapMarkerDetails) => {
    selectedScode.value = data?.scode
@@ -55,17 +56,27 @@ const handleSelectMarker = async (data?: MapMarkerDetails) => {
 watch(
    () => layerStore.getSelectedLayers,
    async (curr, old) => {
-      if (isTogglingAll.value) return
-      await setLayersToMap(curr, old)
+      if (isTogglingAll.value) {
+         return
+      }
+
+      setLayersToMap(curr, old)
    },
    { deep: true }
 )
 
 watch(isTogglingAll, (newVal) => {
    if (newVal) {
-      markers.value = []
-      setLayersToMap(layerStore.getSelectedLayers, [])
+      lastLayers.value = [...layerStore.getSelectedLayers]
+      return
    }
+
+   const arrayDiff = useArrayDifference(
+      layerStore.getSelectedLayers,
+      lastLayers.value,
+      (a, b) => a.id === b.id
+   )
+   toggleAllLayers(arrayDiff.value)
 })
 
 const fetchStationData = async (layer: Layer) => {
@@ -108,24 +119,23 @@ const fetchStationData = async (layer: Layer) => {
    }
 }
 
+const toggleAllLayers = async (layers: Layer[]) => {
+   loading.value += 1
+
+   const newMarkers: DataMarker[] = []
+
+   for (const layer of layers) {
+      newMarkers.push(...((await fetchStationData(layer)) || []))
+      await nextTick()
+   }
+
+   markers.value = newMarkers
+
+   loading.value -= 1
+}
+
 const setLayersToMap = async (curr: Layer[], old: Layer[]) => {
    loading.value += 1
-   if (isTogglingAll.value) {
-      const newMarkers: DataMarker[] = []
-
-      for (const layer of curr) {
-         newMarkers.push(...((await fetchStationData(layer)) || []))
-         await nextTick()
-      }
-
-      isTogglingAll.value = false
-
-      markers.value = newMarkers
-
-      loading.value -= 1
-
-      return
-   }
 
    const arrayDiff = useArrayDifference(curr, old, (a, b) => a.id === b.id)
    const latestSelected = arrayDiff.value[0]
