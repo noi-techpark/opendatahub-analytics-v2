@@ -20,6 +20,7 @@ SPDX-License-Identifier: AGPL-3.0-or-later
       />
       <MarkerCard
          v-if="selectedMarker && selectedScode"
+         :key="selectedMarker.scode"
          :marker="selectedMarker"
          @close="handleSelectMarker()"
       />
@@ -38,7 +39,7 @@ import { ref, watch, onMounted, nextTick, computed } from 'vue'
 import Map from '../components/ui/map/Map.vue'
 import { useMapLayerStore } from '../stores/map-layers'
 import { useArrayDifference, useFetch } from '@vueuse/core'
-import { DataMarker, DataPoint } from '../types/api'
+import { DataMarker, DataPoint, EventPoint } from '../types/api'
 import MapOriginFilterCard from '../components/ui/map/MapOriginFilterCard.vue'
 import MarkerCard from '../components/ui/MarkerCard.vue'
 import MapFilter from '../components/ui/map/MapFilter.vue'
@@ -169,17 +170,17 @@ const fetchStationData = async (
    filter?: { stype: string; filterString: string }
 ) => {
    try {
+      const isProvinceEvents = layer.id === 'Traffic Events'
       const currentMarkers = filter?.filterString
          ? [...markers.value.filter((item) => item.stype !== filter.stype)]
          : [...markers.value]
       const newMarkers: DataMarker[] = []
       let datasetType = 'node'
-      let activeQuery = 'sactive.eq.true'
+      const activeQuery = 'sactive.eq.true'
       let query = 'select=scoordinate%2Cscode%2Cstype%2Csorigin&where='
-      if (layer.id === 'Traffic Events') {
-         datasetType = 'edge'
-         query = 'select=egeometry%2Cecode%2Cetype%2Ceorigin&where='
-         activeQuery = 'eactive.eq.true'
+      if (isProvinceEvents) {
+         datasetType = 'event'
+         query = ''
       }
 
       if (filter?.filterString) {
@@ -188,11 +189,13 @@ const fetchStationData = async (
          query += activeQuery
       }
 
-      const url = `${import.meta.env.VITE_ODH_MOBILITY_API_URI}/flat,${datasetType}/${layer.stationType}/?limit=-1&distinct=true&${query}`
+      const url = `${import.meta.env.VITE_ODH_MOBILITY_API_URI}/flat,${datasetType}/${isProvinceEvents ? 'PROVINCE_BZ/' + new Date().toISOString() : layer.stationType}/?limit=-1&distinct=true&${query}`
 
-      const flatData: DataPoint[] = JSON.parse(
-         (await useFetch(url).text()).data.value || '{}'
-      ).data
+      const flatData = isProvinceEvents
+         ? (JSON.parse((await useFetch(url).text()).data.value || '{}')
+              .data as EventPoint[])
+         : (JSON.parse((await useFetch(url).text()).data.value || '{}')
+              .data as DataPoint[])
 
       if (flatData && flatData.length > 0) {
          const now = new Date()
@@ -203,14 +206,21 @@ const fetchStationData = async (
 
          const newPoints: DataMarker[] = []
          for (const d of flatData) {
-            if (!uniqueOrigins.value[d.stype]) {
-               uniqueOrigins.value[d.stype] = new Set()
+            const typedDataPoint = d as DataPoint
+            const typedEventPoint = d as EventPoint
+            const stype = isProvinceEvents
+               ? 'PROVINCE_BZ'
+               : typedDataPoint.stype
+            if (!uniqueOrigins.value[stype]) {
+               uniqueOrigins.value[stype] = new Set()
             }
+            const origin = isProvinceEvents
+               ? 'PROVINCE_BZ'
+               : typedDataPoint.sorigin
+            uniqueOrigins.value[stype].add(origin)
 
-            uniqueOrigins.value[d.stype].add(d.sorigin)
-
-            if (!fetchedEvents[d.stype]) {
-               fetchedEvents[d.stype] = JSON.parse(
+            if (!isProvinceEvents && !fetchedEvents[stype]) {
+               fetchedEvents[stype] = JSON.parse(
                   (
                      await useFetch(
                         `${import.meta.env.VITE_ODH_MOBILITY_API_URI}/flat,${datasetType}/${d.stype}/*/${subHours(now, getMaxHoursForInfoIcon(d.stype)).toISOString()}/${now.toISOString()}?select=scode,mvalidtime&limit=-1`
@@ -219,25 +229,36 @@ const fetchStationData = async (
                ).data
             }
 
-            const lastEvent = fetchedEvents[d.stype]?.findLast(
-               (e) => e.scode === d.scode
-            )
+            const scode = isProvinceEvents
+               ? typedEventPoint.evuuid
+               : typedDataPoint.scode
+            const lastEvent = !isProvinceEvents
+               ? fetchedEvents[stype]?.findLast((e) => e.scode === scode)
+               : undefined
             const lastDiffHours = lastEvent?.mvalidtime
                ? differenceInHours(now, new Date(lastEvent.mvalidtime))
                : undefined
             newPoints.push({
-               scode: d.scode,
-               sname: d.sname,
+               scode,
+               sname: isProvinceEvents
+                  ? typedEventPoint.evname
+                  : typedDataPoint.sname,
                color: layer.color,
-               stype: d.stype,
-               coordinates: [d.scoordinate?.x || 0, d.scoordinate?.y || 0],
-               infoColor:
-                  lastDiffHours === undefined
-                     ? 'grey'
-                     : getInfoMarkerColorDifferenceThreshold(
-                          d.stype,
-                          lastDiffHours
-                       ),
+               stype,
+               coordinates: isProvinceEvents
+                  ? typedEventPoint.evlgeometry.coordinates
+                  : [
+                       typedDataPoint.scoordinate?.x || 0,
+                       typedDataPoint.scoordinate?.y || 0,
+                    ],
+               infoColor: isProvinceEvents
+                  ? undefined
+                  : lastDiffHours === undefined
+                    ? 'grey'
+                    : getInfoMarkerColorDifferenceThreshold(
+                         stype,
+                         lastDiffHours
+                      ),
             })
          }
 

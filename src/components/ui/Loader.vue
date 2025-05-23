@@ -1,5 +1,5 @@
 <template>
-   <div class="loading-ct" :class="{ active }">
+   <div class="loading-ct" :class="{ active, light }">
       <SpinnerIcon class="loading-indicator animate-spin" />
    </div>
 </template>
@@ -7,7 +7,7 @@
 <script setup lang="ts">
 import SpinnerIcon from './svg/SpinnerIcon.vue'
 
-defineProps<{ active: boolean }>()
+defineProps<{ active: boolean; light?: boolean }>()
 </script>
 
 <style lang="postcss" scoped>
@@ -20,6 +20,14 @@ defineProps<{ active: boolean }>()
 
    &.active {
       @apply pointer-events-auto opacity-100;
+   }
+
+   &.light {
+      @apply bg-white/50;
+
+      & .loading-indicator {
+         @apply text-black;
+      }
    }
 }
 </style>

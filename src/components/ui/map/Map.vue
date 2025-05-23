@@ -256,21 +256,23 @@ const setMapClusterSource = async () => {
          },
       })
 
-      map.value?.addLayer({
-         id: unclusteredMarkerInfoLayerId,
-         type: 'circle',
-         source: key,
-         filter: ['!', ['has', 'point_count']],
-         paint: {
-            'circle-radius': 8,
-            'circle-color': ['get', 'infoColor'],
-            'circle-stroke-width': 2,
-            'circle-stroke-color': '#fff',
-            'circle-blur': 0,
-            'circle-translate': [18, -30],
-            'circle-translate-anchor': 'map',
-         },
-      })
+      if (value[0].infoColor) {
+         map.value?.addLayer({
+            id: unclusteredMarkerInfoLayerId,
+            type: 'circle',
+            source: key,
+            filter: ['!', ['has', 'point_count']],
+            paint: {
+               'circle-radius': 8,
+               'circle-color': ['get', 'infoColor'],
+               'circle-stroke-width': 2,
+               'circle-stroke-color': '#fff',
+               'circle-blur': 0,
+               'circle-translate': [18, -30],
+               'circle-translate-anchor': 'map',
+            },
+         })
+      }
 
       clustersInMap.value[key] = [
          clusterLayerId,

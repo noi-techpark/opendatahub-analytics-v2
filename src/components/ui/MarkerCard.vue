@@ -8,11 +8,14 @@ SPDX-License-Identifier: AGPL-3.0-or-later
    <div class="marker-card-component">
       <div class="marker-card-header">
          <div class="marker-title-ct">
-            <H class="marker-title" tag="h2">{{ data?.name }}</H>
+            <H class="marker-title" tag="h2">{{
+               isLoading ? '...' : data?.name
+            }}</H>
          </div>
          <CloseIcon class="marker-close __clickable" @click="$emit('close')" />
       </div>
       <div class="marker-card-content">
+         <Loader :active="isLoading" light />
          <MenuButtons class="sticky" :links :selected-id="selectedId" />
          <div
             v-if="selectedId === 'metadata'"
@@ -28,7 +31,7 @@ SPDX-License-Identifier: AGPL-3.0-or-later
                   <P>{{ item[1] }}</P>
                </li>
             </ul>
-            <NoData v-else class="no-data" />
+            <NoData v-else-if="!isLoading" class="no-data" />
          </div>
 
          <div
@@ -79,7 +82,7 @@ SPDX-License-Identifier: AGPL-3.0-or-later
                   </div>
                </div>
             </div>
-            <NoData v-else class="no-data" />
+            <NoData v-else-if="!isLoading" class="no-data" />
          </div>
 
          <div
@@ -88,7 +91,7 @@ SPDX-License-Identifier: AGPL-3.0-or-later
             :class="{ 'no-data': !hasAlarms }"
          >
             <div v-if="hasAlarms">alarms</div>
-            <NoData v-else class="no-data" />
+            <NoData v-else-if="!isLoading" class="no-data" />
          </div>
       </div>
    </div>
@@ -101,13 +104,14 @@ import CloseIcon from './svg/CloseIcon.vue'
 import H from './tags/H.vue'
 import { useI18n } from 'vue-i18n'
 import { MapMarkerDetails } from '../../types/map-layer'
-import { MarkerInfo, MarkerMeasurements } from '../../types/api'
+import { EventPoint, MarkerInfo, MarkerMeasurements } from '../../types/api'
 import { asyncComputed, formatDate, useFetch } from '@vueuse/core'
 import { useMapLayerStore } from '../../stores/map-layers'
 import { useTimeSeriesStore } from '../../stores/time-series'
 import { subMonths } from 'date-fns'
 import { useRouter } from 'vue-router'
 
+import Loader from './Loader.vue'
 import P from './tags/P.vue'
 import NoData from './NoData.vue'
 import IconText from './IconText.vue'
@@ -121,6 +125,8 @@ const props = withDefaults(defineProps<Props>(), {})
 
 const router = useRouter()
 const { t } = useI18n()
+const data = ref()
+const isLoading = ref(false)
 const selectedId = ref<'metadata' | 'measurements' | 'alarms'>('metadata')
 const layerStore = useMapLayerStore()
 const { getBaseTimeSeriesObj, addTimeSeries, clearTimeSeriesList } =
@@ -132,23 +138,33 @@ const hasMetadata = computed(
    () => !!Object.entries(data.value?.metadata || {}).length
 )
 
-const links = computed(() => [
-   {
-      id: 'metadata',
-      title: t('components.marker-card.metadata'),
-      action: () => (selectedId.value = 'metadata'),
-   },
-   {
-      id: 'measurements',
-      title: t('components.marker-card.measurements'),
-      action: () => (selectedId.value = 'measurements'),
-   },
-   // {
-   //    id: 'alarms',
-   //    title: t('components.marker-card.alarms'),
-   //    action: () => (selectedId.value = 'alarms'),
-   // },
-])
+const isProvinceEvent = computed(() => props.marker.stype === 'PROVINCE_BZ')
+
+const links = computed(() => {
+   const _links = [
+      {
+         id: 'metadata',
+         title: t('components.marker-card.metadata'),
+         action: () => (selectedId.value = 'metadata'),
+      },
+
+      // {
+      //    id: 'alarms',
+      //    title: t('components.marker-card.alarms'),
+      //    action: () => (selectedId.value = 'alarms'),
+      // },
+   ]
+
+   if (!isProvinceEvent.value) {
+      _links.push({
+         id: 'measurements',
+         title: t('components.marker-card.measurements'),
+         action: () => (selectedId.value = 'measurements'),
+      })
+   }
+
+   return _links
+})
 
 const onMoreDetails = (measurement: MarkerMeasurements) => {
    const timeSeries = {
@@ -175,8 +191,38 @@ const onMoreDetails = (measurement: MarkerMeasurements) => {
    })
 }
 
-const data = asyncComputed(async () => {
-   const dataUrl = `${import.meta.env.VITE_ODH_MOBILITY_API_URI}/flat%2Cnode/${props.marker.stype}/?where=scode.eq.%22${props.marker.scode}%22`
+const fetchMarkerData = async () => {
+   isLoading.value = true
+   const dataUrl = isProvinceEvent.value
+      ? `${import.meta.env.VITE_ODH_MOBILITY_API_URI}/flat,event/PROVINCE_BZ/${new Date().toISOString()}?limit=-1&distinct=true`
+      : `${import.meta.env.VITE_ODH_MOBILITY_API_URI}/flat%2Cnode/${props.marker.stype}/?where=scode.eq.%22${props.marker.scode}%22`
+
+   if (isProvinceEvent.value) {
+      const resData = JSON.parse(
+         (await useFetch(dataUrl)).text().data.value || '{}'
+      ).data[0] as EventPoint
+
+      const { evmetadata } = resData
+      let name = evmetadata.messageGradDescIt || ''
+
+      if (evmetadata.messageGradDescDe) {
+         name += name
+            ? ' - ' + evmetadata.messageGradDescDe
+            : evmetadata.messageGradDescDe
+      }
+
+      data.value = {
+         name: name,
+         color: layerStore.getLayerByStationType(props.marker.stype)?.color,
+         metadata: resData.evmetadata,
+         alarms: [],
+         measurements: [],
+      }
+      isLoading.value = false
+
+      return
+   }
+
    const measurementsUrl = `${import.meta.env.VITE_ODH_MOBILITY_API_URI}/flat%2Cnode/${props.marker.stype}/*/latest?where=scode.eq.%22${props.marker.scode}%22`
 
    const resData = JSON.parse(
@@ -187,14 +233,23 @@ const data = asyncComputed(async () => {
       (await useFetch(measurementsUrl)).text().data.value || '{}'
    ).data as MarkerMeasurements[]
 
-   return {
+   data.value = {
       name: resData.sname,
       color: layerStore.getLayerByStationType(props.marker.stype)?.color,
       metadata: resData.smetadata,
       alarms: [],
       measurements: resMeasurements,
    }
+   isLoading.value = false
+}
+
+watch(links, () => {
+   if (isProvinceEvent.value) {
+      selectedId.value = 'metadata'
+   }
 })
+
+fetchMarkerData()
 </script>
 
 <style lang="postcss" scoped>
@@ -215,6 +270,10 @@ const data = asyncComputed(async () => {
 
          & .marker-title {
             @apply line-clamp-2;
+
+            &:first-letter {
+               @apply uppercase;
+            }
          }
       }
 
@@ -224,7 +283,7 @@ const data = asyncComputed(async () => {
    }
 
    & .marker-card-content {
-      @apply flex flex-grow flex-col gap-3 overflow-y-auto rounded-b border border-t-0 p-4;
+      @apply relative flex flex-grow flex-col gap-3 overflow-y-auto rounded-b border border-t-0 p-4;
 
       & .metadata-ct {
          &.no-data {
