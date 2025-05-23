@@ -107,6 +107,10 @@ export const useTimeSeriesStore = defineStore('time-series', () => {
       return data
    }
 
+   const clearTimeSeriesList = () => {
+      timeSeriesList.value = []
+   }
+
    const getBaseTimeSeriesObj = () => {
       return {
          id: randomId(),
@@ -131,6 +135,7 @@ export const useTimeSeriesStore = defineStore('time-series', () => {
       addTimeSeries,
       updateTimeSeries,
       deleteTimeSeries,
+      clearTimeSeriesList,
 
       // Getters
       getTimeSeriesForEmbedCode,

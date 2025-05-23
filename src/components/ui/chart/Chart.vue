@@ -1,5 +1,7 @@
 <template>
    <div class="chart-ct">
+      <Loader :active="loading" />
+
       <div class="chart-title">
          <P bold>{{ title }}</P>
          <P>{{ $t('common.updated-at', { time: updatedAt }) }}</P>
@@ -12,6 +14,16 @@
 </template>
 
 <script lang="ts" setup>
+// Augment Chart.js types for custom plugins
+declare module 'chart.js' {
+   interface PluginOptionsByType<TType extends ChartType> {
+      background?: {
+         color?: string
+      }
+      // If you have other custom plugins with options, declare them here too
+   }
+}
+
 import { Line } from 'vue-chartjs'
 import zoomPlugin from 'chartjs-plugin-zoom'
 import {
@@ -23,11 +35,14 @@ import {
    CategoryScale,
    LinearScale,
    PointElement,
+   type ChartOptions, // Import ChartOptions type
+   type ChartType, // Import ChartType for module augmentation
 } from 'chart.js'
 import { computed, onMounted, ref } from 'vue'
 import P from '../tags/P.vue'
 import { useTimeSeriesStore } from '../../../stores/time-series'
 import { getReadableDateWithTime } from '../../../utils/date-utils'
+import Loader from '../Loader.vue'
 
 ChartJS.register(
    Title,
@@ -83,6 +98,7 @@ type Props = {
    title: string
    updatedAt: string
    plotHeight?: number
+   loading?: boolean
 }
 const props = withDefaults(defineProps<Props>(), {})
 
@@ -92,75 +108,93 @@ const chartData = computed(() => ({
    labels: timeSeriesList[0]?.labels?.map((item) =>
       getReadableDateWithTime(new Date(item))
    ),
-   datasets: timeSeriesList.map((item) => ({
+   datasets: timeSeriesList.map((item, index) => ({
       label: item.name,
       data: item.data,
       borderColor: item.color,
       fill: false,
       pointRadius: 1.5,
       pointHoverRadius: 1,
+      yAxisID: index % 2 === 0 ? 'y' : 'y1', // Assign to left (y) or right (y1) axis
    })),
 }))
 
-const chartOptions = computed(() => ({
-   responsive: true,
-   maintainAspectRatio: false,
-   plugins: {
-      legend: {
-         display: false,
+const chartOptions = computed(
+   (): ChartOptions<'line'> => ({
+      responsive: true,
+      maintainAspectRatio: false,
+      plugins: {
+         legend: {
+            display: false,
+         },
+         tooltip: {
+            enabled: true,
+            mode: 'index',
+            intersect: false,
+         },
+         background: {
+            color: '#fff',
+         },
+         zoom: {
+            zoom: {
+               wheel: {
+                  enabled: true,
+               },
+               drag: {
+                  enabled: true,
+                  backgroundColor: 'rgba(0, 123, 255, 0.3)',
+                  modifierKey: 'shift',
+               },
+               mode: 'x',
+            },
+            pan: {
+               enabled: true,
+               mode: 'x',
+            },
+            limits: {
+               x: { min: 'original', max: 'original' },
+               y: { min: 'original', max: 'original' },
+            },
+         },
       },
-      tooltip: {
-         enabled: true,
+      interaction: {
          mode: 'index',
          intersect: false,
       },
-      background: {
-         color: '#fff',
-      },
-      zoom: {
-         zoom: {
-            wheel: {
-               enabled: true,
+      scales: {
+         x: {
+            grid: {
+               color: '#D8DEE4',
             },
-            drag: {
-               enabled: true,
-               backgroundColor: 'rgba(0, 123, 255, 0.3)',
-               modifierKey: 'shift',
+         },
+         y: {
+            // Left Y-axis
+            type: 'linear',
+            display: true,
+            position: 'left',
+            grid: {
+               color: '#D8DEE4',
             },
-            mode: 'x',
          },
-         pan: {
-            enabled: true,
-            mode: 'x',
-         },
-         limits: {
-            x: { min: 'original', max: 'original' },
-            y: { min: 'original', max: 'original' },
-         },
-      },
-   },
-   interaction: {
-      mode: 'index',
-      intersect: false,
-   },
-   scales: {
-      x: {
-         grid: {
-            color: '#D8DEE4',
+         y1: {
+            // Right Y-axis
+            type: 'linear',
+            display: timeSeriesList.length > 1,
+            position: 'right',
+            grid: {
+               drawOnChartArea: false,
+            },
          },
       },
-      y: {
-         display: true,
-      },
-   },
-}))
+   })
+)
 
 defineExpose({ chart })
 </script>
 
 <style lang="postcss" scoped>
 .chart-ct {
-   @apply flex flex-grow flex-col gap-2 rounded border px-4 py-2;
+   @apply relative flex flex-grow flex-col gap-2 rounded border px-4 py-2;
 }
 
 @media (max-width: theme('screens.md')) {

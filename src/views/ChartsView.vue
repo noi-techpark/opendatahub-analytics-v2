@@ -62,6 +62,7 @@ SPDX-License-Identifier: AGPL-3.0-or-later
                :title="t('views.charts.timeseries-data')"
                :updatedAt="updatedAt"
                :plotHeight="selectedPlotHeight"
+               :loading="loading"
             />
             <P v-else bold large class="pt-4">{{
                t('views.charts-add-edit.no-time-series')
@@ -87,7 +88,7 @@ SPDX-License-Identifier: AGPL-3.0-or-later
                </Button>
             </div>
 
-            <div class="card">
+            <div v-if="!isEmbedMode" class="card">
                <IconText
                   class="justify-between"
                   bold
@@ -115,6 +116,7 @@ SPDX-License-Identifier: AGPL-3.0-or-later
             </div>
 
             <Button
+               v-if="!isEmbedMode"
                center
                :value="t('views.charts.save')"
                :class="{ 'pointer-events-none': configurationSaved }"
@@ -165,6 +167,7 @@ import TooltipCustom from '../components/ui/tooltip/TooltipCustom.vue'
 import InfoIcon from '../components/ui/svg/InfoIcon.vue'
 
 const { t } = useI18n()
+const route = useRoute()
 const {
    getTimeSeriesForEmbedCode,
    embeddableKeys,
@@ -178,7 +181,7 @@ const { copy, copied } = useClipboard()
 
 const chartEl = ref()
 const lastUpdateOn = ref(new Date())
-
+const isEmbedMode = computed(() => route.query.viewMode === 'embed')
 const LOCAL_STORAGE_CONFIG_KEY = 'savedChartConfiguration'
 
 const loading = ref(false)
@@ -202,7 +205,7 @@ const queryStringToEmbed = computed(() => {
 
    if (!seriesToEmbed.length) return ''
 
-   return `from=${selectedTime.value.from.toJSON()}&to=${selectedTime.value.to.toJSON()}&selectedTimeId=${selectedTimeId.value}&${getTimeSeriesForEmbedCode().join('&')}`
+   return `viewMode=embed&from=${selectedTime.value.from.toJSON()}&to=${selectedTime.value.to.toJSON()}&selectedTimeId=${selectedTimeId.value}&${getTimeSeriesForEmbedCode().join('&')}`
 })
 
 const plotHeights = computed(() => [
@@ -338,7 +341,7 @@ const getConfigFromLocalStorage = () => {
 }
 
 const setSavedTimeseries = async () => {
-   const { query } = useRoute()
+   const query = route.query
 
    const configToLoad = getConfigFromLocalStorage() || query
 
@@ -399,6 +402,15 @@ const onSaveConfiguration = () => {
    }, 2000)
 }
 
+const setRangeFromQueryParams = () => {
+   const query = route.query
+
+   if (!query.from || !query.to) return
+
+   rangeCustom.value = [new Date(query.from), new Date(query.to)]
+   selectedTimeId.value = TimeEnum.CUSTOM
+}
+
 watch(selectedTime, (newVal) => {
    getTimeseriesData()
 })
@@ -416,6 +428,7 @@ onMounted(async () => {
    const { hasLoadedNewData } = await setSavedTimeseries()
 
    if (!hasLoadedNewData) {
+      setRangeFromQueryParams()
       getTimeseriesData()
    }
 })
@@ -458,16 +471,16 @@ onMounted(async () => {
          & .card {
             @apply flex w-[300px] flex-col gap-3 rounded border p-4;
 
-            & .action-icon {
-               @apply transition-all;
-            }
-
-            & .icon-hidden {
-               @apply pointer-events-none absolute opacity-0;
-            }
-
             & .card-content {
                @apply break-words text-xs text-green underline;
+            }
+         }
+
+         & .action-icon {
+            @apply transition-all;
+
+            &.icon-hidden {
+               @apply pointer-events-none absolute opacity-0;
             }
          }
       }

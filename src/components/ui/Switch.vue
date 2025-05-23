@@ -4,7 +4,7 @@ SPDX-License-Identifier: AGPL-3.0-or-later
 -->
 
 <template>
-   <div class="switch-ct">
+   <div class="switch-ct" :class="{ 'w-full': expand }">
       <Switch
          v-model="model"
          :disabled="disabled"
@@ -24,6 +24,7 @@ SPDX-License-Identifier: AGPL-3.0-or-later
          class="__clickable"
          :class="{
             'pointer-events-none opacity-80': disabled,
+            'w-full': expandSlot,
          }"
          @click="model = !model"
       >
@@ -37,6 +38,8 @@ import { Switch } from '@headlessui/vue'
 
 type Props = {
    disabled?: boolean
+   expand?: boolean
+   expandSlot?: boolean
 }
 const props = withDefaults(defineProps<Props>(), {})
 

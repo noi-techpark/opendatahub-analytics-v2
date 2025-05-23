@@ -16,7 +16,11 @@
       "delete": "Delete",
       "edit": "Edit",
       "confirm": "Confirm",
-      "duplicate": "Duplicate"
+      "duplicate": "Duplicate",
+      "datatype": "Datatype",
+      "dataprovider": "Dataprovider",
+      "station": "Station",
+      "continue": "Continue"
    },
    "auth": {
       "login": "Login",
@@ -64,6 +68,10 @@
       },
       "select": {
          "no-option-found": "No option found"
+      },
+      "map-origin-filter": {
+         "search-for-datatype": "Search for datatype",
+         "search-for-dataprovider": "Search for dataprovider"
       }
    },
    "views": {
@@ -130,6 +138,9 @@
       },
       "events-weather": {
          "title": "Headline for Tables"
+      },
+      "map": {
+         "noDataFor": "No data for {name}"
       }
    },
    "layouts": {

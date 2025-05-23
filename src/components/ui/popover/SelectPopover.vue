@@ -30,7 +30,11 @@ SPDX-License-Identifier: AGPL-3.0-or-later
                   type="text"
                />
             </header>
-            <Listbox v-model="selectedOption" :disabled="loading">
+            <Listbox
+               v-model="selectedOption"
+               :disabled="loading"
+               :multiple="multiple"
+            >
                <ListboxOptions
                   ref="listboxRef"
                   class="max-h-60 overflow-y-auto overflow-x-hidden"
@@ -48,7 +52,11 @@ SPDX-License-Identifier: AGPL-3.0-or-later
                      <div class="flex items-center gap-2">
                         <input
                            type="checkbox"
-                           :checked="selectedOption === item.value"
+                           :checked="
+                              multiple && Array.isArray(selectedOption)
+                                 ? selectedOption.includes(item.value)
+                                 : selectedOption === item.value
+                           "
                            class="h-4 w-4"
                         />
                         <span class="truncate">{{ item.label }}</span>
@@ -94,7 +102,7 @@ const listboxRef = ref()
 
 const { t } = useI18n()
 
-const selectedOption = defineModel<string | number | undefined>({
+const selectedOption = defineModel<string | number | undefined | string[]>({
    default: [],
 })
 
@@ -106,6 +114,7 @@ type Props = {
    loading?: boolean
    disabled?: boolean
    showSearch?: boolean
+   multiple?: boolean
 }
 
 const props = defineProps<Props>()

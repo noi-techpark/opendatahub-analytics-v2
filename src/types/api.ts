@@ -3,11 +3,23 @@
 
 import { Layer } from './map-layer.js'
 
+export type StationMapMarker = {
+   scode: string
+   color: string
+   stype: string
+   coordinates: [number, number]
+   selected?: boolean
+   infoColor?: string
+   eventData?: string // stringified EventPoint (JSON)
+}
+
 export type DataMarker = {
    alarm?: boolean
    sname?: string
    selected?: boolean
    coordinates: [number, number]
+   infoColor?: string
+   eventData?: EventPoint
 } & Pick<Layer, 'color'> &
    Pick<DataPoint, 'stype' | 'scode'>
 
@@ -20,6 +32,63 @@ export type DataPoint = {
       srid: number
    }
    stype: string
+   sorigin: string
+}
+
+export type EventPoint = {
+   evcategory: string
+   evdescription: string
+   evend: string
+   evmetadata: {
+      placeDe?: string
+      placeIt?: string
+      tycodeDe?: string
+      tycodeIt?: string
+      messageId?: number
+      actualMail?: number
+      subTycodeDe?: string
+      subTycodeIt?: string
+      tycodeValue?: string
+      messageGradId?: number
+      messageStatus?: number
+      messageZoneId?: number
+      subTycodeValue?: string
+      messageStreetId?: number
+      messageStreetNr?: string
+      publishDateTime?: string
+      json_featuretype?: string
+      messageGradDescDe?: string
+      messageGradDescIt?: string
+      messageZoneDescDe?: string
+      messageZoneDescIt?: string
+      messageStreetWapDescDe?: string
+      messageStreetWapDescIt?: string
+      messageStreetHierarchie?: number
+      messageStreetInternetDescDe?: string
+      messageStreetInternetDescIt?: string
+      [key: string]: any
+   }
+   evname: string
+   evorigin: string
+   evseriesuuid: string
+   evstart: string
+   evtransactiontime: string
+   evuuid: string
+   evldescription: string
+   evlgeometry: {
+      crs: {
+         type: string
+         properties: {
+            name: string
+         }
+      }
+      bbox: number[]
+      type: string
+      coordinates: [number, number]
+   }
+   prlineage: string
+   prname: string
+   prversion: string
 }
 
 export type MarkerInfo = {
@@ -43,5 +112,8 @@ export type MarkerMeasurements = {
    tname: string
    tunit: string
    mvalue: number
+   sorigin: string
+   stype: string
+   sname: string
    _timestamp: string
 }

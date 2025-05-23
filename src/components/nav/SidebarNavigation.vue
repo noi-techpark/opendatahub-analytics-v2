@@ -42,7 +42,7 @@ const selectedId = ref<string>('map')
 const links = computed(() => [
    { id: 'map', title: t('components.sidebar.map'), route: '/' },
    { id: 'charts', title: t('components.sidebar.charts'), route: '/charts' },
-   { id: 'events', title: t('components.sidebar.events'), route: '/events' },
+   // { id: 'events', title: t('components.sidebar.events'), route: '/events' },
 ])
 
 watch(route, () => {

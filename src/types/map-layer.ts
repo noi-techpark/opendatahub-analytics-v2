@@ -1,6 +1,8 @@
 // SPDX-FileCopyrightText: NOI Techpark <digital@noi.bz.it>
 // SPDX-License-Identifier: AGPL-3.0-or-later
 
+import { EventPoint } from './api'
+
 /*
    id: code of the layer, unique string without spaces
    icons: icon for the layer ["weather.svg"]. the array can
@@ -55,4 +57,10 @@ export type Layer = {
 export type MapMarkerDetails = {
    scode: string
    stype: string
+   eventData?: string // stringified EventPoint (JSON)
+}
+
+export type SelectedFilterOrigins = {
+   stype: string
+   sorigin: Record<string, string[]>
 }
