@@ -8,9 +8,7 @@ SPDX-License-Identifier: AGPL-3.0-or-later
    <div class="marker-card-component">
       <div class="marker-card-header">
          <div class="marker-title-ct">
-            <H class="marker-title" tag="h2">{{
-               isLoading ? '...' : data?.name
-            }}</H>
+            <H class="marker-title" tag="h2">{{ markerName }}</H>
          </div>
          <CloseIcon class="marker-close __clickable" @click="$emit('close')" />
       </div>
@@ -138,7 +136,21 @@ const hasMetadata = computed(
    () => !!Object.entries(data.value?.metadata || {}).length
 )
 
-const isProvinceEvent = computed(() => props.marker.stype === 'PROVINCE_BZ')
+const markerName = computed(() => {
+   if (isLoading.value) return '...'
+
+   const name = data.value?.name
+
+   if (!name) return ''
+
+   let result = name.charAt(0).toUpperCase() + name.slice(1)
+
+   return result
+})
+
+const isProvinceEvent = computed(() =>
+   props.marker.stype.startsWith('PROVINCE_BZ')
+)
 
 const links = computed(() => {
    const _links = [
@@ -193,16 +205,18 @@ const onMoreDetails = (measurement: MarkerMeasurements) => {
 
 const fetchMarkerData = async () => {
    isLoading.value = true
-   const dataUrl = isProvinceEvent.value
-      ? `${import.meta.env.VITE_ODH_MOBILITY_API_URI}/flat,event/PROVINCE_BZ/${new Date().toISOString()}?limit=-1&distinct=true`
-      : `${import.meta.env.VITE_ODH_MOBILITY_API_URI}/flat%2Cnode/${props.marker.stype}/?where=scode.eq.%22${props.marker.scode}%22`
 
    if (isProvinceEvent.value) {
-      const resData = JSON.parse(
-         (await useFetch(dataUrl)).text().data.value || '{}'
-      ).data[0] as EventPoint
+      const resData = props.marker.eventData
 
-      const { evmetadata } = resData
+      if (!resData) {
+         isLoading.value = false
+         return {}
+      }
+
+      const parsedData = JSON.parse(resData)
+
+      const { evmetadata } = parsedData
       let name = evmetadata.messageGradDescIt || ''
 
       if (evmetadata.messageGradDescDe) {
@@ -214,7 +228,7 @@ const fetchMarkerData = async () => {
       data.value = {
          name: name,
          color: layerStore.getLayerByStationType(props.marker.stype)?.color,
-         metadata: resData.evmetadata,
+         metadata: evmetadata,
          alarms: [],
          measurements: [],
       }
@@ -223,6 +237,7 @@ const fetchMarkerData = async () => {
       return
    }
 
+   const dataUrl = `${import.meta.env.VITE_ODH_MOBILITY_API_URI}/flat%2Cnode/${props.marker.stype}/?where=scode.eq.%22${props.marker.scode}%22`
    const measurementsUrl = `${import.meta.env.VITE_ODH_MOBILITY_API_URI}/flat%2Cnode/${props.marker.stype}/*/latest?where=scode.eq.%22${props.marker.scode}%22`
 
    const resData = JSON.parse(
@@ -270,10 +285,6 @@ fetchMarkerData()
 
          & .marker-title {
             @apply line-clamp-2;
-
-            &:first-letter {
-               @apply uppercase;
-            }
          }
       }
 

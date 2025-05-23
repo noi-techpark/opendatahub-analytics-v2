@@ -209,7 +209,7 @@ const fetchStationData = async (
             const typedDataPoint = d as DataPoint
             const typedEventPoint = d as EventPoint
             const stype = isProvinceEvents
-               ? 'PROVINCE_BZ'
+               ? `PROVINCE_BZ/${typedEventPoint.evmetadata?.subTycodeValue}`
                : typedDataPoint.stype
             if (!uniqueOrigins.value[stype]) {
                uniqueOrigins.value[stype] = new Set()
@@ -223,7 +223,7 @@ const fetchStationData = async (
                fetchedEvents[stype] = JSON.parse(
                   (
                      await useFetch(
-                        `${import.meta.env.VITE_ODH_MOBILITY_API_URI}/flat,${datasetType}/${d.stype}/*/${subHours(now, getMaxHoursForInfoIcon(d.stype)).toISOString()}/${now.toISOString()}?select=scode,mvalidtime&limit=-1`
+                        `${import.meta.env.VITE_ODH_MOBILITY_API_URI}/flat,${datasetType}/${typedDataPoint.stype}/*/${subHours(now, getMaxHoursForInfoIcon(typedDataPoint.stype)).toISOString()}/${now.toISOString()}?select=scode,mvalidtime&limit=-1`
                      ).text()
                   ).data.value || '{}'
                ).data
@@ -259,6 +259,8 @@ const fetchStationData = async (
                          stype,
                          lastDiffHours
                       ),
+
+               eventData: isProvinceEvents ? typedEventPoint : undefined,
             })
          }
 

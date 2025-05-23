@@ -10,6 +10,7 @@ export type StationMapMarker = {
    coordinates: [number, number]
    selected?: boolean
    infoColor?: string
+   eventData?: string // stringified EventPoint (JSON)
 }
 
 export type DataMarker = {
@@ -18,6 +19,7 @@ export type DataMarker = {
    selected?: boolean
    coordinates: [number, number]
    infoColor?: string
+   eventData?: EventPoint
 } & Pick<Layer, 'color'> &
    Pick<DataPoint, 'stype' | 'scode'>
 

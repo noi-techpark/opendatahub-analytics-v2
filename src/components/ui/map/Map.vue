@@ -374,6 +374,7 @@ watch(
                      coordinates: data.coordinates,
                      selected,
                      infoColor: data.infoColor,
+                     eventData: JSON.stringify(data.eventData),
                   },
                ]
             })

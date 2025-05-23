@@ -131,8 +131,41 @@ export function getIconForStationType(stationType: string): string {
       VMS: '/markers/icons/vms.svg',
       LinkStation: '/markers/icons/vehicular-times.svg',
       PROVINCE_BZ: '/markers/icons/caution-multiple.svg',
+
+      // Specific PROVINCE_BZ event types
+      'PROVINCE_BZ/AMPELREGELUNG':
+         '/markers/icons/PROVINCE_BZ/AMPELREGELUNG.gif',
+      'PROVINCE_BZ/KREISVERKEHR': '/markers/icons/PROVINCE_BZ/KREISVERKEHR.gif',
+      'PROVINCE_BZ/RADWEG_SPERRE':
+         '/markers/icons/PROVINCE_BZ/RADWEG_SPERRE.gif',
+      'PROVINCE_BZ/UNFALL': '/markers/icons/PROVINCE_BZ/UNFALL.gif',
+      'PROVINCE_BZ/BAUSTELLE': '/markers/icons/PROVINCE_BZ/BAUSTELLE.gif',
+      'PROVINCE_BZ/LKW_FAHRVERBOT':
+         '/markers/icons/PROVINCE_BZ/LKW_FAHRVERBOT.gif',
+      'PROVINCE_BZ/SCHNEEFALL': '/markers/icons/PROVINCE_BZ/SCHNEEFALL.gif',
+      'PROVINCE_BZ/VIEHABTRIEB': '/markers/icons/PROVINCE_BZ/VIEHABTRIEB.gif',
+      'PROVINCE_BZ/EINENGUNG': '/markers/icons/PROVINCE_BZ/EINENGUNG.gif',
+      'PROVINCE_BZ/MESSE_BOZEN': '/markers/icons/PROVINCE_BZ/MESSE_BOZEN.gif',
+      'PROVINCE_BZ/SPERRE': '/markers/icons/PROVINCE_BZ/SPERRE.gif',
+      'PROVINCE_BZ/VORSICHT': '/markers/icons/PROVINCE_BZ/VORSICHT.gif',
+      'PROVINCE_BZ/EISENBAHN': '/markers/icons/PROVINCE_BZ/EISENBAHN.gif',
+      'PROVINCE_BZ/OELSPUR': '/markers/icons/PROVINCE_BZ/OELSPUR.gif',
+      'PROVINCE_BZ/STAU': '/markers/icons/PROVINCE_BZ/STAU.gif',
+      'PROVINCE_BZ/WINDBOEHEN': '/markers/icons/PROVINCE_BZ/WINDBOEHEN.gif',
+      'PROVINCE_BZ/GEGENVERKEHR': '/markers/icons/PROVINCE_BZ/GEGENVERKEHR.gif',
+      'PROVINCE_BZ/RADAR': '/markers/icons/PROVINCE_BZ/RADAR.gif',
+      'PROVINCE_BZ/TIERE_AUF_FAHRB':
+         '/markers/icons/PROVINCE_BZ/TIERE_AUF_FAHRB.gif',
+      'PROVINCE_BZ/WINTERAUSRUEST':
+         '/markers/icons/PROVINCE_BZ/WINTERAUSRUEST.gif',
    }
-   return map[stationType] || '/markers/icons/gear.svg'
+
+   return (
+      map[stationType] ||
+      (stationType.startsWith('PROVINCE_BZ')
+         ? map['PROVINCE_BZ']
+         : '/markers/icons/gear.svg')
+   )
 }
 
 export const getMaxHoursForInfoIcon = (stationType: string): number => {
