@@ -88,7 +88,7 @@ SPDX-License-Identifier: AGPL-3.0-or-later
                </Button>
             </div>
 
-            <div class="card">
+            <div v-if="!isEmbedMode" class="card">
                <IconText
                   class="justify-between"
                   bold
@@ -116,6 +116,7 @@ SPDX-License-Identifier: AGPL-3.0-or-later
             </div>
 
             <Button
+               v-if="!isEmbedMode"
                center
                :value="t('views.charts.save')"
                :class="{ 'pointer-events-none': configurationSaved }"
@@ -180,7 +181,7 @@ const { copy, copied } = useClipboard()
 
 const chartEl = ref()
 const lastUpdateOn = ref(new Date())
-
+const isEmbedMode = computed(() => route.query.viewMode === 'embed')
 const LOCAL_STORAGE_CONFIG_KEY = 'savedChartConfiguration'
 
 const loading = ref(false)
@@ -204,7 +205,7 @@ const queryStringToEmbed = computed(() => {
 
    if (!seriesToEmbed.length) return ''
 
-   return `from=${selectedTime.value.from.toJSON()}&to=${selectedTime.value.to.toJSON()}&selectedTimeId=${selectedTimeId.value}&${getTimeSeriesForEmbedCode().join('&')}`
+   return `viewMode=embed&from=${selectedTime.value.from.toJSON()}&to=${selectedTime.value.to.toJSON()}&selectedTimeId=${selectedTimeId.value}&${getTimeSeriesForEmbedCode().join('&')}`
 })
 
 const plotHeights = computed(() => [
@@ -470,16 +471,16 @@ onMounted(async () => {
          & .card {
             @apply flex w-[300px] flex-col gap-3 rounded border p-4;
 
-            & .action-icon {
-               @apply transition-all;
-            }
-
-            & .icon-hidden {
-               @apply pointer-events-none absolute opacity-0;
-            }
-
             & .card-content {
                @apply break-words text-xs text-green underline;
+            }
+         }
+
+         & .action-icon {
+            @apply transition-all;
+
+            &.icon-hidden {
+               @apply pointer-events-none absolute opacity-0;
             }
          }
       }

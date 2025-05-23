@@ -5,12 +5,12 @@ SPDX-License-Identifier: AGPL-3.0-or-later
 
 <template>
    <div class="app-layout">
-      <div ref="appHeader">
+      <div v-if="showAppHeader" ref="appHeader">
          <AppHeader :is-menu-open="isMenuOpen" @toggle-menu="toggleMenu" />
       </div>
 
       <div class="content-ct">
-         <AppSidebar />
+         <AppSidebar v-if="showAppSidebar" />
          <slot />
       </div>
    </div>
@@ -20,10 +20,15 @@ SPDX-License-Identifier: AGPL-3.0-or-later
 import AppSidebar from './AppSidebar.vue'
 import AppHeader from './AppHeader.vue'
 import { computed, ref } from 'vue'
+import { useRoute } from 'vue-router'
 
+const route = useRoute()
 const isMenuOpen = ref(false)
 const appHeader = ref<HTMLElement>()
 const headerHeight = computed(() => `${appHeader.value?.offsetHeight}px`)
+const isEmbedMode = computed(() => route.query.viewMode === 'embed')
+const showAppHeader = computed(() => !isEmbedMode.value)
+const showAppSidebar = computed(() => !isEmbedMode.value)
 
 function toggleMenu() {
    isMenuOpen.value = !isMenuOpen.value

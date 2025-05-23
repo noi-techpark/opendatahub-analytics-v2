@@ -222,10 +222,12 @@ const pagination = ref({
    stations: {
       lastSearchVal: '',
       lastPage: 1,
+      reachedMaxData: false,
    },
    datatypes: {
       lastSearchVal: '',
       lastPage: 1,
+      reachedMaxData: false,
    },
 })
 
@@ -350,13 +352,21 @@ const useFetchDatasetOptions = async (searchVal?: string) => {
 }
 
 const useFetchStationOptions = async (searchVal?: string, page = 1) => {
+   const isNewSearchVal =
+      (searchVal || '') !== pagination.value.stations.lastSearchVal
+
+   if (!isNewSearchVal && pagination.value.stations.reachedMaxData) {
+      return
+   }
+
    loadingState.value.station = true
 
    if (searchVal) {
       selection.value.station = ''
    }
 
-   if ((searchVal || '') !== pagination.value.stations.lastSearchVal) {
+   if (isNewSearchVal) {
+      pagination.value.stations.reachedMaxData = false
       pagination.value.stations.lastPage = 1
       page = 1
    }
@@ -369,6 +379,10 @@ const useFetchStationOptions = async (searchVal?: string, page = 1) => {
 
    const { data } = await useFetch(dataUrl).json()
    const stationsData = data.value.data
+   const stationsDataLength = stationsData?.length || 0
+
+   pagination.value.stations.reachedMaxData =
+      stationsDataLength === 0 || stationsDataLength < limit
 
    if (offset > 0) {
       stations.value = [...stations.value, ...stationsData]
@@ -386,26 +400,37 @@ const useFetchStationOptions = async (searchVal?: string, page = 1) => {
 }
 
 const useFetchDatatypeOptions = async (searchVal?: string, page = 1) => {
+   const isNewSearchVal =
+      (searchVal || '') !== pagination.value.datatypes.lastSearchVal
+
+   if (!isNewSearchVal && pagination.value.datatypes.reachedMaxData) {
+      return
+   }
+
    loadingState.value.datatype = true
 
    if (searchVal) {
       selection.value.datatype = ''
    }
 
-   if ((searchVal || '') !== pagination.value.datatypes.lastSearchVal) {
+   if (isNewSearchVal) {
+      pagination.value.datatypes.reachedMaxData = false
       pagination.value.datatypes.lastPage = 1
       page = 1
    }
 
    const { limit, offset } = useComputePagination(page)
 
-   const searchString = useComputeILIKESearch('tdescription', searchVal)
+   const searchString = useComputeILIKESearch('tname', searchVal)
 
    const dataUrl = `${import.meta.env.VITE_ODH_MOBILITY_API_URI}/flat/${selection.value.dataset}/*?limit=${limit}&offset=${offset}&select=tname,tdescription&where=and(${searchString ? searchString + ',' : ''}sorigin.eq.${selection.value.provider})&shownull=false&distinct=true`
 
    const { data } = await useFetch(dataUrl).json()
 
    const datatypesData = data.value.data
+   const datatypesDataLength = datatypesData?.length || 0
+   pagination.value.datatypes.reachedMaxData =
+      datatypesDataLength === 0 || datatypesDataLength < limit
 
    if (offset > 0) {
       datatypes.value = [...datatypes.value, ...datatypesData]
@@ -432,7 +457,7 @@ const getMarkersFromStations = (data: DataPoint[]) => {
 
 const useComputePagination = (page: number) => {
    return {
-      limit: page * DEFAULT_LIMIT,
+      limit: DEFAULT_LIMIT,
       offset: (page - 1) * DEFAULT_LIMIT,
    }
 }
@@ -513,6 +538,7 @@ watch(
 
       pagination.value.stations.lastPage = 1
       pagination.value.stations.lastSearchVal = ''
+      pagination.value.stations.reachedMaxData = false
 
       useFetchStationOptions()
    }
@@ -531,6 +557,7 @@ watch(
 
       pagination.value.datatypes.lastPage = 1
       pagination.value.datatypes.lastSearchVal = ''
+      pagination.value.datatypes.reachedMaxData = false
 
       useFetchDatatypeOptions()
    }
