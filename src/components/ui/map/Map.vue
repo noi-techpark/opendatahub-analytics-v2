@@ -232,7 +232,7 @@ const setMapClusterSource = async () => {
       const iconId = `custom-marker-${key}-value`
       const iconUrl = getIconForStationType(value[0].stype)
 
-      const svgUrl = getBaseMarkerSvgUrl(value[0].color)
+      const svgUrl = getBaseMarkerSvgUrl(value[0].iconColor || value[0].color)
 
       if (!map.value?.hasImage(iconId)) {
          try {
@@ -370,6 +370,7 @@ watch(
                   {
                      scode: data.scode,
                      color: data.color,
+                     iconColor: data.iconColor,
                      stype: data.stype,
                      coordinates: data.coordinates,
                      selected,

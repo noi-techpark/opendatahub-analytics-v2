@@ -237,7 +237,8 @@ export const initMap = () => {
 
 export const createMarkerIcon = async (
    svgUrl: string,
-   iconUrl: string
+   iconUrl: string,
+   iconBoxSize: number = 32
 ): Promise<HTMLCanvasElement> => {
    return new Promise((resolve, reject) => {
       const svgImg = new window.Image()
@@ -247,11 +248,13 @@ export const createMarkerIcon = async (
          canvas.height = 72
          const ctx = canvas.getContext('2d')
          if (!ctx) return reject('No ctx')
+
+         ctx.imageSmoothingEnabled = !iconUrl.includes('svg')
+
          ctx.drawImage(svgImg, 0, 0)
          const iconImg = new window.Image()
          iconImg.onload = () => {
             // Draw the icon centered in a 32x32 box, maintaining aspect ratio
-            const iconBoxSize = 32
             let drawWidth = iconImg.width
             let drawHeight = iconImg.height
             if (drawWidth > drawHeight) {
@@ -284,7 +287,7 @@ export const getBaseMarkerSvgUrl = (markerColor: string) => {
         fill="none"
         xmlns="http://www.w3.org/2000/svg"
      >
-        <circle cx="24" cy="64" r="8" fill="white" />
+        ${markerColor === 'transparent' ? '' : '<circle cx="24" cy="64" r="8" fill="white" />'}
         <circle cx="24" cy="64" r="4" fill="${markerColor}" />
         <circle cx="24" cy="24" r="24" fill="${markerColor}" />
         <mask

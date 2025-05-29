@@ -244,6 +244,7 @@ const fetchStationData = async (
                   ? typedEventPoint.evname
                   : typedDataPoint.sname,
                color: layer.color,
+               iconColor: layer.iconColor,
                stype,
                coordinates: isProvinceEvents
                   ? typedEventPoint.evlgeometry.coordinates
