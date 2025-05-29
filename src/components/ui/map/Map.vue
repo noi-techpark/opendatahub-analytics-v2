@@ -46,12 +46,13 @@ SPDX-License-Identifier: AGPL-3.0-or-later
 import 'maplibre-gl/dist/maplibre-gl.css'
 import { computed, h, nextTick, onMounted, ref, render, watch } from 'vue'
 import { DataMarker, StationMapMarker } from '../../../types/api'
+import { initMap } from '../../../utils/map-utils'
 import {
    createMarkerIcon,
    getBaseMarkerSvgUrl,
    getIconForStationType,
-   initMap,
-} from '../../../utils/map-utils'
+} from '../../../utils/marker-alert-utils'
+
 import { Map, Marker } from 'maplibre-gl'
 import { MapMarkerDetails } from '../../../types/map-layer'
 import InputSearch from '../input/InputSearch.vue'
@@ -232,7 +233,7 @@ const setMapClusterSource = async () => {
       const iconId = `custom-marker-${key}-value`
       const iconUrl = getIconForStationType(value[0].stype)
 
-      const svgUrl = getBaseMarkerSvgUrl(value[0].color)
+      const svgUrl = getBaseMarkerSvgUrl(value[0].iconColor || value[0].color)
 
       if (!map.value?.hasImage(iconId)) {
          try {
@@ -256,23 +257,21 @@ const setMapClusterSource = async () => {
          },
       })
 
-      if (value[0].infoColor) {
-         map.value?.addLayer({
-            id: unclusteredMarkerInfoLayerId,
-            type: 'circle',
-            source: key,
-            filter: ['!', ['has', 'point_count']],
-            paint: {
-               'circle-radius': 8,
-               'circle-color': ['get', 'infoColor'],
-               'circle-stroke-width': 2,
-               'circle-stroke-color': '#fff',
-               'circle-blur': 0,
-               'circle-translate': [18, -30],
-               'circle-translate-anchor': 'map',
-            },
-         })
-      }
+      map.value?.addLayer({
+         id: unclusteredMarkerInfoLayerId,
+         type: 'circle',
+         source: key,
+         filter: ['all', ['!', ['has', 'point_count']], ['has', 'infoColor']],
+         paint: {
+            'circle-radius': 8,
+            'circle-color': ['get', 'infoColor'],
+            'circle-stroke-width': 2,
+            'circle-stroke-color': '#fff',
+            'circle-blur': 0,
+            'circle-translate': [18, -30],
+            'circle-translate-anchor': 'map',
+         },
+      })
 
       clustersInMap.value[key] = [
          clusterLayerId,
@@ -370,6 +369,7 @@ watch(
                   {
                      scode: data.scode,
                      color: data.color,
+                     iconColor: data.iconColor,
                      stype: data.stype,
                      coordinates: data.coordinates,
                      selected,

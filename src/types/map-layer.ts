@@ -45,6 +45,7 @@ export type Layer = {
    format: 'integreen' | 'wms'
    'custom-function': any | null
    color: string
+   iconColor?: string
    'main-data': [string, any][]
    imageMapping?: {
       dataType: string

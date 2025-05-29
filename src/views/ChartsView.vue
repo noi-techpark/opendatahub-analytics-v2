@@ -53,6 +53,18 @@ SPDX-License-Identifier: AGPL-3.0-or-later
                      :options="plotHeights"
                      type="list"
                   />
+                  <SelectPopover
+                     v-model="axisPosition"
+                     :text="
+                        t('views.charts.y-axis-position', {
+                           position: axisPositionOptions.find(
+                              (option) => option.value === axisPosition
+                           )?.label,
+                        })
+                     "
+                     :options="axisPositionOptions"
+                     type="list"
+                  />
                </div>
             </div>
             <Chart
@@ -63,6 +75,7 @@ SPDX-License-Identifier: AGPL-3.0-or-later
                :updatedAt="updatedAt"
                :plotHeight="selectedPlotHeight"
                :loading="loading"
+               :axis-position="axisPosition"
             />
             <P v-else bold large class="pt-4">{{
                t('views.charts-add-edit.no-time-series')
@@ -186,6 +199,13 @@ const LOCAL_STORAGE_CONFIG_KEY = 'savedChartConfiguration'
 
 const loading = ref(false)
 const configurationSaved = ref(false)
+const axisPosition = ref<'default' | 'all-left' | 'all-right'>('default')
+
+const axisPositionOptions = computed(() => [
+   { label: t('common.default'), value: 'default' },
+   { label: t('common.all-left'), value: 'all-left' },
+   { label: t('common.all-right'), value: 'all-right' },
+])
 
 const selectedTimeId = ref<TimeEnum>(TimeEnum.DAY)
 const rangeCustom = ref<TimeRange>([new Date(), new Date()])
@@ -205,7 +225,7 @@ const queryStringToEmbed = computed(() => {
 
    if (!seriesToEmbed.length) return ''
 
-   return `viewMode=embed&from=${selectedTime.value.from.toJSON()}&to=${selectedTime.value.to.toJSON()}&selectedTimeId=${selectedTimeId.value}&${getTimeSeriesForEmbedCode().join('&')}`
+   return `viewMode=embed&from=${selectedTime.value.from.toJSON()}&to=${selectedTime.value.to.toJSON()}&selectedYAxis=${axisPosition.value}&selectedTimeId=${selectedTimeId.value}&${getTimeSeriesForEmbedCode().join('&')}`
 })
 
 const plotHeights = computed(() => [
@@ -386,6 +406,13 @@ const setSavedTimeseries = async () => {
          new Date(configToLoad.from?.toString() || ''),
          new Date(configToLoad.to?.toString() || ''),
       ]
+   }
+
+   if (configToLoad.selectedYAxis) {
+      axisPosition.value = configToLoad.selectedYAxis as
+         | 'default'
+         | 'all-left'
+         | 'all-right'
    }
 
    selectedTimeId.value = configToLoad.selectedTimeId as TimeEnum
