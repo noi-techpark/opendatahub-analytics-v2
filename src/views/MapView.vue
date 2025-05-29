@@ -219,6 +219,13 @@ const fetchStationData = async (
                : typedDataPoint.sorigin
             uniqueOrigins.value[stype].add(origin)
 
+            if (
+               isProvinceEvents &&
+               filterProvinceBZEvent(typedEventPoint, now)
+            ) {
+               continue
+            }
+
             if (!isProvinceEvents && !fetchedEvents[stype]) {
                fetchedEvents[stype] = JSON.parse(
                   (
@@ -327,6 +334,36 @@ const setLayersToMap = async (curr: Layer[], old: Layer[]) => {
    }
 
    loading.value -= 1
+}
+
+// returns true, if PROVINCE_BZ event should NOT be visible on the map
+const filterProvinceBZEvent = (event: EventPoint, date: Date) => {
+   if (event.evorigin !== 'PROVINCE_BZ') return false
+
+   const startTs = new Date(event.evstart).getTime()
+   const endTs = new Date(event.evend).getTime()
+   const category = event.evcategory
+   const now = date.getTime()
+   // use 00:00:00 for check if event today
+   const startDayTs = new Date(event.evstart).setHours(0, 0, 0, 0)
+   const todayTs = date.setHours(0, 0, 0, 0)
+
+   switch (category) {
+      case 'intralci viabilità in e fuori Alto Adige_chiusura temporanea | Verkehrsbehinderung für Zonen und aus. Südt._kurzfristige oder zeitweilige Sperre':
+         if (endTs === null || endTs === undefined) return false
+         return now <= startTs && now >= endTs
+      case 'intralci viabilità in e fuori Alto Adige_cantiere | Verkehrsbehinderung für Zonen und aus. Südt._Baustelle':
+         return now <= startTs && now >= endTs
+      case 'intralci viabilità in e fuori Alto Adige_attenzione | Verkehrsbehinderung für Zonen und aus. Südt._Vorsicht':
+      case 'intralci viabilità in e fuori Alto Adige_caduta frana | Verkehrsbehinderung für Zonen und aus. Südt._Murenabgang und Strassenverlegung':
+      case 'intralci viabilità in e fuori Alto Adige_manifestazione | Verkehrsbehinderung für Zonen und aus. Südt._Veranstaltungen':
+      case 'intralci viabilità in e fuori Alto Adige_senso unico alternato con semafero | Verkehrsbehinderung für Zonen und aus. Südt._Ampelregelung':
+         return startDayTs !== todayTs
+      default:
+         if (category.includes('Situazione attuale'))
+            return startDayTs !== todayTs
+         return false
+   }
 }
 
 onMounted(() => {
