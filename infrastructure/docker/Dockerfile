@@ -18,3 +18,4 @@ FROM nginx:stable-alpine
 
 # Copy the built files from the builder stage
 COPY --from=builder /app/dist /usr/share/nginx/html
+COPY ./infrastructure/nginx/default.conf /etc/nginx/conf.d/default.conf
