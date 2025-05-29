@@ -55,8 +55,8 @@ import { watchDebounced } from '@vueuse/core'
 import { differenceInHours, subHours } from 'date-fns'
 import {
    getInfoMarkerColorDifferenceThreshold,
-   getMaxHoursForInfoIcon,
-} from '../utils/map-utils'
+   infoIconHoursThresholds,
+} from '../utils/marker-alert-utils'
 
 const { showNotification } = useNotificationsStore()
 
@@ -201,7 +201,26 @@ const fetchStationData = async (
          const now = new Date()
          const fetchedEvents: Record<
             string,
-            { scode: string; mvalidtime: string }[]
+            Record<
+               string,
+               {
+                  stations: Record<
+                     string,
+                     {
+                        sdatatypes: Record<
+                           string,
+                           {
+                              tmeasurements: Array<{
+                                 mperiod: number
+                                 mvalidtime: string
+                                 mvalue: number
+                              }>
+                           }
+                        >
+                     }
+                  >
+               }
+            >
          > = {}
 
          const newPoints: DataMarker[] = []
@@ -226,25 +245,120 @@ const fetchStationData = async (
                continue
             }
 
-            if (!isProvinceEvents && !fetchedEvents[stype]) {
-               fetchedEvents[stype] = JSON.parse(
-                  (
-                     await useFetch(
-                        `${import.meta.env.VITE_ODH_MOBILITY_API_URI}/flat,${datasetType}/${typedDataPoint.stype}/*/${subHours(now, getMaxHoursForInfoIcon(typedDataPoint.stype)).toISOString()}/${now.toISOString()}?select=scode,mvalidtime&limit=-1`
-                     ).text()
-                  ).data.value || '{}'
-               ).data
+            // for (let i = 1; i < infoIconHoursThresholds[stype].length; i++) {
+            //    let key = layer_info.icons[i][1] + ';' + layer_info.icons[i][2]
+            //    if (!datatype_period_duplicates[key]) {
+            //       datatype_period_duplicates[key] = true
+            //       let query_datatype =
+            //          'and(mperiod.eq.' +
+            //          layer_info.icons[i][2] +
+            //          ',tname.eq."' +
+            //          layer_info.icons[i][1].replace(/(['"\(\)\\])/g, '\\$1') +
+            //          '")'
+            //       query_where_datatypes +=
+            //          (query_where_datatypes === '' ? 'or(' : ',') +
+            //          query_datatype
+            //    }
+            // }
+
+            const fetchedEventsKey = Array.isArray(layer.stationType)
+               ? layer.stationType.join('_')
+               : layer.stationType
+            if (!isProvinceEvents && !fetchedEvents[fetchedEventsKey]) {
+               let query_where_datatypes = ''
+               let datatype_period_duplicates: Record<string, boolean> = {}
+
+               // Only proceed if the station type exists in the thresholds
+               if (infoIconHoursThresholds[typedDataPoint.stype]) {
+                  for (const tnameKey in infoIconHoursThresholds[
+                     typedDataPoint.stype
+                  ]) {
+                     for (const mperiodKey in infoIconHoursThresholds[
+                        typedDataPoint.stype
+                     ][tnameKey]) {
+                        const duplicatesKey = tnameKey + '_' + mperiodKey
+                        if (!datatype_period_duplicates[duplicatesKey]) {
+                           datatype_period_duplicates[duplicatesKey] = true
+                           let query_datatype =
+                              'and(mperiod.eq.' +
+                              mperiodKey +
+                              ',tname.eq."' +
+                              tnameKey.replace(/(['"\(\)\\])/g, '\\$1') +
+                              '")'
+                           query_where_datatypes +=
+                              (query_where_datatypes === '' ? 'or(' : ',') +
+                              query_datatype
+                        }
+                     }
+                  }
+               }
+
+               if (query_where_datatypes) {
+                  query_where_datatypes += ')' // Close the OR statement
+                  try {
+                     const response = await useFetch(
+                        `${import.meta.env.VITE_ODH_MOBILITY_API_URI}/tree/${layer.stationType}/*/latest?limit=-1&distinct=true&select=tmeasurements&showNull=true&where=${encodeURIComponent(query_where_datatypes)}`
+                     )
+
+                     fetchedEvents[fetchedEventsKey] = JSON.parse(
+                        response.data.value || '{}'
+                     ).data
+                  } catch (error) {
+                     console.error(
+                        `Error fetching data for ${fetchedEventsKey}:`,
+                        error
+                     )
+                     fetchedEvents[fetchedEventsKey] = {}
+                  }
+               } else {
+                  fetchedEvents[fetchedEventsKey] = {}
+               }
             }
 
             const scode = isProvinceEvents
                ? typedEventPoint.evuuid
                : typedDataPoint.scode
-            const lastEvent = !isProvinceEvents
-               ? fetchedEvents[stype]?.findLast((e) => e.scode === scode)
-               : undefined
-            const lastDiffHours = lastEvent?.mvalidtime
-               ? differenceInHours(now, new Date(lastEvent.mvalidtime))
-               : undefined
+
+            // Find the most recent measurement for this station
+            let lastDiffHours = undefined
+            let lastMeasurement = undefined
+
+            if (
+               !isProvinceEvents &&
+               fetchedEvents[fetchedEventsKey] &&
+               fetchedEvents[fetchedEventsKey][stype] &&
+               fetchedEvents[fetchedEventsKey][stype].stations &&
+               fetchedEvents[fetchedEventsKey][stype].stations[scode]
+            ) {
+               const station =
+                  fetchedEvents[fetchedEventsKey][stype].stations[scode]
+
+               // Look through all datatypes for this station
+               for (const dataType in station.sdatatypes) {
+                  const measurements =
+                     station.sdatatypes[dataType].tmeasurements
+                  if (measurements && measurements.length > 0) {
+                     // Get the most recent measurement
+                     const measurement = measurements[0]
+                     if (measurement.mvalidtime) {
+                        const diffHours = differenceInHours(
+                           now,
+                           new Date(measurement.mvalidtime)
+                        )
+
+                        // Update if this is the first measurement or more recent than the previous one
+                        if (
+                           lastDiffHours === undefined ||
+                           diffHours < lastDiffHours
+                        ) {
+                           lastDiffHours = diffHours
+                           lastMeasurement = { ...measurement, dataType }
+                        }
+                     }
+                  }
+               }
+            }
+
             newPoints.push({
                scode,
                sname: isProvinceEvents
@@ -261,12 +375,15 @@ const fetchStationData = async (
                     ],
                infoColor: isProvinceEvents
                   ? undefined
-                  : lastDiffHours === undefined
-                    ? 'grey'
-                    : getInfoMarkerColorDifferenceThreshold(
+                  : lastMeasurement
+                    ? getInfoMarkerColorDifferenceThreshold(
                          stype,
-                         lastDiffHours
-                      ),
+                         lastMeasurement.dataType,
+                         lastMeasurement.mperiod,
+                         Number(lastMeasurement.mvalue),
+                         lastDiffHours || 0
+                      )
+                    : undefined,
 
                eventData: isProvinceEvents ? typedEventPoint : undefined,
             })
@@ -327,9 +444,22 @@ const setLayersToMap = async (curr: Layer[], old: Layer[]) => {
       const newTypes = new Set(curr.flatMap((n) => n.stationType))
       const oldTypes = old.flatMap((o) => o.stationType)
       const diff = oldTypes.filter((ot) => !newTypes.has(ot))
+
       diff.forEach((d) => {
-         markers.value = markers.value.filter((p) => p.stype !== d)
-         delete uniqueOrigins.value[d]
+         const isProvinceBZ = d === 'PROVINCE_BZ'
+
+         markers.value = isProvinceBZ
+            ? markers.value.filter((p) => !p.stype.startsWith(d))
+            : markers.value.filter((p) => p.stype !== d)
+
+         if (isProvinceBZ) {
+            const keysToRemove = Object.keys(uniqueOrigins.value).filter((k) =>
+               k.startsWith(d)
+            )
+            keysToRemove.forEach((k) => delete uniqueOrigins.value[k])
+         } else {
+            delete uniqueOrigins.value[d]
+         }
       })
    }
 
