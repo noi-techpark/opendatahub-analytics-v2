@@ -20,7 +20,10 @@
       "datatype": "Datatype",
       "dataprovider": "Dataprovider",
       "station": "Station",
-      "continue": "Continue"
+      "continue": "Continue",
+      "default": "Default",
+      "all-left": "All left",
+      "all-right": "All right"
    },
    "auth": {
       "login": "Login",
@@ -43,7 +46,8 @@
       "marker-card": {
          "measurements": "Measurements",
          "alarms": "Alarms",
-         "metadata": "Metadata"
+         "metadata": "Metadata",
+         "additional-metadata": "Additional Metadata"
       },
       "time-selector": {
          "day": "Day",
@@ -100,7 +104,8 @@
          "tooltip": {
             "zoom": "Use scroll wheel or hold {shift} and drag to zoom.",
             "pan": "Click and drag to pan."
-         }
+         },
+         "y-axis-position": "Y axis: {position}"
       },
       "charts-add-edit": {
          "no-time-series": "Please, add a time series to load.",

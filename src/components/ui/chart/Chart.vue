@@ -99,38 +99,141 @@ type Props = {
    updatedAt: string
    plotHeight?: number
    loading?: boolean
+   axisPosition?: 'default' | 'all-left' | 'all-right'
 }
-const props = withDefaults(defineProps<Props>(), {})
+const props = withDefaults(defineProps<Props>(), {
+   axisPosition: 'default',
+})
 
 const chart = ref()
 
-const chartData = computed(() => ({
-   labels: timeSeriesList[0]?.labels?.map((item) =>
+const chartData = computed(() => {
+   const labels = timeSeriesList[0]?.labels?.map((item) =>
       getReadableDateWithTime(new Date(item))
-   ),
-   datasets: timeSeriesList.map((item, index) => ({
-      label: item.name,
-      data: item.data,
-      borderColor: item.color,
-      fill: false,
-      pointRadius: 1.5,
-      pointHoverRadius: 1,
-      yAxisID: index % 2 === 0 ? 'y' : 'y1', // Assign to left (y) or right (y1) axis
-   })),
-}))
+   )
 
-const chartOptions = computed(
-   (): ChartOptions<'line'> => ({
+   const datasets = timeSeriesList.map((item, index) => {
+      // Default alternating behavior for default mode
+      let yAxisID = index % 2 === 0 ? 'y' : 'y1'
+
+      // For 'all-left' and 'all-right' modes, all datasets use the same axis
+      if (props.axisPosition === 'all-left') {
+         // For 'all-left', all datasets use the 'y' scale (left side)
+         yAxisID = 'y'
+      } else if (props.axisPosition === 'all-right') {
+         // For 'all-right', all datasets use the 'y1' scale (right side)
+         yAxisID = 'y1'
+      }
+
+      // Create a display label from available properties
+      const displayLabel = `${item.station} - ${item.datatype}`
+
+      return {
+         label: displayLabel,
+         data: item.data,
+         borderColor: item.color,
+         fill: false,
+         pointRadius: 1.5,
+         pointHoverRadius: 1,
+         yAxisID: yAxisID,
+      }
+   })
+
+   return { labels, datasets }
+})
+
+const chartOptions = computed((): ChartOptions<'line'> => {
+   // Determine if we should show both scales or just one
+   const showBothScales = props.axisPosition === 'default'
+
+   // Find which dataset has the largest values for scale configuration
+   let largerDatasetIndex = 0
+   if (timeSeriesList.length > 1) {
+      // Get max values from all datasets
+      const maxValues = timeSeriesList.map((series) =>
+         Math.max(...series.data.filter((n) => !isNaN(n) && n !== null), 0)
+      )
+
+      // Find which dataset has the largest values
+      largerDatasetIndex = maxValues.indexOf(Math.max(...maxValues))
+   }
+
+   const yAxisColor = timeSeriesList[0]?.color || '#000'
+   const y1AxisColor =
+      timeSeriesList.length > 1 ? timeSeriesList[1]?.color || '#000' : '#000'
+
+   const yAxisLabel = timeSeriesList[0]
+      ? `${timeSeriesList[0].station} - ${timeSeriesList[0].datatype}`
+      : ''
+   const y1AxisLabel =
+      timeSeriesList.length > 1
+         ? `${timeSeriesList[1].station} - ${timeSeriesList[1].datatype}`
+         : ''
+
+   // For single-side modes, we'll use the color and label of the dataset with larger values
+   let leftAxisColor = yAxisColor
+   let leftAxisLabel = yAxisLabel
+   let rightAxisColor = y1AxisColor
+   let rightAxisLabel = y1AxisLabel
+
+   // If the second dataset has larger values, use its color and label for the left axis in 'all-left' mode
+   if (largerDatasetIndex === 1 && timeSeriesList.length > 1) {
+      leftAxisColor = y1AxisColor
+      leftAxisLabel = y1AxisLabel
+   }
+
+   // If the first dataset has larger values, use its color and label for the right axis in 'all-right' mode
+   if (largerDatasetIndex === 0 && timeSeriesList.length > 1) {
+      rightAxisColor = yAxisColor
+      rightAxisLabel = yAxisLabel
+   }
+
+   // For single-side modes, determine which scale to show
+   let scaleToShow = 'y' // Default to first scale
+
+   // For single-side modes, determine which scale to show
+   if (props.axisPosition === 'all-left') {
+      // For 'all-left', we'll use the y scale (left side)
+      scaleToShow = 'y'
+   } else if (props.axisPosition === 'all-right') {
+      // For 'all-right', we'll use the y1 scale (right side)
+      scaleToShow = 'y1'
+   }
+
+   return {
       responsive: true,
       maintainAspectRatio: false,
       plugins: {
          legend: {
-            display: false,
+            display: true,
+            position: 'top',
+            align: 'start',
+            labels: {
+               usePointStyle: true,
+               boxWidth: 6,
+               boxHeight: 6,
+               padding: 15,
+               color: '#333',
+               font: {
+                  size: 12,
+               },
+            },
          },
          tooltip: {
             enabled: true,
             mode: 'index',
             intersect: false,
+            callbacks: {
+               title: (tooltipItems) => {
+                  return tooltipItems[0].label || ''
+               },
+               label: (context) => {
+                  const dataset = timeSeriesList[context.datasetIndex]
+                  const displayLabel = `${dataset.station} - ${dataset.datatype}`
+                  const value = context.raw !== null ? context.raw : 'N/A'
+                  return `${displayLabel}: ${value}`
+               },
+            },
          },
          background: {
             color: '#fff',
@@ -168,26 +271,109 @@ const chartOptions = computed(
             },
          },
          y: {
-            // Left Y-axis
             type: 'linear',
-            display: true,
-            position: 'left',
+            display: (showBothScales || scaleToShow === 'y'),
+            position: props.axisPosition === 'all-right' ? 'right' : 'left',
             grid: {
                color: '#D8DEE4',
             },
+            ticks: {
+               color:
+                  props.axisPosition === 'all-left'
+                     ? leftAxisColor
+                     : yAxisColor,
+            },
+            title: {
+               display: timeSeriesList.length > 1,
+               text:
+                  props.axisPosition === 'all-left'
+                     ? leftAxisLabel
+                     : yAxisLabel,
+               color:
+                  props.axisPosition === 'all-left'
+                     ? leftAxisColor
+                     : yAxisColor,
+            },
+            beginAtZero: false,
+            suggestedMin:
+               props.axisPosition === 'all-left' &&
+               largerDatasetIndex === 1 &&
+               timeSeriesList.length > 1
+                  ? Math.min(
+                       ...timeSeriesList[1].data.filter(
+                          (n) => !isNaN(n) && n !== null
+                       )
+                    )
+                  : undefined,
+            suggestedMax:
+               props.axisPosition === 'all-left' &&
+               largerDatasetIndex === 1 &&
+               timeSeriesList.length > 1
+                  ? Math.max(
+                       ...timeSeriesList[1].data.filter(
+                          (n) => !isNaN(n) && n !== null
+                       )
+                    )
+                  : undefined,
          },
          y1: {
-            // Right Y-axis
             type: 'linear',
-            display: timeSeriesList.length > 1,
-            position: 'right',
+            display: (showBothScales || scaleToShow === 'y1') && timeSeriesList.length > 1,
+            position:
+               props.axisPosition !== 'default'
+                  ? props.axisPosition === 'all-right'
+                     ? 'right'
+                     : 'left'
+                  : 'right',
+            offset: props.axisPosition !== 'default',
             grid: {
-               drawOnChartArea: false,
+               drawOnChartArea:
+                  props.axisPosition === 'all-right' ||
+                  (props.axisPosition === 'default' &&
+                     timeSeriesList.some((_, index) => index % 2 !== 0)),
             },
+            ticks: {
+               color:
+                  props.axisPosition === 'all-right'
+                     ? rightAxisColor
+                     : y1AxisColor,
+            },
+            title: {
+               display: timeSeriesList.length > 1,
+               text:
+                  props.axisPosition === 'all-right'
+                     ? rightAxisLabel
+                     : y1AxisLabel,
+               color:
+                  props.axisPosition === 'all-right'
+                     ? rightAxisColor
+                     : y1AxisColor,
+            },
+            beginAtZero: false,
+            suggestedMin:
+               props.axisPosition === 'all-right' &&
+               largerDatasetIndex === 0 &&
+               timeSeriesList.length > 1
+                  ? Math.min(
+                       ...timeSeriesList[0].data.filter(
+                          (n) => !isNaN(n) && n !== null
+                       )
+                    )
+                  : undefined,
+            suggestedMax:
+               props.axisPosition === 'all-right' &&
+               largerDatasetIndex === 0 &&
+               timeSeriesList.length > 1
+                  ? Math.max(
+                       ...timeSeriesList[0].data.filter(
+                          (n) => !isNaN(n) && n !== null
+                       )
+                    )
+                  : undefined,
          },
       },
-   })
-)
+   }
+})
 
 defineExpose({ chart })
 </script>
@@ -197,8 +383,10 @@ defineExpose({ chart })
    @apply relative flex flex-grow flex-col gap-2 rounded border px-4 py-2;
 }
 
+/* Responsive styles for mobile devices */
 @media (max-width: theme('screens.md')) {
    .chart-ct {
+      @apply px-2 py-1;
    }
 }
 </style>

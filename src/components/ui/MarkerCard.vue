@@ -20,7 +20,10 @@ SPDX-License-Identifier: AGPL-3.0-or-later
             class="metadata-ct"
             :class="{ 'no-data': !hasMetadata }"
          >
-            <ul v-if="hasMetadata" class="metadata-list">
+            <ul
+               v-if="hasMetadata && hasMandatoryMetadata"
+               class="metadata-list"
+            >
                <li
                   v-for="item in Object.entries(data?.metadata || {})"
                   class="metadata-item"
@@ -29,7 +32,23 @@ SPDX-License-Identifier: AGPL-3.0-or-later
                   <P>{{ item[1] }}</P>
                </li>
             </ul>
-            <NoData v-else-if="!isLoading" class="no-data" />
+            <ul
+               v-if="hasMetadata && hasAdditionalMetadata"
+               class="metadata-list"
+               :class="{ 'is-separator': hasMandatoryMetadata }"
+            >
+               <li class="metadata-title">
+                  {{ $t('components.marker-card.additional-metadata') }}
+               </li>
+               <li
+                  v-for="item in Object.entries(data?.additionalMetadata || {})"
+                  class="metadata-item"
+               >
+                  <P bold class="capitalize">{{ item[0] }}:</P>
+                  <P>{{ item[1] }}</P>
+               </li>
+            </ul>
+            <NoData v-else-if="!isLoading && !hasMetadata" class="no-data" />
          </div>
 
          <div
@@ -133,8 +152,19 @@ const { getBaseTimeSeriesObj, addTimeSeries, clearTimeSeriesList } =
 const hasMeasurements = computed(() => !!data.value?.measurements.length)
 const hasAlarms = computed(() => !!data.value?.alarms.length)
 const hasMetadata = computed(
-   () => !!Object.entries(data.value?.metadata || {}).length
+   () =>
+      !!Object.entries(
+         data.value?.metadata || data.value?.additionalMetadata || {}
+      ).length
 )
+
+const hasMandatoryMetadata = computed(() => {
+   return !!Object.entries(data.value?.metadata || {}).length
+})
+
+const hasAdditionalMetadata = computed(() => {
+   return !!Object.entries(data.value?.additionalMetadata || {}).length
+})
 
 const markerName = computed(() => {
    if (isLoading.value) return '...'
@@ -248,10 +278,13 @@ const fetchMarkerData = async () => {
       (await useFetch(measurementsUrl)).text().data.value || '{}'
    ).data as MarkerMeasurements[]
 
+   const mainMetadata: Partial<MarkerInfo> = { ...resData }
+   delete mainMetadata.smetadata
    data.value = {
       name: resData.sname,
       color: layerStore.getLayerByStationType(props.marker.stype)?.color,
-      metadata: resData.smetadata,
+      metadata: mainMetadata,
+      additionalMetadata: resData.smetadata,
       alarms: [],
       measurements: resMeasurements,
    }
@@ -303,6 +336,14 @@ fetchMarkerData()
 
          & .metadata-list {
             @apply flex flex-col gap-1;
+
+            &.is-separator {
+               @apply mt-2 border-t pt-2;
+            }
+
+            & .metadata-title {
+               @apply text-sm font-bold;
+            }
 
             & .metadata-item {
                @apply flex gap-1;

@@ -6,6 +6,7 @@ import { Layer } from './map-layer.js'
 export type StationMapMarker = {
    scode: string
    color: string
+   iconColor?: string
    stype: string
    coordinates: [number, number]
    selected?: boolean
@@ -20,7 +21,7 @@ export type DataMarker = {
    coordinates: [number, number]
    infoColor?: string
    eventData?: EventPoint
-} & Pick<Layer, 'color'> &
+} & Pick<Layer, 'color' | 'iconColor'> &
    Pick<DataPoint, 'stype' | 'scode'>
 
 export type DataPoint = {
