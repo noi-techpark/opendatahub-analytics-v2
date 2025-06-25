@@ -19,7 +19,7 @@ ingress:
   tls:
     - hosts:
       - analytics.beta.dev.testingmachine.eu
-      secretName: tls-rest-push
+      secretName: tls-analytics
   hosts:
     - host: analytics.beta.dev.testingmachine.eu
       paths: 

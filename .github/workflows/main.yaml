@@ -15,7 +15,7 @@ env:
 
 jobs:
   test:
-    runs-on: ubuntu-22.04
+    runs-on: ubuntu-24.04
     steps:
       - name: Checkout source code
         uses: actions/checkout@v4
@@ -23,18 +23,20 @@ jobs:
         uses: fsfe/reuse-action@v4
 
   deploy-test:
-    runs-on: ubuntu-22.04
+    runs-on: ubuntu-24.04
     if: github.ref == 'refs/heads/main'
     needs: test
     concurrency: deploy-test
     env:
       SERVER_PORT: 8999
       DOCKER_TAG: ${{ github.sha }}-test
-      VALUES_YAML: infrastructure/helm/values.yaml
+      VALUES_YAML: infrastructure/helm/test.yaml
       K8S_NAME: analytics-v2
+      ENDPOINT_URL: https://analytics.beta.dev.testingmachine.eu
     steps:
       - name: Checkout source code
         uses: actions/checkout@v2
+
       - name: Create .env file
         uses: noi-techpark/github-actions/env-file@v2
         with:
@@ -43,14 +45,14 @@ jobs:
           X_COMPOSE_PROJECT_NAME: ${{ env.PROJECT_NAME }}
           X_DOCKER_IMAGE: ${{ env.DOCKER_IMAGE }}
           X_DOCKER_TAG: ${{ env.DOCKER_TAG }}
-          X_VITE_ENDPOINT_URL: https://analytics.opendatahub.com/v2
-          X_VITE_ODH_MOBILITY_API_URI: https://mobility.api.opendatahub.com/v2
+          X_VITE_ENDPOINT_URL: ${{ env.ENDPOINT_URL}}
+          X_VITE_ODH_MOBILITY_API_URI: https://mobility.api.opendatahub.testingmachine.eu/v2
           X_VITE_LOG_APPLICATION_NAME: opendatahub-analytics
-          X_VITE_KEYCLOAK_AUTHORIZATION_URI: https://auth.opendatahub.com/auth
+          X_VITE_KEYCLOAK_AUTHORIZATION_URI: https://auth.opendatahub.testingmachine.eu/auth
           X_VITE_KEYCLOAK_REALM: noi
           X_VITE_KEYCLOAK_CLIENT_ID: odh-mobility-analytics
-          X_VITE_KEYCLOAK_REDIRECT_URI: http://localhost:8999
-          X_VITE_KEYCLOAK_SILENT_CHECK_SSO_REDIRECT_URI: http://localhost:8999
+          X_VITE_KEYCLOAK_REDIRECT_URI: ${{ env.ENDPOINT_URL }}
+          X_VITE_KEYCLOAK_SILENT_CHECK_SSO_REDIRECT_URI: ${{ env.ENDPOINT_URL }}
 
       - name: Build and push images
         uses: noi-techpark/github-actions/docker-build-and-push@v2
