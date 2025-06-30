@@ -46,6 +46,12 @@ SPDX-License-Identifier: AGPL-3.0-or-later
                      src="/logo-open-data-hub-black.svg"
                   />
                </a>
+               <a href="https://europa.provincia.bz.it/it/informazione-e-visibilita-fesr">
+                  <img
+                     :alt="t('layouts.app-header.logo')" 
+                     class="eu-logo"
+                     src="https://databrowser.impact.digital.noi.bz.it/EFRmod.png" alt="">
+               </a>
             </div>
          </div>
       </div>
@@ -114,6 +120,8 @@ function toggleMenu() {
             & .odh-logo {
                @apply aspect-square h-6;
             }
+            & .eu-logo {
+               @apply aspect-auto h-6         }
          }
       }
    }
@@ -150,6 +158,9 @@ function toggleMenu() {
 
                & .odh-logo {
                   @apply h-8;
+               }
+               & .eu-logo {
+                  @apply h-8
                }
             }
          }
