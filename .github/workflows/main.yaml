@@ -84,7 +84,8 @@ jobs:
       env:
          SERVER_PORT: 1100
          DOCKER_TAG: ${{ github.sha }}-impact
-         ENDPOINT_URL: https://dataquality.impact.digital.noi.bz.it
+         DOCKER_IMAGE: ghcr.io/${{ github.repository }}/analytics-impact
+         ENDPOINT_URL: https://analytics.impact.digital.noi.bz.it
       steps:
          - name: Checkout source code
            uses: actions/checkout@v2
@@ -116,7 +117,7 @@ jobs:
          - name: Deploy application
            uses: noi-techpark/github-actions/docker-deploy@v2
            with:
-              working-directory: frontend/infrastructure/ansible
+              working-directory: infrastructure/ansible
               hosts: 'prod'
               ssh-private-key: ${{ secrets.SSH_PRIVATE_KEY }}
               docker-username: 'noi-techpark-bot'
