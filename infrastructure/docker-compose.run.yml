@@ -1,7 +1,7 @@
 services:
    app:
       image: ${DOCKER_IMAGE}:${DOCKER_TAG}
-      env_file: .env.build
+      env_file: .env
       restart: unless-stopped
       ports:
          - ${SERVER_PORT}:80
