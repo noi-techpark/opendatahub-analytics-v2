@@ -99,6 +99,8 @@ jobs:
               X_COMPOSE_PROJECT_NAME: ${{ env.PROJECT_NAME }}-impact
               X_DOCKER_IMAGE: ${{ env.DOCKER_IMAGE }}-impact
               X_DOCKER_TAG: ${{ env.DOCKER_TAG }}
+              X_SERVER_PORT: ${{ env.SERVER_PORT}}
+
               X_VITE_ENDPOINT_URL: ${{ env.ENDPOINT_URL}}
               X_VITE_ODH_MOBILITY_API_URI: https://mobility.api.opendatahub.testingmachine.eu/v2
               X_VITE_LOG_APPLICATION_NAME: opendatahub-analytics
