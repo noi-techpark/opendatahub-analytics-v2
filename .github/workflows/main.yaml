@@ -77,7 +77,7 @@ jobs:
               aws-region: eu-west-1
 
    deploy-impact:
-      runs-on: ubuntu-24.04
+      runs-on: ubuntu-22.04
       if: github.ref == 'refs/heads/eulogo'
       needs: test
       concurrency: deploy-impact
