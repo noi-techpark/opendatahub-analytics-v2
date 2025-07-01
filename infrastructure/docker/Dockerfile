@@ -8,7 +8,7 @@ WORKDIR /app
 
 COPY . .
 # explicit copy due to .dockerignore
-COPY .env .env
+COPY .env.build .env
 
 RUN yarn install
 RUN yarn build-only
