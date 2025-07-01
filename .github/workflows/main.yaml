@@ -4,76 +4,119 @@
 name: CI/CD
 
 on:
-  push:
-  pull_request:
+   push:
+   pull_request:
 
 env:
-  NODE_VERSION: 20.x
-  PROJECT_NAME: opendatahub-analytics-v2
-  DOCKER_IMAGE: ghcr.io/${{ github.repository }}/analytics
-
+   NODE_VERSION: 20.x
+   PROJECT_NAME: opendatahub-analytics-v2
+   DOCKER_IMAGE: ghcr.io/${{ github.repository }}/analytics
 
 jobs:
-  test:
-    runs-on: ubuntu-24.04
-    steps:
-      - name: Checkout source code
-        uses: actions/checkout@v4
-      - name: REUSE Compliance Check
-        uses: fsfe/reuse-action@v4
+   test:
+      runs-on: ubuntu-24.04
+      steps:
+         - name: Checkout source code
+           uses: actions/checkout@v4
+         - name: REUSE Compliance Check
+           uses: fsfe/reuse-action@v4
 
-  deploy-test:
-    runs-on: ubuntu-24.04
-    if: github.ref == 'refs/heads/main'
-    needs: test
-    concurrency: deploy-test
-    env:
-      SERVER_PORT: 8999
-      DOCKER_TAG: ${{ github.sha }}-test
-      VALUES_YAML: infrastructure/helm/test.yaml
-      K8S_NAME: analytics-v2
-      ENDPOINT_URL: https://analytics.beta.dev.testingmachine.eu
-    steps:
-      - name: Checkout source code
-        uses: actions/checkout@v2
+   deploy-test:
+      runs-on: ubuntu-24.04
+      if: github.ref == 'refs/heads/main'
+      needs: test
+      concurrency: deploy-test
+      env:
+         SERVER_PORT: 8999
+         DOCKER_TAG: ${{ github.sha }}-test
+         VALUES_YAML: infrastructure/helm/test.yaml
+         K8S_NAME: analytics-v2
+         ENDPOINT_URL: https://analytics.beta.dev.testingmachine.eu
+      steps:
+         - name: Checkout source code
+           uses: actions/checkout@v2
 
-      - name: Create .env file
-        uses: noi-techpark/github-actions/env-file@v2
-        with:
-          destination-file: .env.build
-        env:
-          X_COMPOSE_PROJECT_NAME: ${{ env.PROJECT_NAME }}
-          X_DOCKER_IMAGE: ${{ env.DOCKER_IMAGE }}
-          X_DOCKER_TAG: ${{ env.DOCKER_TAG }}
-          X_VITE_ENDPOINT_URL: ${{ env.ENDPOINT_URL}}
-          X_VITE_ODH_MOBILITY_API_URI: https://mobility.api.opendatahub.testingmachine.eu/v2
-          X_VITE_LOG_APPLICATION_NAME: opendatahub-analytics
-          X_VITE_KEYCLOAK_AUTHORIZATION_URI: https://auth.opendatahub.testingmachine.eu/auth
-          X_VITE_KEYCLOAK_REALM: noi
-          X_VITE_KEYCLOAK_CLIENT_ID: odh-mobility-analytics
-          X_VITE_KEYCLOAK_REDIRECT_URI: ${{ env.ENDPOINT_URL }}
-          X_VITE_KEYCLOAK_SILENT_CHECK_SSO_REDIRECT_URI: ${{ env.ENDPOINT_URL }}
+         - name: Create .env file
+           uses: noi-techpark/github-actions/env-file@v2
+           with:
+              destination-file: .env.build
+           env:
+              X_COMPOSE_PROJECT_NAME: ${{ env.PROJECT_NAME }}
+              X_DOCKER_IMAGE: ${{ env.DOCKER_IMAGE }}
+              X_DOCKER_TAG: ${{ env.DOCKER_TAG }}
+              X_VITE_ENDPOINT_URL: ${{ env.ENDPOINT_URL}}
+              X_VITE_ODH_MOBILITY_API_URI: https://mobility.api.opendatahub.testingmachine.eu/v2
+              X_VITE_LOG_APPLICATION_NAME: opendatahub-analytics
+              X_VITE_KEYCLOAK_AUTHORIZATION_URI: https://auth.opendatahub.testingmachine.eu/auth
+              X_VITE_KEYCLOAK_REALM: noi
+              X_VITE_KEYCLOAK_CLIENT_ID: odh-mobility-analytics
+              X_VITE_KEYCLOAK_REDIRECT_URI: ${{ env.ENDPOINT_URL }}
+              X_VITE_KEYCLOAK_SILENT_CHECK_SSO_REDIRECT_URI: ${{ env.ENDPOINT_URL }}
 
-      - name: Build and push images
-        uses: noi-techpark/github-actions/docker-build-and-push@v2
-        with:
-          working-directory: infrastructure
-          docker-username: ${{ github.actor }}
-          docker-password: ${{ secrets.GITHUB_TOKEN }}
+         - name: Build and push images
+           uses: noi-techpark/github-actions/docker-build-and-push@v2
+           with:
+              working-directory: infrastructure
+              docker-username: ${{ github.actor }}
+              docker-password: ${{ secrets.GITHUB_TOKEN }}
 
-      - name: Customize values.yaml    
-        run: | 
-          yq -i '.image.tag="${{ env.DOCKER_TAG }}"' ${{ env.VALUES_YAML }}          
-          
-      - name: Deploy on cluster  
-        uses: noi-techpark/github-actions/helm-deploy@v2
-        with:
-          k8s-name: ${{ env.K8S_NAME }}
-          k8s-namespace: core
-          chart-path: infrastructure/helm/analytics-v2
-          values-file: ${{ env.VALUES_YAML }}
-          aws-access-key-id: ${{ secrets.AWS_DEV_ACCESS_KEY_ID }}
-          aws-secret-access-key: ${{ secrets.AWS_DEV_ACCESS_KEY_SECRET }}
-          aws-eks-cluster-name: aws-main-eu-01
-          aws-region: eu-west-1
+         - name: Customize values.yaml
+           run: |
+              yq -i '.image.tag="${{ env.DOCKER_TAG }}"' ${{ env.VALUES_YAML }}
 
+         - name: Deploy on cluster
+           uses: noi-techpark/github-actions/helm-deploy@v2
+           with:
+              k8s-name: ${{ env.K8S_NAME }}
+              k8s-namespace: core
+              chart-path: infrastructure/helm/analytics-v2
+              values-file: ${{ env.VALUES_YAML }}
+              aws-access-key-id: ${{ secrets.AWS_DEV_ACCESS_KEY_ID }}
+              aws-secret-access-key: ${{ secrets.AWS_DEV_ACCESS_KEY_SECRET }}
+              aws-eks-cluster-name: aws-main-eu-01
+              aws-region: eu-west-1
+
+   deploy-impact:
+      runs-on: ubuntu-24.04
+      if: github.ref == 'refs/heads/eulogo'
+      needs: test
+      concurrency: deploy-impact
+      env:
+         SERVER_PORT: 1100
+         DOCKER_TAG: ${{ github.sha }}-impact
+         ENDPOINT_URL: https://dataquality.impact.digital.noi.bz.it
+      steps:
+         - name: Checkout source code
+           uses: actions/checkout@v2
+
+         - name: Create .env file
+           uses: noi-techpark/github-actions/env-file@v2
+           env:
+              X_COMPOSE_PROJECT_NAME: ${{ env.PROJECT_NAME }}-impact
+              X_DOCKER_IMAGE: ${{ env.DOCKER_IMAGE }}-impact
+              X_DOCKER_TAG: ${{ env.DOCKER_TAG }}
+              X_VITE_ENDPOINT_URL: ${{ env.ENDPOINT_URL}}
+              X_VITE_ODH_MOBILITY_API_URI: https://mobility.api.opendatahub.testingmachine.eu/v2
+              X_VITE_LOG_APPLICATION_NAME: opendatahub-analytics
+              X_VITE_KEYCLOAK_AUTHORIZATION_URI: https://auth.opendatahub.testingmachine.eu/auth
+              X_VITE_KEYCLOAK_REALM: noi
+              X_VITE_KEYCLOAK_CLIENT_ID: odh-mobility-analytics
+              X_VITE_KEYCLOAK_REDIRECT_URI: ${{ env.ENDPOINT_URL }}
+              X_VITE_KEYCLOAK_SILENT_CHECK_SSO_REDIRECT_URI: ${{ env.ENDPOINT_URL }}
+
+         - name: Build and push images
+           uses: noi-techpark/github-actions/docker-build-and-push@v2
+           with:
+              working-directory: infrastructure
+              docker-username: ${{ github.actor }}
+              docker-password: ${{ secrets.GITHUB_TOKEN }}
+
+         - name: Deploy application
+           uses: noi-techpark/github-actions/docker-deploy@v2
+           with:
+              working-directory: frontend/infrastructure/ansible
+              hosts: 'prod'
+              ssh-private-key: ${{ secrets.SSH_PRIVATE_KEY }}
+              docker-username: 'noi-techpark-bot'
+              docker-password: ${{ secrets.GH_PERSONAL_ACCESS_TOKEN }}
+              project-name: ${{ env.PROJECT_NAME }}
