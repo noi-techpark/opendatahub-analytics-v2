@@ -83,6 +83,7 @@ jobs:
       concurrency: deploy-impact
       env:
          SERVER_PORT: 1100
+         PROJECT_NAME: opendatahub-analytics-v2-impact
          DOCKER_TAG: ${{ github.sha }}-impact
          DOCKER_IMAGE: ghcr.io/${{ github.repository }}/analytics-impact
          ENDPOINT_URL: https://analytics.impact.digital.noi.bz.it
