@@ -93,6 +93,7 @@
          "export": {
             "title": "Export Details",
             "xls": "Export data as XLS",
+            "csv": "Export data as CSV",
             "image": "Export chart as image"
          },
          "embed": "Embed code",
