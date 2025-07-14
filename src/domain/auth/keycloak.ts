@@ -13,7 +13,8 @@ export const keycloak = new Keycloak({
 keycloak
    .init({
       onLoad: 'check-sso',
-      silentCheckSsoRedirectUri: import.meta.env.VITE_KEYCLOAK_REDIRECT_URI,
+      silentCheckSsoRedirectUri: import.meta.env
+         .VITE_KEYCLOAK_SILENT_CHECK_SSO_REDIRECT_URI,
       pkceMethod: 'S256',
    })
    .then(() => {

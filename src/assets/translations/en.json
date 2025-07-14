@@ -27,7 +27,9 @@
    },
    "auth": {
       "login": "Login",
-      "register": "Register"
+      "register": "Register",
+      "logout": "Logout",
+      "profile": "Profile"
    },
    "components": {
       "sidebar": {
