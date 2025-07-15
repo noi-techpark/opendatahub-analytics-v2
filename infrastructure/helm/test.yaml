@@ -12,6 +12,7 @@ service:
 ingress:
   enabled: true
 
+  className: nginx
   hosts:
     - host: v2-beta.analytics.opendatahub.testingmachine.eu
       paths: 
