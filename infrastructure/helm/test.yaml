@@ -18,10 +18,10 @@ ingress:
   className: nginx
   tls:
     - hosts:
-      - analytics.beta.dev.testingmachine.eu
+      - v2-beta.analytics.opendatahub.testingmachine.eu
       secretName: tls-analytics-v2
   hosts:
-    - host: analytics.beta.dev.testingmachine.eu
+    - host: v2-beta.analytics.opendatahub.testingmachine.eu
       paths: 
         - path: "/"
           pathType: Prefix
