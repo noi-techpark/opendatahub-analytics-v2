@@ -14,7 +14,7 @@ SPDX-License-Identifier: AGPL-3.0-or-later
             first: i === 0,
             last: i === links.length - 1,
          }"
-         :to="item.route"
+         :to="item.route ? { path: item.route, query: route.query } : undefined"
          @click="item.action"
       >
          {{ item.title }}
@@ -23,6 +23,8 @@ SPDX-License-Identifier: AGPL-3.0-or-later
 </template>
 
 <script lang="ts" setup>
+import { useRoute } from 'vue-router'
+
 type Props = {
    links: {
       id: string
@@ -34,6 +36,7 @@ type Props = {
    selectedId?: string
 }
 
+const route = useRoute()
 const props = withDefaults(defineProps<Props>(), {})
 </script>
 

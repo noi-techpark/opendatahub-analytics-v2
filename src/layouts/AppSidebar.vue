@@ -73,7 +73,7 @@ const page = ref<
    'map' | 'charts' | 'charts-add' | 'charts-edit' | 'events' | 'about'
 >()
 
-const mapLayerSelection = computed(() => route.path === '/' && !!route.hash)
+const mapLayerSelection = computed(() => route.name === 'map' && !!route.hash)
 
 const back = computed(() => {
    const isVisible =

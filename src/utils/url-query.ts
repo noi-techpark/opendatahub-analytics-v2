@@ -24,6 +24,11 @@ export const updateUrlQueryParams = (
    window.history.replaceState({}, '', newUrl)
 }
 
+export const getSessionStorageQueryParamsString = (): string => {
+   const storedParams = sessionStorage.getItem(DEFAULT_SESSION_STORAGE_KEY)
+   return storedParams || ''
+}
+
 export const getUrlQueryParams = (
    params: string[]
 ): Record<string, string | null> => {

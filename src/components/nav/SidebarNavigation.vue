@@ -5,7 +5,10 @@ SPDX-License-Identifier: AGPL-3.0-or-later
 
 <template>
    <div class="sidebar-navigation" :class="{ back: back?.visible }">
-      <RouterLink v-if="back?.visible" :to="back?.route">
+      <RouterLink
+         v-if="back?.visible"
+         :to="{ path: back?.route, query: route.query }"
+      >
          <IconText :text="back?.title">
             <ArrowLeftIcon />
          </IconText>

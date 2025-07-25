@@ -57,7 +57,12 @@ import {
    getInfoMarkerColorDifferenceThreshold,
    infoIconHoursThresholds,
 } from '../utils/marker-alert-utils'
-import { updateUrlQueryParams, getUrlQueryParams } from '../utils/url-query'
+import {
+   getUrlQueryParams,
+   updateUrlQueryParams,
+   saveQueryParamsToSessionStorage,
+   getSessionStorageQueryParamsString,
+} from '../utils/url-query'
 
 const { showNotification } = useNotificationsStore()
 
@@ -660,6 +665,7 @@ const loadQueryParamsIntoStore = async () => {
    if (params.layers) {
       const layerIds = params.layers.split(',')
       const allLayers = layerStore.getAllLayers
+      let firstLayerGroupId: string | null = null
 
       layerIds.forEach((layerId) => {
          allLayers.forEach((layerGroup, groupIndex) => {
@@ -667,10 +673,19 @@ const loadQueryParamsIntoStore = async () => {
                if (layer.id === layerId) {
                   layerStore.setLayerState(layerGroup.id, layerIndex, true)
                   layersToLoad.push(layer)
+
+                  if (firstLayerGroupId === null) {
+                     firstLayerGroupId = layerGroup.id
+                  }
                }
             })
          })
       })
+
+      // Set the selected layer ID to ensure sidebar content is visible
+      if (firstLayerGroupId !== null) {
+         layerStore.selectLayer(firstLayerGroupId)
+      }
 
       if (layersToLoad.length > 0) {
          await toggleAllLayers(layersToLoad)
@@ -690,6 +705,24 @@ const loadQueryParamsIntoStore = async () => {
          }
       } catch (e) {
          console.error('Failed to parse originOptions from URL', e)
+      }
+   } else {
+      // If no originOptions in URL but we have layers and origins, populate uniqueOrigins
+      // This ensures the sidebar shows options when opening a URL directly
+      if (params.layers && params.origins) {
+         try {
+            const parsedOrigins = JSON.parse(params.origins)
+            for (const [stype, origins] of Object.entries(parsedOrigins)) {
+               if (!uniqueOrigins.value[stype]) {
+                  uniqueOrigins.value[stype] = new Set()
+               }
+               for (const origin of origins as string[]) {
+                  uniqueOrigins.value[stype].add(origin)
+               }
+            }
+         } catch (e) {
+            console.error('Failed to populate uniqueOrigins from origins', e)
+         }
       }
    }
 
@@ -734,10 +767,15 @@ const loadQueryParamsIntoStore = async () => {
 onMounted(async () => {
    markers.value = []
 
-   const storedParams = sessionStorage.getItem('odh_map_query_params')
-   const currentSearchString = new URLSearchParams(
-      window.location.search
-   ).toString()
+   const storedParams = getSessionStorageQueryParamsString()
+   const currentSearchParams = new URLSearchParams(window.location.search)
+   const currentSearchString = currentSearchParams.toString()
+
+   // Save current URL query parameters to session storage on initial load
+   // This ensures we don't lose parameters when navigating
+   if (currentSearchString) {
+      saveQueryParamsToSessionStorage(currentSearchParams)
+   }
 
    if (storedParams && storedParams !== currentSearchString) {
       isRestoringFromSessionStorage.value = true
