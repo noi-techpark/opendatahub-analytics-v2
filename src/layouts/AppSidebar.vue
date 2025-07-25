@@ -60,6 +60,7 @@ import SidebarNavigation from '../components/nav/SidebarNavigation.vue'
 import { useI18n } from 'vue-i18n'
 import { ref } from 'vue'
 import Switch from '../components/ui/Switch.vue'
+import { restoreQueryParamsFromSessionStorage } from '../utils/url-query'
 
 const route = useRoute()
 const router = useRouter()
@@ -93,7 +94,13 @@ const back = computed(() => {
    }
 })
 
-watch(route, () => {
+watch(route, (newRoute, oldRoute) => {
+   const isGoingToMap = newRoute.name === 'map'
+
+   if (isGoingToMap) {
+      restoreQueryParamsFromSessionStorage(newRoute.hash)
+   }
+
    switch (route.path) {
       case '/': {
          if (route.hash) {
