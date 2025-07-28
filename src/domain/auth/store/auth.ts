@@ -4,18 +4,7 @@
 
 import { jwtDecode } from 'jwt-decode'
 import { acceptHMRUpdate, defineStore } from 'pinia'
-
-interface AuthState {
-   ready: boolean
-   isAuthenticated: boolean
-   accessToken: string | null
-}
-
-const initialState: AuthState = {
-   ready: false,
-   isAuthenticated: false,
-   accessToken: null,
-}
+import { initialState } from './initialState'
 
 export const useAuth = defineStore('auth', {
    state: () => initialState,

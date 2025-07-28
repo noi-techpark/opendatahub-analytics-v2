@@ -27,7 +27,9 @@
    },
    "auth": {
       "login": "Login",
-      "register": "Register"
+      "register": "Register",
+      "logout": "Logout",
+      "profile": "Profile"
    },
    "components": {
       "sidebar": {
@@ -93,6 +95,7 @@
          "export": {
             "title": "Export Details",
             "xls": "Export data as XLS",
+            "csv": "Export data as CSV",
             "image": "Export chart as image"
          },
          "embed": "Embed code",

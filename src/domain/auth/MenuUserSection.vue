@@ -51,16 +51,13 @@ SPDX-License-Identifier: AGPL-3.0-or-later
       <HeaderButton class="md:hidden" @click="onLogin">
          {{ t('auth.login') }}
       </HeaderButton>
-      <HeaderButton class="md:hidden" @click="onRegister">
+      <HeaderButton class="md:hidden" @click.prevent="onRegister">
          {{ t('auth.register') }}
       </HeaderButton>
       <PopoverCustom class="hidden h-8 md:flex">
          <template #trigger>
             <PopoverCustomButton class="rounded focus-visible:outline-offset-2">
-               <ProfileButton
-                  icon-name="IconUser"
-                  custom-bg-color="bg-hint-info/10"
-               />
+               <ProfileButton />
             </PopoverCustomButton>
          </template>
          <template #container>

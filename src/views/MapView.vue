@@ -57,6 +57,12 @@ import {
    getInfoMarkerColorDifferenceThreshold,
    infoIconHoursThresholds,
 } from '../utils/marker-alert-utils'
+import {
+   getUrlQueryParams,
+   updateUrlQueryParams,
+   saveQueryParamsToSessionStorage,
+   getSessionStorageQueryParamsString,
+} from '../utils/url-query'
 
 const { showNotification } = useNotificationsStore()
 
@@ -70,6 +76,9 @@ const { isTogglingAll, uniqueOrigins, selectedFilterOrigins, lastMarkersSet } =
    storeToRefs(layerStore)
 const lastLayers = ref<Layer[]>([])
 const currentFilter = ref<string>('')
+
+const isInitialLoad = ref<boolean>(true)
+const isRestoringFromSessionStorage = ref<boolean>(false)
 
 const totalOriginsFilters = computed(
    () => Object.values(selectedFilterOrigins.value.sorigin).flat().length
@@ -88,7 +97,18 @@ const setCurrentFilter = (filter: string) => {
 watchDebounced(
    selectedFilterOrigins,
    (newVal, oldVal) => {
-      if (!oldVal.stype || newVal.stype !== oldVal.stype) {
+      if (
+         (!isInitialLoad.value && !oldVal.stype) ||
+         newVal.stype !== oldVal.stype
+      ) {
+         return
+      }
+
+      if (!isInitialLoad.value) {
+         updateUrlWithStoreValues(newVal)
+      }
+
+      if (isRestoringFromSessionStorage.value) {
          return
       }
 
@@ -102,6 +122,10 @@ watch(
    async (curr, old) => {
       if (isTogglingAll.value) {
          return
+      }
+
+      if (!isInitialLoad.value) {
+         updateUrlWithSelectedLayers(curr)
       }
 
       setLayersToMap(curr, old)
@@ -137,6 +161,15 @@ watch(
    { deep: true }
 )
 
+const buildOriginFilterString = (origins: string[]): string => {
+   if (!origins || origins.length === 0) return ''
+
+   const filterParts = origins.map((origin) => `sorigin.ire.${origin}`)
+   const filterString = filterParts.join(',')
+
+   return origins.length > 1 ? `or(${filterString})` : filterString
+}
+
 const refetchForDataTypeWithFilters = async (newVal: SelectedFilterOrigins) => {
    const layer = layerStore.getSelectedLayers.find((l) =>
       l.stationType.includes(newVal.stype)
@@ -145,13 +178,11 @@ const refetchForDataTypeWithFilters = async (newVal: SelectedFilterOrigins) => {
       return
    }
 
-   let filterString = newVal.sorigin[newVal.stype]
-      .map((s) => `sorigin.ire.${s}`)
-      .join(',')
+   const filterString = buildOriginFilterString(newVal.sorigin[newVal.stype])
 
-   if (newVal.sorigin[newVal.stype].length > 1) {
-      filterString = `or(${filterString})`
-   }
+   markers.value = markers.value.filter(
+      (marker) => marker.stype !== newVal.stype
+   )
 
    const newMarkers = await fetchStationData(layer, {
       stype: newVal.stype,
@@ -171,6 +202,7 @@ const fetchStationData = async (
 ) => {
    try {
       const isProvinceEvents = layer.id === 'Traffic Events'
+
       const currentMarkers = filter?.filterString
          ? [...markers.value.filter((item) => item.stype !== filter.stype)]
          : [...markers.value]
@@ -245,22 +277,6 @@ const fetchStationData = async (
                continue
             }
 
-            // for (let i = 1; i < infoIconHoursThresholds[stype].length; i++) {
-            //    let key = layer_info.icons[i][1] + ';' + layer_info.icons[i][2]
-            //    if (!datatype_period_duplicates[key]) {
-            //       datatype_period_duplicates[key] = true
-            //       let query_datatype =
-            //          'and(mperiod.eq.' +
-            //          layer_info.icons[i][2] +
-            //          ',tname.eq."' +
-            //          layer_info.icons[i][1].replace(/(['"\(\)\\])/g, '\\$1') +
-            //          '")'
-            //       query_where_datatypes +=
-            //          (query_where_datatypes === '' ? 'or(' : ',') +
-            //          query_datatype
-            //    }
-            // }
-
             const fetchedEventsKey = Array.isArray(layer.stationType)
                ? layer.stationType.join('_')
                : layer.stationType
@@ -268,7 +284,6 @@ const fetchStationData = async (
                let query_where_datatypes = ''
                let datatype_period_duplicates: Record<string, boolean> = {}
 
-               // Only proceed if the station type exists in the thresholds
                if (infoIconHoursThresholds[typedDataPoint.stype]) {
                   for (const tnameKey in infoIconHoursThresholds[
                      typedDataPoint.stype
@@ -294,15 +309,17 @@ const fetchStationData = async (
                }
 
                if (query_where_datatypes) {
-                  query_where_datatypes += ')' // Close the OR statement
+                  query_where_datatypes += ')'
                   try {
                      const response = await useFetch(
                         `${import.meta.env.VITE_ODH_MOBILITY_API_URI}/tree/${layer.stationType}/*/latest?limit=-1&distinct=true&select=tmeasurements&showNull=true&where=${encodeURIComponent(query_where_datatypes)}`
                      )
 
-                     fetchedEvents[fetchedEventsKey] = JSON.parse(
-                        response.data.value || '{}'
-                     ).data
+                     const parsedResponse = JSON.parse(
+                        (response.data.value as string) || '{}'
+                     )
+                     fetchedEvents[fetchedEventsKey] =
+                        parsedResponse?.data || {}
                   } catch (error) {
                      console.error(
                         `Error fetching data for ${fetchedEventsKey}:`,
@@ -319,7 +336,6 @@ const fetchStationData = async (
                ? typedEventPoint.evuuid
                : typedDataPoint.scode
 
-            // Find the most recent measurement for this station
             let lastDiffHours = undefined
             let lastMeasurement = undefined
 
@@ -333,12 +349,10 @@ const fetchStationData = async (
                const station =
                   fetchedEvents[fetchedEventsKey][stype].stations[scode]
 
-               // Look through all datatypes for this station
                for (const dataType in station.sdatatypes) {
                   const measurements =
                      station.sdatatypes[dataType].tmeasurements
                   if (measurements && measurements.length > 0) {
-                     // Get the most recent measurement
                      const measurement = measurements[0]
                      if (measurement.mvalidtime) {
                         const diffHours = differenceInHours(
@@ -346,7 +360,6 @@ const fetchStationData = async (
                            new Date(measurement.mvalidtime)
                         )
 
-                        // Update if this is the first measurement or more recent than the previous one
                         if (
                            lastDiffHours === undefined ||
                            diffHours < lastDiffHours
@@ -415,11 +428,68 @@ const toggleAllLayers = async (layers: Layer[]) => {
    const newMarkers: DataMarker[] = []
 
    for (const layer of layers) {
-      newMarkers.push(...((await fetchStationData(layer)) || []))
+      const stationTypes = Array.isArray(layer.stationType)
+         ? layer.stationType
+         : [layer.stationType]
+
+      let hasFilters = false
+      let filteredStationTypes: string[] = []
+
+      for (const stype of stationTypes) {
+         if (selectedFilterOrigins.value.sorigin[stype]?.length > 0) {
+            hasFilters = true
+            filteredStationTypes.push(stype)
+         }
+      }
+
+      if (hasFilters) {
+         for (const stype of filteredStationTypes) {
+            const filterStrings = Object.entries(
+               selectedFilterOrigins.value.sorigin
+            )
+               .filter(([key]) => stationTypes.includes(key))
+               .map(([key, values]) => buildOriginFilterString(values))
+            const filterString = filterStrings.join(',')
+
+            const stypeFilteredMarkers = await fetchStationData(layer, {
+               stype,
+               filterString,
+            })
+
+            if (stypeFilteredMarkers) {
+               newMarkers.push(...stypeFilteredMarkers)
+            }
+         }
+
+         const unfilteredTypes = stationTypes.filter(
+            (stype) => !filteredStationTypes.includes(stype)
+         )
+         if (unfilteredTypes.length > 0) {
+            const unfilteredLayer = {
+               ...layer,
+               stationType: unfilteredTypes,
+            }
+
+            const unfilteredMarkers = await fetchStationData(unfilteredLayer)
+            if (unfilteredMarkers) {
+               newMarkers.push(...unfilteredMarkers)
+            }
+         }
+      } else {
+         const unfilteredMarkers = await fetchStationData(layer)
+         if (unfilteredMarkers) {
+            newMarkers.push(...unfilteredMarkers)
+         }
+      }
+
       await nextTick()
    }
 
    markers.value = newMarkers
+
+   if (!isInitialLoad.value) {
+      updateUrlWithSelectedLayers(layers)
+   }
 
    loading.value -= 1
 }
@@ -431,10 +501,40 @@ const setLayersToMap = async (curr: Layer[], old: Layer[]) => {
    const latestSelected = arrayDiff.value[0]
 
    if (latestSelected && curr.length > old.length) {
-      const newMarkers = await fetchStationData(latestSelected)
+      const stationTypes = Array.isArray(latestSelected.stationType)
+         ? latestSelected.stationType
+         : [latestSelected.stationType]
+      let hasAppliedFilter = false
+      let newMarkers: DataMarker[] = []
+
+      for (const stype of stationTypes) {
+         if (selectedFilterOrigins.value.sorigin[stype]?.length > 0) {
+            const filterString = buildOriginFilterString(
+               selectedFilterOrigins.value.sorigin[stype]
+            )
+
+            const filteredMarkers = await fetchStationData(latestSelected, {
+               stype,
+               filterString,
+            })
+
+            if (filteredMarkers) {
+               newMarkers = [...newMarkers, ...filteredMarkers]
+               hasAppliedFilter = true
+            }
+         }
+      }
+
+      if (!hasAppliedFilter) {
+         const unfilteredMarkers = await fetchStationData(latestSelected)
+         if (unfilteredMarkers) {
+            newMarkers = [...newMarkers, ...unfilteredMarkers]
+         }
+      }
+
       const uniquePoints = new Set(markers.value.map((p) => p.scode))
 
-      if (newMarkers) {
+      if (newMarkers.length > 0) {
          markers.value = [
             ...markers.value,
             ...newMarkers.filter((point) => !uniquePoints.has(point.scode)),
@@ -496,10 +596,204 @@ const filterProvinceBZEvent = (event: EventPoint, date: Date) => {
    }
 }
 
-onMounted(() => {
-   if (lastMarkersSet.value.length > 0) {
-      markers.value = lastMarkersSet.value
+const updateUrlWithStoreValues = (filterOrigins: SelectedFilterOrigins) => {
+   const params: Record<string, string | null> = {}
+
+   params['stype'] = filterOrigins.stype || null
+
+   if (filterOrigins.sorigin && Object.keys(filterOrigins.sorigin).length > 0) {
+      params['origins'] = JSON.stringify(filterOrigins.sorigin)
+   } else {
+      params['origins'] = null
    }
+
+   if (uniqueOrigins.value && Object.keys(uniqueOrigins.value).length > 0) {
+      const serializableOriginOptions: Record<string, string[]> = {}
+      for (const [key, value] of Object.entries(uniqueOrigins.value)) {
+         serializableOriginOptions[key] = Array.from(value)
+      }
+      params['originOptions'] = JSON.stringify(serializableOriginOptions)
+   } else {
+      params['originOptions'] = null
+   }
+
+   updateUrlQueryParams(params)
+}
+
+const updateUrlWithSelectedLayers = (layers: Layer[]) => {
+   const params: Record<string, string | null> = {}
+
+   if (layers.length > 0) {
+      params['layers'] = layers.map((layer) => layer.id).join(',')
+   } else {
+      params['layers'] = null
+   }
+
+   updateUrlQueryParams(params)
+}
+
+const loadQueryParamsIntoStore = async () => {
+   const params = getUrlQueryParams([
+      'stype',
+      'origins',
+      'layers',
+      'originOptions',
+   ])
+   const layersToLoad: Layer[] = []
+
+   if (params.stype) {
+      let parsedOrigins: Record<string, string[]> = {}
+
+      if (params.origins) {
+         try {
+            parsedOrigins = JSON.parse(params.origins)
+         } catch (e) {
+            const origins = params.origins.split(',')
+            parsedOrigins = { [params.stype]: origins }
+         }
+      }
+
+      selectedFilterOrigins.value = {
+         stype: params.stype,
+         sorigin: {
+            ...parsedOrigins,
+            ...selectedFilterOrigins.value.sorigin,
+         },
+      }
+   }
+
+   if (params.layers) {
+      const layerIds = params.layers.split(',')
+      const allLayers = layerStore.getAllLayers
+      let firstLayerGroupId: string | null = null
+
+      layerIds.forEach((layerId) => {
+         allLayers.forEach((layerGroup, groupIndex) => {
+            layerGroup.layers.forEach((layer, layerIndex) => {
+               if (layer.id === layerId) {
+                  layerStore.setLayerState(layerGroup.id, layerIndex, true)
+                  layersToLoad.push(layer)
+
+                  if (firstLayerGroupId === null) {
+                     firstLayerGroupId = layerGroup.id
+                  }
+               }
+            })
+         })
+      })
+
+      // Set the selected layer ID to ensure sidebar content is visible
+      if (firstLayerGroupId !== null) {
+         layerStore.selectLayer(firstLayerGroupId)
+      }
+
+      if (layersToLoad.length > 0) {
+         await toggleAllLayers(layersToLoad)
+      }
+   }
+
+   if (params.originOptions) {
+      try {
+         const parsedOriginOptions = JSON.parse(params.originOptions)
+         for (const [key, value] of Object.entries(parsedOriginOptions)) {
+            if (!uniqueOrigins.value[key]) {
+               uniqueOrigins.value[key] = new Set()
+            }
+            for (const origin of value as string[]) {
+               uniqueOrigins.value[key].add(origin)
+            }
+         }
+      } catch (e) {
+         console.error('Failed to parse originOptions from URL', e)
+      }
+   } else {
+      // If no originOptions in URL but we have layers and origins, populate uniqueOrigins
+      // This ensures the sidebar shows options when opening a URL directly
+      if (params.layers && params.origins) {
+         try {
+            const parsedOrigins = JSON.parse(params.origins)
+            for (const [stype, origins] of Object.entries(parsedOrigins)) {
+               if (!uniqueOrigins.value[stype]) {
+                  uniqueOrigins.value[stype] = new Set()
+               }
+               for (const origin of origins as string[]) {
+                  uniqueOrigins.value[stype].add(origin)
+               }
+            }
+         } catch (e) {
+            console.error('Failed to populate uniqueOrigins from origins', e)
+         }
+      }
+   }
+
+   if (
+      selectedFilterOrigins.value.sorigin &&
+      Object.keys(selectedFilterOrigins.value.sorigin).length > 0
+   ) {
+      for (const layer of layersToLoad) {
+         const stationTypes = Array.isArray(layer.stationType)
+            ? layer.stationType
+            : [layer.stationType]
+
+         for (const stype of stationTypes) {
+            if (selectedFilterOrigins.value.sorigin[stype]?.length > 0) {
+               const tempFilterOrigins = {
+                  stype,
+                  sorigin: selectedFilterOrigins.value.sorigin,
+               }
+               await refetchForDataTypeWithFilters(tempFilterOrigins)
+            }
+         }
+      }
+
+      if (
+         params.stype &&
+         selectedFilterOrigins.value.sorigin[params.stype]?.length > 0
+      ) {
+         const isHandled = layersToLoad.some((layer) => {
+            const stationTypes = Array.isArray(layer.stationType)
+               ? layer.stationType
+               : [layer.stationType]
+            return stationTypes.includes(params.stype as string)
+         })
+
+         if (!isHandled) {
+            await refetchForDataTypeWithFilters(selectedFilterOrigins.value)
+         }
+      }
+   }
+}
+
+onMounted(async () => {
+   markers.value = []
+
+   const storedParams = getSessionStorageQueryParamsString()
+   const currentSearchParams = new URLSearchParams(window.location.search)
+   const currentSearchString = currentSearchParams.toString()
+
+   // Save current URL query parameters to session storage on initial load
+   // This ensures we don't lose parameters when navigating
+   if (currentSearchString) {
+      saveQueryParamsToSessionStorage(currentSearchParams)
+   }
+
+   if (storedParams && storedParams !== currentSearchString) {
+      isRestoringFromSessionStorage.value = true
+   }
+
+   await loadQueryParamsIntoStore()
+
+   if (markers.value.length === 0 && layerStore.getSelectedLayers.length > 0) {
+      await toggleAllLayers(layerStore.getSelectedLayers)
+   }
+
+   nextTick(() => {
+      isInitialLoad.value = false
+
+      setTimeout(() => {
+         isRestoringFromSessionStorage.value = false
+      }, 1000)
+   })
 })
 </script>
 

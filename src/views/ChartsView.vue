@@ -94,6 +94,13 @@ SPDX-License-Identifier: AGPL-3.0-or-later
                </Button>
                <Button
                   secondary
+                  :value="t('views.charts.export.csv')"
+                  @click="onExportAsCSV()"
+               >
+                  <DownloadIcon />
+               </Button>
+               <Button
+                  secondary
                   :value="t('views.charts.export.image')"
                   @click="onExportAsImage()"
                >
@@ -324,6 +331,44 @@ const onExportAsXLS = () => {
    )
 
    XLSX.writeFile(workbook, `chart-data-${new Date().getTime()}.xlsx`)
+}
+
+const onExportAsCSV = () => {
+   const chartData = chartEl.value.chart.chart.data
+   const currentDate = new Date().getTime()
+
+   chartData.datasets.forEach(
+      (chartDataset: Record<string, any>, index: number) => {
+         let csvContent = 'Datetime,Value\n'
+
+         chartDataset.data.forEach((value: any, i: number) => {
+            const timestamp = timeSeriesList.value[index].labels[i]
+            csvContent += `${timestamp},${value}\n`
+         })
+
+         const { id, provider, dataset, station, datatype } =
+            timeSeriesList.value[index]
+         const fileName = `${provider}_${dataset}_${station}_${datatype}_${currentDate}.csv`
+
+         setTimeout(() => {
+            const blob = new Blob([csvContent], {
+               type: 'text/csv;charset=utf-8;',
+            })
+            const url = URL.createObjectURL(blob)
+            const link = document.createElement('a')
+            link.setAttribute('href', url)
+            link.setAttribute('download', fileName)
+            link.style.visibility = 'hidden'
+            document.body.appendChild(link)
+            link.click()
+
+            setTimeout(() => {
+               document.body.removeChild(link)
+               URL.revokeObjectURL(url)
+            }, 100)
+         }, index * 300)
+      }
+   )
 }
 
 const onExportAsImage = () => {

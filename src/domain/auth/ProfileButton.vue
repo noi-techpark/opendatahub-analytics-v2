@@ -6,7 +6,7 @@ SPDX-License-Identifier: AGPL-3.0-or-later
 <template>
    <div class="profile-button" :class="bgColorClass" :title="username">
       <div class="user-icon-ct">
-         <PersonIcon v-if="iconName" class="user-icon" />
+         <PersonIcon v-if="username == null" class="user-icon" />
          <span v-else>
             {{ letter }}
          </span>
@@ -21,7 +21,6 @@ import PersonIcon from '../../components/ui/svg/PersonIcon.vue'
 type Props = {
    username?: string
    iconName?: string
-   customBgColor?: string
 }
 
 const props = defineProps<Props>()
@@ -37,12 +36,15 @@ const letter = computed(() =>
 const bgColorClasses = [
    'bg-blue-500',
    'bg-gray-500',
-   'bg-green-500',
+   'bg-green',
    'bg-red-500',
-   'bg-yellow-500',
+   'bg-yellow',
 ]
+
 const bgColorClass = computed(() => {
-   if (props.customBgColor) return props.customBgColor
+   if (username.value == null) {
+      return 'bg-green/10'
+   }
 
    const ascii = letter.value?.charCodeAt(0) ?? 0
    const colorIndex = ascii % bgColorClasses.length

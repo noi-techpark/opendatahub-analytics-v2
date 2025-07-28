@@ -16,7 +16,7 @@ SPDX-License-Identifier: AGPL-3.0-or-later
                <P bold>{{ t('common.datatype') }}</P>
                <SelectPopover
                   v-model="selectedFilterOrigins.stype"
-                  :text="selectedFilterOrigins.stype"
+                  :text="getLabelOfDataType(selectedFilterOrigins.stype)"
                   :options="stypeOptions"
                   :search-label-placeholder="
                      t('components.map-origin-filter.search-for-datatype')
@@ -77,7 +77,7 @@ const filterCardRef = ref()
 const stypeOptions = computed(() =>
    Object.keys(uniqueOrigins.value).map((e) => ({
       value: e,
-      label: e,
+      label: getLabelOfDataType(e),
    }))
 )
 
@@ -91,6 +91,15 @@ const originOptions = computed(() =>
         )
       : []
 )
+
+const getLabelOfDataType = (origin: string) => {
+   const layer = layerStore.getLayerByStationType(origin)
+   const id = layer?.id
+
+   if (id === origin) return origin
+
+   return `${id} - ${origin}`
+}
 
 onClickOutside(filterCardRef, () => {
    emit('close')
