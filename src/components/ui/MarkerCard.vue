@@ -122,7 +122,8 @@ import H from './tags/H.vue'
 import { useI18n } from 'vue-i18n'
 import { MapMarkerDetails } from '../../types/map-layer'
 import { EventPoint, MarkerInfo, MarkerMeasurements } from '../../types/api'
-import { asyncComputed, formatDate, useFetch } from '@vueuse/core'
+import { asyncComputed, formatDate } from '@vueuse/core'
+import { useFetchWithAuth } from '../../utils/api'
 import { useMapLayerStore } from '../../stores/map-layers'
 import { useTimeSeriesStore } from '../../stores/time-series'
 import { subMonths } from 'date-fns'
@@ -270,13 +271,11 @@ const fetchMarkerData = async () => {
    const dataUrl = `${import.meta.env.VITE_ODH_MOBILITY_API_URI}/flat%2Cnode/${props.marker.stype}/?where=scode.eq.%22${props.marker.scode}%22`
    const measurementsUrl = `${import.meta.env.VITE_ODH_MOBILITY_API_URI}/flat%2Cnode/${props.marker.stype}/*/latest?where=scode.eq.%22${props.marker.scode}%22`
 
-   const resData = JSON.parse(
-      (await useFetch(dataUrl)).text().data.value || '{}'
-   ).data[0] as MarkerInfo
+   const { data: dataResponse } = await useFetchWithAuth(dataUrl).json()
+   const resData = (dataResponse.value?.data?.[0] || {}) as MarkerInfo
 
-   const resMeasurements = JSON.parse(
-      (await useFetch(measurementsUrl)).text().data.value || '{}'
-   ).data as MarkerMeasurements[]
+   const { data: measurementsResponse } = await useFetchWithAuth(measurementsUrl).json()
+   const resMeasurements = (measurementsResponse.value?.data || []) as MarkerMeasurements[]
 
    const mainMetadata: Partial<MarkerInfo> = { ...resData }
    delete mainMetadata.smetadata

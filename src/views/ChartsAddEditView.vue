@@ -177,7 +177,8 @@ import P from '../components/ui/tags/P.vue'
 import Switch from '../components/ui/Switch.vue'
 import { computed, nextTick, onMounted, ref, watch } from 'vue'
 import SelectPopover from '../components/ui/popover/SelectPopover.vue'
-import { useFetch, useSessionStorage } from '@vueuse/core'
+import { useSessionStorage } from '@vueuse/core'
+import { useFetchWithAuth } from '../utils/api'
 import { SelectOption } from '../types/select'
 import ChardAddSelectWrapper from '../components/ui/chart/ChardAddSelectWrapper.vue'
 import { TimeSeries } from '../types/time-series'
@@ -328,7 +329,7 @@ const useFetchProviderOptions = async (searchVal?: string) => {
 
    const dataUrl = `${import.meta.env.VITE_ODH_MOBILITY_API_URI}/flat/%2A?limit=-1&offset=0&where=${searchString}&select=sorigin&shownull=false&distinct=true`
 
-   const { data } = await useFetch(dataUrl).json()
+   const { data } = await useFetchWithAuth(dataUrl).json()
    providers.value = data.value.data
 
    loadingState.value.provider = false
@@ -345,7 +346,7 @@ const useFetchDatasetOptions = async (searchVal?: string) => {
 
    const dataUrl = `${import.meta.env.VITE_ODH_MOBILITY_API_URI}/flat/%2A?limit=-1&offset=0&select=stype&where=and(${searchString ? searchString + ',' : ''}sorigin.eq.${selection.value.provider})&shownull=false&distinct=true`
 
-   const { data } = await useFetch(dataUrl).json()
+   const { data } = await useFetchWithAuth(dataUrl).json()
    datasets.value = data.value.data
 
    loadingState.value.dataset = false
@@ -377,7 +378,7 @@ const useFetchStationOptions = async (searchVal?: string, page = 1) => {
 
    const dataUrl = `${import.meta.env.VITE_ODH_MOBILITY_API_URI}/flat/${selection.value.dataset}?limit=${limit}&offset=${offset}&select=sname,scode,scoordinate,stype&where=and(${searchString ? searchString + ',' : ''}sorigin.eq.${selection.value.provider})&shownull=false&distinct=true`
 
-   const { data } = await useFetch(dataUrl).json()
+   const { data } = await useFetchWithAuth(dataUrl).json()
    const stationsData = data.value.data
    const stationsDataLength = stationsData?.length || 0
 
@@ -425,7 +426,7 @@ const useFetchDatatypeOptions = async (searchVal?: string, page = 1) => {
 
    const dataUrl = `${import.meta.env.VITE_ODH_MOBILITY_API_URI}/flat/${selection.value.dataset}/*?limit=${limit}&offset=${offset}&select=tname,tdescription&where=and(${searchString ? searchString + ',' : ''}sorigin.eq.${selection.value.provider})&shownull=false&distinct=true`
 
-   const { data } = await useFetch(dataUrl).json()
+   const { data } = await useFetchWithAuth(dataUrl).json()
 
    const datatypesData = data.value.data
    const datatypesDataLength = datatypesData?.length || 0
@@ -502,9 +503,8 @@ const onScrollEndDatatypes = () => {
    useFetchDatatypeOptions(lastSearchVal, lastPage)
 }
 
-onMounted(async () => {
-   await useFetchProviderOptions()
-
+onMounted(() => {
+   useFetchProviderOptions()
    if (route.query.id) {
       setSelectionToEdit()
    }
@@ -512,74 +512,45 @@ onMounted(async () => {
 
 watch(
    () => selection.value.provider,
-   (newVal) => {
-      if (!isSettingSelectionToEdit.value) {
-         selection.value.dataset = ''
+   () => {
+      if (selection.value.provider) {
+         useFetchDatasetOptions()
       }
-
-      if (!newVal) {
-         return
-      }
-
-      useFetchDatasetOptions()
    }
 )
 
 watch(
    () => selection.value.dataset,
-   (newVal) => {
-      if (!isSettingSelectionToEdit.value) {
-         selection.value.station = ''
+   () => {
+      if (selection.value.dataset) {
+         useFetchStationOptions()
       }
-
-      if (!newVal) {
-         return
-      }
-
-      pagination.value.stations.lastPage = 1
-      pagination.value.stations.lastSearchVal = ''
-      pagination.value.stations.reachedMaxData = false
-
-      useFetchStationOptions()
    }
 )
 
 watch(
    () => selection.value.station,
-   (newVal) => {
-      if (!isSettingSelectionToEdit.value) {
-         selection.value.datatype = ''
+   () => {
+      if (selection.value.station) {
+         useFetchDatatypeOptions()
       }
-
-      if (!newVal) {
-         return
-      }
-
-      pagination.value.datatypes.lastPage = 1
-      pagination.value.datatypes.lastSearchVal = ''
-      pagination.value.datatypes.reachedMaxData = false
-
-      useFetchDatatypeOptions()
    }
 )
 
 watch(
    () => selection.value.datatype,
-   (newVal) => {
+   () => {
       if (!isSettingSelectionToEdit.value) {
          selection.value.period = ''
-      }
-
-      if (!newVal) {
-         return
       }
    }
 )
 </script>
 
 <style lang="postcss" scoped>
-.charts-add-view {
-   @apply flex flex-col gap-2;
+.chart-add-edit-view {
+  /* Component styles */
+  @apply flex flex-col gap-2;
 
    & .input-cards-ct {
       @apply flex max-w-[700px] flex-col pb-40;

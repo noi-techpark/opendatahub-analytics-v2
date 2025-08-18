@@ -38,7 +38,8 @@ SPDX-License-Identifier: AGPL-3.0-or-later
 import { ref, watch, onMounted, nextTick, computed } from 'vue'
 import Map from '../components/ui/map/Map.vue'
 import { useMapLayerStore } from '../stores/map-layers'
-import { useArrayDifference, useFetch } from '@vueuse/core'
+import { useArrayDifference } from '@vueuse/core'
+import { useFetchWithAuth } from '../utils/api'
 import { DataMarker, DataPoint, EventPoint } from '../types/api'
 import MapOriginFilterCard from '../components/ui/map/MapOriginFilterCard.vue'
 import MarkerCard from '../components/ui/MarkerCard.vue'
@@ -223,11 +224,12 @@ const fetchStationData = async (
 
       const url = `${import.meta.env.VITE_ODH_MOBILITY_API_URI}/flat,${datasetType}/${isProvinceEvents ? 'PROVINCE_BZ/' + new Date().toISOString() : layer.stationType}/?limit=-1&distinct=true&${query}`
 
+      const { data } = await useFetchWithAuth(url).json()
+
+      // Access data directly without parsing since it's already an object
       const flatData = isProvinceEvents
-         ? (JSON.parse((await useFetch(url).text()).data.value || '{}')
-              .data as EventPoint[])
-         : (JSON.parse((await useFetch(url).text()).data.value || '{}')
-              .data as DataPoint[])
+         ? (data.value?.data as EventPoint[]) || []
+         : (data.value?.data as DataPoint[]) || []
 
       if (flatData && flatData.length > 0) {
          const now = new Date()
@@ -311,15 +313,11 @@ const fetchStationData = async (
                if (query_where_datatypes) {
                   query_where_datatypes += ')'
                   try {
-                     const response = await useFetch(
-                        `${import.meta.env.VITE_ODH_MOBILITY_API_URI}/tree/${layer.stationType}/*/latest?limit=-1&distinct=true&select=tmeasurements&showNull=true&where=${encodeURIComponent(query_where_datatypes)}`
-                     )
+                     const dataUrl = `${import.meta.env.VITE_ODH_MOBILITY_API_URI}/tree/${layer.stationType}/*/latest?limit=-1&distinct=true&select=tmeasurements&showNull=true&where=${encodeURIComponent(query_where_datatypes)}`
+                     const { data } = await useFetchWithAuth(dataUrl).json()
 
-                     const parsedResponse = JSON.parse(
-                        (response.data.value as string) || '{}'
-                     )
-                     fetchedEvents[fetchedEventsKey] =
-                        parsedResponse?.data || {}
+                     // Access data directly without parsing
+                     fetchedEvents[fetchedEventsKey] = data.value?.data || {}
                   } catch (error) {
                      console.error(
                         `Error fetching data for ${fetchedEventsKey}:`,

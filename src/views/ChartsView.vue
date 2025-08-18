@@ -172,7 +172,8 @@ import Chart from '../components/ui/chart/Chart.vue'
 
 import { startOfDay, subDays, subMonths } from 'date-fns'
 import { useTimeSeriesStore } from '../stores/time-series'
-import { useClipboard, useFetch } from '@vueuse/core'
+import { useClipboard } from '@vueuse/core'
+import { useFetchWithAuth } from '../utils/api'
 import SelectPopover from '../components/ui/popover/SelectPopover.vue'
 import IconCheck from '../components/ui/svg/IconCheck.vue'
 import { randomId } from '../components/utils/useRandomId'
@@ -282,7 +283,7 @@ const getTimeseriesData = async () => {
 
    for (const element of timeSeriesList.value) {
       const dataUrl = `${import.meta.env.VITE_ODH_MOBILITY_API_URI}/flat/${encodeURIComponent(element.dataset)}/${encodeURIComponent(element.datatype)}/${from}/${to}?limit=-1&offset=0&select=mvalue,mvalidtime,mperiod&where=sname.eq.${encodeURIComponent(element.station)},sorigin.eq.${encodeURIComponent(element.provider)},mperiod.eq.${element.period},sactive.eq.true&shownull=false&distinct=true`
-      const { data } = await useFetch(dataUrl).json()
+      const { data } = await useFetchWithAuth(dataUrl).json()
       const labels = []
       const values = []
 
@@ -561,6 +562,7 @@ onMounted(async () => {
 
 @media (max-width: theme('screens.md')) {
    .charts-view {
+      /* Component styles */
    }
 }
 </style>
