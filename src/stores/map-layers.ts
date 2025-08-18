@@ -30,6 +30,9 @@ export const useMapLayerStore = defineStore('map-layers', () => {
 
    // Getters
    const getAllLayers = computed(() => allLayers.value)
+   const getAllLayersFlat = computed(() =>
+      allLayers.value.flatMap((l) => l.layers)
+   )
 
    const getSelectedLayer = computed(() =>
       allLayers.value.find((layer) => layer.id === selectedLayerId.value)
@@ -143,6 +146,7 @@ export const useMapLayerStore = defineStore('map-layers', () => {
 
       // Getters
       getAllLayers,
+      getAllLayersFlat,
       getSelectedLayer,
       getSelectedCount,
       getSelectedLayers,

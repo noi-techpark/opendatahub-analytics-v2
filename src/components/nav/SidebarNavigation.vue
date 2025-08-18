@@ -4,17 +4,21 @@ SPDX-License-Identifier: AGPL-3.0-or-later
 -->
 
 <template>
-   <div class="sidebar-navigation" :class="{ back: back?.visible }">
+   <div>
+      <div class="sidebar-navigation">
+         <MenuButtons :links :selected-id="selectedId" grow />
+      </div>
+
       <RouterLink
          v-if="back?.visible"
          :to="{ path: back?.route, query: route.query }"
+         class="back-link"
+         @click="onBackClick"
       >
-         <IconText :text="back?.title">
+         <IconText :text="back?.title" class="w-full">
             <ArrowLeftIcon />
          </IconText>
       </RouterLink>
-
-      <MenuButtons v-else :links :selected-id="selectedId" grow />
    </div>
 
    <Divider v-if="back?.visible" :noTop="!!back?.visible" />
@@ -28,6 +32,8 @@ import IconText from '../ui/IconText.vue'
 import ArrowLeftIcon from '../ui/svg/ArrowLeftIcon.vue'
 import Divider from '../ui/Divider.vue'
 import MenuButtons from '../ui/MenuButtons.vue'
+import { useLayoutStore } from '../../stores/layout'
+import { storeToRefs } from 'pinia'
 
 type Props = {
    back?: {
@@ -41,6 +47,8 @@ const props = withDefaults(defineProps<Props>(), {})
 const route = useRoute()
 const { t } = useI18n()
 const selectedId = ref<string>('map')
+const layoutStore = useLayoutStore()
+const { sidebarMapContent } = storeToRefs(layoutStore)
 
 const links = computed(() => [
    { id: 'map', title: t('components.sidebar.map'), route: '/' },
@@ -57,15 +65,19 @@ watch(route, () => {
 
    return id
 })
+
+const onBackClick = () => {
+   sidebarMapContent.value = false
+}
 </script>
 
 <style lang="postcss" scoped>
 .sidebar-navigation {
    @apply flex justify-center px-3 py-2;
+}
 
-   &.back {
-      @apply justify-normal;
-   }
+.back-link {
+   @apply inline-block w-full;
 }
 
 @media only screen and (max-width: theme('screens.md')) {

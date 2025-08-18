@@ -64,7 +64,10 @@ import {
    saveQueryParamsToSessionStorage,
    getSessionStorageQueryParamsString,
 } from '../utils/url-query'
+import { useLayoutStore } from '../stores/layout'
 
+const layoutStore = useLayoutStore()
+const { sidebarMapContent } = storeToRefs(layoutStore)
 const { showNotification } = useNotificationsStore()
 
 const { t } = useI18n()
@@ -772,6 +775,7 @@ onMounted(async () => {
    // Save current URL query parameters to session storage on initial load
    // This ensures we don't lose parameters when navigating
    if (currentSearchString) {
+      sidebarMapContent.value = true
       saveQueryParamsToSessionStorage(currentSearchParams)
    }
 

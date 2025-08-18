@@ -11,7 +11,9 @@ SPDX-License-Identifier: AGPL-3.0-or-later
       </div>
 
       <div class="sidebar-content">
-         <SidebarMapContent v-if="page === 'map' && !!route.hash" />
+         <SidebarMapContent
+            v-if="page === 'map' && (!!route.hash || sidebarMapContent)"
+         />
          <SidebarChartsContent v-if="page === 'charts' && !route.hash" />
          <SidebarEventsContent v-if="page === 'events'" />
       </div>
@@ -61,10 +63,15 @@ import { useI18n } from 'vue-i18n'
 import { ref } from 'vue'
 import Switch from '../components/ui/Switch.vue'
 import { restoreQueryParamsFromSessionStorage } from '../utils/url-query'
+import { useLayoutStore } from '../stores/layout'
+import { storeToRefs } from 'pinia'
 
 const route = useRoute()
 const router = useRouter()
 const layerStore = useMapLayerStore()
+const layoutStore = useLayoutStore()
+
+const { sidebarMapContent } = storeToRefs(layoutStore)
 const { t } = useI18n()
 const showAlarms = ref<boolean>(false)
 
@@ -78,14 +85,21 @@ const mapLayerSelection = computed(() => route.name === 'map' && !!route.hash)
 const back = computed(() => {
    const isVisible =
       !['/', '/charts', '/events', '/events/weather'].includes(route.path) ||
-      !!route.hash
-   const title = route.hash
-      ? layerStore.getSelectedLayer?.title || t('common.back')
-      : t('common.back')
+      !!route.hash ||
+      sidebarMapContent.value
+
+   const title =
+      route.hash || sidebarMapContent.value
+         ? layerStore.getSelectedLayer?.title || t('common.back')
+         : t('common.back')
 
    const routerState = router.options.history.state
    const previousRoute =
-      routerState && routerState.back ? routerState.back.toString() : '/'
+      page.value === 'map'
+         ? '/'
+         : routerState && routerState.back
+           ? routerState.back.toString()
+           : '/'
 
    return {
       title,
