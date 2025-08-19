@@ -25,6 +25,24 @@ SPDX-License-Identifier: AGPL-3.0-or-later
          <Divider />
 
          <Switch
+            :model-value="isAutoRefreshEnabled"
+            @update:model-value="toggleAutoRefresh"
+            expand
+            expand-slot
+            class="auto-refresh-toggle"
+         >
+            <IconText
+               :text="$t('layouts.app-sidebar.auto-refresh')"
+               noPaddingX
+               reverse
+               class="grow"
+               :hover="false"
+            >
+               <RefreshIcon class="size-5" />
+            </IconText>
+         </Switch>
+
+         <Switch
             v-if="mapLayerSelection"
             v-model="showAlarms"
             expand
@@ -41,7 +59,7 @@ SPDX-License-Identifier: AGPL-3.0-or-later
             </IconText>
          </Switch>
 
-         <RouterLink to="/about" v-else>
+         <RouterLink to="/about">
             <IconText :text="$t('common.about')">
                <InfoIcon />
             </IconText>
@@ -67,17 +85,20 @@ import { ref } from 'vue'
 import Switch from '../components/ui/Switch.vue'
 import { restoreQueryParamsFromSessionStorage } from '../utils/url-query'
 import { useLayoutStore } from '../stores/layout'
+import { useAutoRefreshStore } from '../stores/auto-refresh'
 import { storeToRefs } from 'pinia'
-import CloseIcon from '../components/ui/svg/CloseIcon.vue'
-import MenuIcon from '../components/ui/svg/MenuIcon.vue'
+import RefreshIcon from '../components/ui/svg/RefreshIcon.vue'
 
 const route = useRoute()
 const router = useRouter()
 const layerStore = useMapLayerStore()
 const layoutStore = useLayoutStore()
+const autoRefreshStore = useAutoRefreshStore()
 
 const { sidebarMapContent, isSidebarVisible } = storeToRefs(layoutStore)
+const { isAutoRefreshEnabled } = storeToRefs(autoRefreshStore)
 const { toggleSidebar } = layoutStore
+const { toggleAutoRefresh } = autoRefreshStore
 const { t } = useI18n()
 const showAlarms = ref<boolean>(false)
 
@@ -86,7 +107,7 @@ const page = ref<
    'map' | 'charts' | 'charts-add' | 'charts-edit' | 'events' | 'about'
 >()
 
-const mapLayerSelection = computed(() => route.name === 'map' && !!route.hash)
+const mapLayerSelection = computed(() => route.name === 'map')
 
 const back = computed(() => {
    const isVisible =

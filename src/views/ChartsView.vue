@@ -170,8 +170,9 @@ import IconText from '../components/ui/IconText.vue'
 import ContentCopyIcon from '../components/ui/svg/ContentCopyIcon.vue'
 import Chart from '../components/ui/chart/Chart.vue'
 
-import { startOfDay, subDays, subMonths } from 'date-fns'
+import { startOfDay, subDays, subMonths, isToday } from 'date-fns'
 import { useTimeSeriesStore } from '../stores/time-series'
+import { useAutoRefreshStore } from '../stores/auto-refresh'
 import { useClipboard } from '@vueuse/core'
 import { useFetchWithAuth } from '../utils/api'
 import SelectPopover from '../components/ui/popover/SelectPopover.vue'
@@ -197,6 +198,7 @@ const {
 } = useTimeSeriesStore()
 
 const { hasToLoad, timeSeriesList } = storeToRefs(useTimeSeriesStore())
+const autoRefreshStore = useAutoRefreshStore()
 
 const { copy, copied } = useClipboard()
 
@@ -217,6 +219,8 @@ const axisPositionOptions = computed(() => [
 
 const selectedTimeId = ref<TimeEnum>(TimeEnum.DAY)
 const rangeCustom = ref<TimeRange>([new Date(), new Date()])
+
+const now = ref(new Date())
 
 const selectedPlotHeight = ref<number>(0)
 
@@ -243,8 +247,7 @@ const plotHeights = computed(() => [
 ])
 
 const selectedTime = computed(() => {
-   const date = new Date()
-
+   const date = now.value
    switch (selectedTimeId.value) {
       case TimeEnum.WEEK:
          return {
@@ -494,6 +497,19 @@ watch(
       if (!newVal) return
 
       getTimeseriesData()
+   }
+)
+
+// Watch for auto-refresh changes and only refresh if selected end date is today
+watch(
+   () => autoRefreshStore.lastRefreshTime,
+   (newTime) => {
+      if (newTime && timeSeriesList.value.length > 0) {
+         if (isToday(selectedTime.value.to)) {
+            now.value = new Date()
+            getTimeseriesData()
+         }
+      }
    }
 )
 

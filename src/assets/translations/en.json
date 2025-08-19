@@ -159,7 +159,8 @@
          "logo": "opendatahub"
       },
       "app-sidebar": {
-         "alarms": "Highlight alarms on dataset"
+         "alarms": "Highlight alarms on dataset",
+         "auto-refresh": "Auto-refresh data every minute"
       }
    },
    "pages": {}

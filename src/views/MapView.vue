@@ -65,6 +65,7 @@ import {
    getSessionStorageQueryParamsString,
 } from '../utils/url-query'
 import { useLayoutStore } from '../stores/layout'
+import { useAutoRefreshStore } from '../stores/auto-refresh'
 
 const layoutStore = useLayoutStore()
 const { sidebarMapContent } = storeToRefs(layoutStore)
@@ -72,6 +73,7 @@ const { showNotification } = useNotificationsStore()
 
 const { t } = useI18n()
 const layerStore = useMapLayerStore()
+const autoRefreshStore = useAutoRefreshStore()
 const loading = ref<number>(0)
 const markers = ref<DataMarker[]>([])
 const selectedScode = ref<string>()
@@ -163,6 +165,16 @@ watch(
       lastMarkersSet.value = newVal
    },
    { deep: true }
+)
+
+watch(
+   () => autoRefreshStore.lastRefreshTime,
+   (newTime) => {
+      if (newTime && layerStore.getSelectedLayers.length > 0) {
+         // Refresh all selected layers when auto-refresh is triggered
+         toggleAllLayers(layerStore.getSelectedLayers)
+      }
+   }
 )
 
 const buildOriginFilterString = (origins: string[]): string => {
