@@ -13,11 +13,11 @@ SPDX-License-Identifier: AGPL-3.0-or-later
                :label="$t('components.sidebar-events-content.events')"
             />
          </RouterLink>
-         <RouterLink to="/events/weather">
+         <RouterLink to="/events/alarms">
             <Checkbox
-               :checked="page === 'weather'"
+               :checked="page === 'alarms'"
                rounded
-               :label="$t('components.sidebar-events-content.weather')"
+               :label="$t('components.sidebar-events-content.alarms')"
             />
          </RouterLink>
       </div>
@@ -35,7 +35,7 @@ type Props = {}
 const props = withDefaults(defineProps<Props>(), {})
 
 const route = useRoute()
-const page = ref<'events' | 'weather'>()
+const page = ref<'events' | 'alarms'>()
 
 watch(route, () => {
    switch (route.path) {
@@ -43,8 +43,8 @@ watch(route, () => {
          page.value = undefined
          break
       }
-      case '/events/weather': {
-         page.value = 'weather'
+      case '/events/alarms': {
+         page.value = 'alarms'
          break
       }
    }

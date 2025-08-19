@@ -1,0 +1,94 @@
+# SPDX-FileCopyrightText: NOI Techpark <digital@noi.bz.it>
+# SPDX-License-Identifier: AGPL-3.0-or-later
+
+MeteoStation:
+   precipitation:
+      alarms:
+         - name: 'Light Rain'
+           description: 'Light precipitation detected'
+           priority: 'medium'
+           thresholds:
+              min: 0.1
+              max: 1.0
+         - name: 'Heavy Rain'
+           description: 'Heavy precipitation detected'
+           priority: 'high'
+           thresholds:
+              min: 1.0
+              max: 99999
+   air-temperature:
+      alarms:
+         - name: 'Freezing Temperature'
+           description: 'Temperature below freezing point'
+           priority: 'high'
+           thresholds:
+              min: -99999
+              max: 0
+         - name: 'High Temperature'
+           description: 'Unusually high temperature'
+           priority: 'medium'
+           thresholds:
+              min: 30
+              max: 99999
+
+EnvironmentStation:
+   nitrogen-dioxide:
+      alarms:
+         - name: 'Moderate NO2 Level'
+           description: 'Nitrogen dioxide levels are moderate'
+           priority: 'medium'
+           thresholds:
+              min: 40
+              max: 60
+         - name: 'High NO2 Level'
+           description: 'Nitrogen dioxide levels are high'
+           priority: 'high'
+           thresholds:
+              min: 60
+              max: 99999
+   particulate-matter10:
+      alarms:
+         - name: 'Moderate PM10 Level'
+           description: 'Particulate matter (PM10) levels are moderate'
+           priority: 'medium'
+           thresholds:
+              min: 50
+              max: 100
+         - name: 'High PM10 Level'
+           description: 'Particulate matter (PM10) levels are high'
+           priority: 'high'
+           thresholds:
+              min: 100
+              max: 99999
+
+RWISstation:
+   ground-surface-temperature:
+      alarms:
+         - name: 'Near Freezing'
+           description: 'Road surface temperature near freezing point'
+           priority: 'medium'
+           thresholds:
+              min: -5
+              max: 0
+         - name: 'Below Freezing'
+           description: 'Road surface temperature below freezing point'
+           priority: 'high'
+           thresholds:
+              min: -99999
+              max: -5
+
+TrafficSensor:
+   average-vehicle-speed:
+      alarms:
+         - name: 'Slow Traffic'
+           description: 'Traffic moving slower than normal'
+           priority: 'medium'
+           thresholds:
+              min: 0
+              max: 25
+         - name: 'Moderate Traffic'
+           description: 'Traffic moving at moderate speed'
+           priority: 'low'
+           thresholds:
+              min: 26
+              max: 40

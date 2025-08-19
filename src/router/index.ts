@@ -9,7 +9,7 @@ const ChartsView = () => import('../views/ChartsView.vue')
 const EventsView = () => import('../views/EventsView.vue')
 const AboutView = () => import('../views/AboutView.vue')
 const ChartsAddEditView = () => import('../views/ChartsAddEditView.vue')
-const EventsWeatherView = () => import('../views/EventsWeatherView.vue')
+const AlarmsView = () => import('../views/AlarmsView.vue')
 
 const router = createRouter({
    history: createWebHistory(import.meta.env.BASE_URL),
@@ -40,9 +40,9 @@ const router = createRouter({
          component: EventsView,
       },
       {
-         path: '/events/weather',
-         name: 'events-weather',
-         component: EventsWeatherView,
+         path: '/events/alarms',
+         name: 'events-alarms',
+         component: AlarmsView,
       },
       {
          path: '/about',

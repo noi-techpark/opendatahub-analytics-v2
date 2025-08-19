@@ -1,6 +1,6 @@
 <template>
    <div class="chart-ct">
-      <Loader :active="loading" />
+      <Loader :active="!!loading" />
 
       <div class="chart-title">
          <P bold>{{ title }}</P>
@@ -272,7 +272,7 @@ const chartOptions = computed((): ChartOptions<'line'> => {
          },
          y: {
             type: 'linear',
-            display: (showBothScales || scaleToShow === 'y'),
+            display: showBothScales || scaleToShow === 'y',
             position: props.axisPosition === 'all-right' ? 'right' : 'left',
             grid: {
                color: '#D8DEE4',
@@ -318,7 +318,9 @@ const chartOptions = computed((): ChartOptions<'line'> => {
          },
          y1: {
             type: 'linear',
-            display: (showBothScales || scaleToShow === 'y1') && timeSeriesList.length > 1,
+            display:
+               (showBothScales || scaleToShow === 'y1') &&
+               timeSeriesList.length > 1,
             position:
                props.axisPosition !== 'default'
                   ? props.axisPosition === 'all-right'

@@ -111,7 +111,7 @@ const mapLayerSelection = computed(() => route.name === 'map')
 
 const back = computed(() => {
    const isVisible =
-      !['/', '/charts', '/events', '/events/weather'].includes(route.path) ||
+      !['/', '/charts', '/events', '/events/alarms'].includes(route.path) ||
       !!route.hash ||
       sidebarMapContent.value
 
