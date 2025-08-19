@@ -18,22 +18,20 @@ SPDX-License-Identifier: AGPL-3.0-or-later
                   <H tag="h2">{{ t('views.charts-add-edit.provider') }}</H>
                   <P>{{ t('views.charts-add-edit.provider-description') }}</P>
                </div>
-               <ChardAddSelectWrapper>
-                  <SelectPopover
-                     v-model="selection.provider"
-                     :text="
-                        selection.provider ||
-                        t('views.charts-add-edit.provider-select')
-                     "
-                     :search-label-placeholder="
-                        t('views.charts-add-edit.search-for-dataprovider')
-                     "
-                     :loading="loadingState.provider"
-                     :options="providerOptions"
-                     show-search
-                     @search="useFetchProviderOptions"
-                  />
-               </ChardAddSelectWrapper>
+               <SelectPopover
+                  v-model="selection.provider"
+                  :text="
+                     selection.provider ||
+                     t('views.charts-add-edit.provider-select')
+                  "
+                  :search-label-placeholder="
+                     t('views.charts-add-edit.search-for-dataprovider')
+                  "
+                  :loading="loadingState.provider"
+                  :options="providerOptions"
+                  show-search
+                  @search="useFetchProviderOptions"
+               />
             </div>
          </div>
 
@@ -180,7 +178,6 @@ import SelectPopover from '../components/ui/popover/SelectPopover.vue'
 import { useSessionStorage } from '@vueuse/core'
 import { useFetchWithAuth } from '../utils/api'
 import { SelectOption } from '../types/select'
-import ChardAddSelectWrapper from '../components/ui/chart/ChardAddSelectWrapper.vue'
 import { TimeSeries } from '../types/time-series'
 import { useTimeSeriesStore } from '../stores/time-series'
 import IconText from '../components/ui/IconText.vue'
@@ -190,6 +187,7 @@ import { MapMarkerDetails } from '../types/map-layer'
 import { DataMarker, DataPoint } from '../types/api'
 import { storeToRefs } from 'pinia'
 import { useI18n } from 'vue-i18n'
+import { useLayoutStore } from '../stores/layout'
 
 const {
    addTimeSeries,
@@ -206,6 +204,9 @@ const seriesToEditFromStorage = useSessionStorage(
 const { t } = useI18n()
 
 const { hasToLoad } = storeToRefs(useTimeSeriesStore())
+
+const layoutStore = useLayoutStore()
+const { isSidebarVisible } = storeToRefs(layoutStore)
 
 const router = useRouter()
 const route = useRoute()
@@ -505,6 +506,7 @@ const onScrollEndDatatypes = () => {
 
 onMounted(() => {
    useFetchProviderOptions()
+   isSidebarVisible.value = false
    if (route.query.id) {
       setSelectionToEdit()
    }
@@ -548,9 +550,8 @@ watch(
 </script>
 
 <style lang="postcss" scoped>
-.chart-add-edit-view {
-  /* Component styles */
-  @apply flex flex-col gap-2;
+.charts-add-view {
+   @apply flex flex-col gap-2;
 
    & .input-cards-ct {
       @apply flex max-w-[700px] flex-col pb-40;
@@ -586,7 +587,32 @@ watch(
 }
 
 @media (max-width: theme('screens.md')) {
-   .charts-view {
+   .charts-add-view {
+      @apply px-2;
+
+      & .input-cards-ct {
+         @apply w-full pb-20;
+
+         & .input-card {
+            @apply p-3;
+
+            & .input-card-header {
+               @apply flex-col;
+
+               & .input-card-text {
+                  @apply mb-2;
+               }
+            }
+
+            & .map-ct {
+               @apply h-64;
+            }
+         }
+
+         & .buttons-ct {
+            @apply w-full justify-end;
+         }
+      }
    }
 }
 </style>

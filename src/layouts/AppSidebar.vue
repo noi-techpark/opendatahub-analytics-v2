@@ -4,7 +4,10 @@ SPDX-License-Identifier: AGPL-3.0-or-later
 -->
 
 <template>
-   <aside class="app-sidebar">
+   <aside
+      class="app-sidebar"
+      :class="{ 'sidebar-mobile-hidden': !isSidebarVisible }"
+   >
       <div class="sidebar-navigation">
          <SidebarNavigation :back="back" />
          <SidebarMapHeader v-if="page === 'map'" />
@@ -65,13 +68,16 @@ import Switch from '../components/ui/Switch.vue'
 import { restoreQueryParamsFromSessionStorage } from '../utils/url-query'
 import { useLayoutStore } from '../stores/layout'
 import { storeToRefs } from 'pinia'
+import CloseIcon from '../components/ui/svg/CloseIcon.vue'
+import MenuIcon from '../components/ui/svg/MenuIcon.vue'
 
 const route = useRoute()
 const router = useRouter()
 const layerStore = useMapLayerStore()
 const layoutStore = useLayoutStore()
 
-const { sidebarMapContent } = storeToRefs(layoutStore)
+const { sidebarMapContent, isSidebarVisible } = storeToRefs(layoutStore)
+const { toggleSidebar } = layoutStore
 const { t } = useI18n()
 const showAlarms = ref<boolean>(false)
 
@@ -151,10 +157,20 @@ watch(route, (newRoute, oldRoute) => {
 
 <style lang="postcss" scoped>
 .app-sidebar {
-   @apply relative z-20 flex h-full w-[300px] flex-shrink-0 flex-col overflow-y-auto border-r bg-white px-3;
+   @apply relative z-20 flex h-full w-[300px] flex-shrink-0 flex-col overflow-y-auto border-r bg-white px-3 transition-all duration-300;
 
    & .sidebar-footer {
       @apply mt-auto pb-2 pt-10;
+   }
+}
+
+@media (max-width: theme('screens.md')) {
+   .app-sidebar {
+      @apply fixed bottom-0 left-0 top-0 w-5/6 shadow-lg;
+
+      &.sidebar-mobile-hidden {
+         @apply -translate-x-full;
+      }
    }
 }
 </style>

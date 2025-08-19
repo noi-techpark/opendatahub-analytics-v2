@@ -59,6 +59,6 @@ const links = computed(() => [
 
 <style lang="postcss" scoped>
 .time-selector {
-   @apply flex gap-3;
+   @apply flex flex-wrap gap-3;
 }
 </style>

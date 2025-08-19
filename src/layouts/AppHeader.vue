@@ -17,7 +17,10 @@ SPDX-License-Identifier: AGPL-3.0-or-later
             </div>
          </div>
 
-         <div class="header-menu" :class="{ '!hidden': props.isMenuOpen }">
+         <div
+            class="header-menu"
+            :class="{ 'max-md:!hidden': !props.isMenuOpen }"
+         >
             <div class="menu-links">
                <a
                   href="https://github.com/noi-techpark/odh-docs/wiki/Data-Browser"
@@ -124,7 +127,7 @@ function toggleMenu() {
       @apply flex-col;
 
       & .app-header {
-         @apply flex-col;
+         @apply flex-col px-3;
 
          & .header-links {
             @apply w-full;
@@ -135,18 +138,18 @@ function toggleMenu() {
          }
 
          & .header-menu {
-            @apply flex-col items-start gap-5 border-t pb-4 pt-2;
+            @apply flex-col items-start gap-4 border-t pb-4 pt-2;
 
             & .menu-links {
-               @apply flex-col;
+               @apply w-full flex-col;
 
                & .menu-link {
-                  @apply mx-0;
+                  @apply mx-0 w-full py-2;
                }
             }
 
             & .header-profile {
-               @apply w-full justify-between;
+               @apply mt-2 w-full justify-between;
 
                & .odh-logo {
                   @apply h-8;

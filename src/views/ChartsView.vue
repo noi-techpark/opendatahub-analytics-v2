@@ -562,7 +562,27 @@ onMounted(async () => {
 
 @media (max-width: theme('screens.md')) {
    .charts-view {
-      /* Component styles */
+      @apply px-2;
+
+      & .chart-content-ct {
+         @apply flex-col;
+
+         & .chart-content {
+            @apply w-full;
+
+            & .chart-control {
+               @apply flex-col;
+            }
+         }
+
+         & .chart-side {
+            @apply w-full;
+
+            & .card {
+               @apply w-full;
+            }
+         }
+      }
    }
 }
 </style>

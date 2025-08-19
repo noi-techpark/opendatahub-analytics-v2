@@ -2,12 +2,14 @@
 // SPDX-License-Identifier: AGPL-3.0-or-later
 
 import { createRouter, createWebHistory } from 'vue-router'
-import MapView from '../views/MapView.vue'
-import ChartsView from '../views/ChartsView.vue'
-import EventsView from '../views/EventsView.vue'
-import AboutView from '../views/AboutView.vue'
-import ChartsAddEditView from '../views/ChartsAddEditView.vue'
-import EventsWeatherView from '../views/EventsWeatherView.vue'
+
+// Implement lazy loading for components
+const MapView = () => import('../views/MapView.vue')
+const ChartsView = () => import('../views/ChartsView.vue')
+const EventsView = () => import('../views/EventsView.vue')
+const AboutView = () => import('../views/AboutView.vue')
+const ChartsAddEditView = () => import('../views/ChartsAddEditView.vue')
+const EventsWeatherView = () => import('../views/EventsWeatherView.vue')
 
 const router = createRouter({
    history: createWebHistory(import.meta.env.BASE_URL),
