@@ -44,7 +44,7 @@ SPDX-License-Identifier: AGPL-3.0-or-later
 
 <script setup lang="ts">
 import 'maplibre-gl/dist/maplibre-gl.css'
-import { computed, h, nextTick, onMounted, ref, render, watch } from 'vue'
+import { computed, h, nextTick, onMounted, ref, watch } from 'vue'
 import { DataMarker, StationMapMarker } from '../../../types/api'
 import { initMap } from '../../../utils/map-utils'
 import {
@@ -60,6 +60,7 @@ import IconText from '../IconText.vue'
 import CloseIcon from '../svg/CloseIcon.vue'
 import P from '../tags/P.vue'
 import Loader from '../Loader.vue'
+import { useMapLayerStore } from '../../../stores/map-layers'
 
 type Props = {
    loading?: boolean
@@ -123,6 +124,7 @@ const focus = (data?: DataMarker) => {
 }
 
 const clustersInMap = ref<Record<string, string[]>>({})
+const mapLayerStore = useMapLayerStore()
 
 const clearCurrentClusterSource = async () => {
    if (!map.value) return
@@ -184,30 +186,17 @@ const setMapClusterSource = async () => {
       const clusterCountLayerId = `${key}-cluster-count`
       const unclusteredMarkerLayerId = `${key}-unclustered-marker`
       const unclusteredMarkerInfoLayerId = `${key}-unclustered-marker-info`
+      const unclusteredCountLayerId = `${key}-unclustered-count`
+
       map.value.addLayer({
          id: clusterLayerId,
-         type: 'circle',
+         type: 'symbol',
          source: key,
          filter: ['has', 'point_count'],
-         paint: {
-            'circle-color': [
-               'step',
-               ['get', 'point_count'],
-               value[0].color,
-               100,
-               value[0].color,
-               750,
-               value[0].color,
-            ],
-            'circle-radius': [
-               'step',
-               ['get', 'point_count'],
-               25,
-               100,
-               30,
-               750,
-               40,
-            ],
+         layout: {
+            'icon-image': `custom-marker-${key}-value`,
+            'icon-size': 1,
+            'icon-allow-overlap': true,
          },
       })
 
@@ -219,27 +208,36 @@ const setMapClusterSource = async () => {
          layout: {
             'text-field': '{point_count_abbreviated}',
             'text-font': ['Open Sans Regular'],
-            'text-size': 22,
+            'text-size': 10,
             'text-allow-overlap': true,
          },
          paint: {
-            'text-color': '#fff',
-            'text-halo-color': 'rgba(0, 0, 0, 0.3)',
-            'text-halo-blur': 1,
-            'text-halo-width': 0.5,
+            'text-color': '#000',
+            'text-halo-width': 0,
+            'text-translate': [0, 12],
+            'text-translate-anchor': 'map',
          },
       })
 
       const iconId = `custom-marker-${key}-value`
-      const iconUrl = getIconForStationType(value[0].stype)
+      const layerForStype = mapLayerStore.getLayerByStationType(key)
+      const letter = layerForStype?.id?.[0]?.toUpperCase() || ''
+      const isProvince = key.startsWith('PROVINCE_BZ')
+      const iconUrl = isProvince
+         ? getIconForStationType(value[0].stype)
+         : undefined
 
-      const svgUrl = getBaseMarkerSvgUrl(value[0].iconColor || value[0].color)
+      const svgUrl = getBaseMarkerSvgUrl(
+         value[0].iconColor || value[0].color,
+         letter,
+         false
+      )
 
       if (!map.value?.hasImage(iconId)) {
          try {
             const markerCanvas = await createMarkerIcon(svgUrl, iconUrl)
             const bitmap = await createImageBitmap(markerCanvas)
-            map.value?.addImage(iconId, bitmap)
+            map.value?.addImage(iconId, bitmap, { pixelRatio: 1.5 })
          } catch (e) {
             console.error('Failed to create marker icon', e)
          }
@@ -254,6 +252,25 @@ const setMapClusterSource = async () => {
             'icon-image': iconId,
             'icon-size': 1,
             'icon-allow-overlap': true,
+         },
+      })
+
+      map.value?.addLayer({
+         id: unclusteredCountLayerId,
+         type: 'symbol',
+         source: key,
+         filter: ['!', ['has', 'point_count']],
+         layout: {
+            'text-field': '1',
+            'text-font': ['Open Sans Regular'],
+            'text-size': 10,
+            'text-allow-overlap': true,
+         },
+         paint: {
+            'text-color': '#000',
+            'text-halo-width': 0,
+            'text-translate': [0, 12],
+            'text-translate-anchor': 'map',
          },
       })
 
@@ -280,6 +297,7 @@ const setMapClusterSource = async () => {
          clusterCountLayerId,
          unclusteredMarkerLayerId,
          unclusteredMarkerInfoLayerId,
+         unclusteredCountLayerId,
       ]
 
       map.value?.on('click', clusterLayerId, async (e) => {

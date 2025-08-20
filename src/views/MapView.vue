@@ -54,11 +54,7 @@ import { useI18n } from 'vue-i18n'
 import { useNotificationsStore } from '../stores/notifications'
 import { watchDebounced } from '@vueuse/core'
 import { differenceInHours, subHours } from 'date-fns'
-import {
-   getIconForStationType,
-   getBaseMarkerSvgUrl,
-   createMarkerIcon,
-} from '../utils/marker-alert-utils'
+
 import { AlarmConfig, Alarm } from '../types/alarm-config'
 import {
    loadAlarmConfig,
