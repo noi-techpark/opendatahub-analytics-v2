@@ -25,7 +25,7 @@ SPDX-License-Identifier: AGPL-3.0-or-later
 </template>
 
 <script lang="ts" setup>
-import { computed, ref, watch } from 'vue'
+import { computed, onMounted, ref, watch } from 'vue'
 import { useI18n } from 'vue-i18n'
 import { useRoute } from 'vue-router'
 import IconText from '../ui/IconText.vue'
@@ -69,6 +69,21 @@ watch(route, () => {
 const onBackClick = () => {
    sidebarMapContent.value = false
 }
+
+onMounted(() => {
+   switch (route.path) {
+      case '/charts':
+         selectedId.value = 'charts'
+         break
+      case '/events':
+      case '/events/alarms':
+         selectedId.value = 'events'
+         break
+      default:
+         selectedId.value = 'map'
+         break
+   }
+})
 </script>
 
 <style lang="postcss" scoped>

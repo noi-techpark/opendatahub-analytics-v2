@@ -439,7 +439,7 @@ const setSavedTimeseries = async () => {
 
       ;(data[+index] ??= getBaseTimeSeriesObj())[timeSeriesKey] = configToLoad[
          key
-      ] as string & number[]
+      ] as string & number[] & string[]
    }
 
    for (const item of data) {
@@ -483,7 +483,10 @@ const setRangeFromQueryParams = () => {
 
    if (!query.from || !query.to) return
 
-   rangeCustom.value = [new Date(query.from), new Date(query.to)]
+   rangeCustom.value = [
+      new Date(query.from.toString()),
+      new Date(query.to.toString()),
+   ]
    selectedTimeId.value = TimeEnum.CUSTOM
 }
 

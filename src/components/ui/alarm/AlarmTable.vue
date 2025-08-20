@@ -7,72 +7,64 @@ SPDX-License-Identifier: AGPL-3.0-or-later
    <div class="alarm-table">
       <Loader :active="loading" />
 
-      <div class="table-container">
-         <table class="alarm-table-content">
-            <thead>
-               <tr class="table-header">
-                  <th
-                     v-for="header in tableHeaders"
-                     :key="header.key"
-                     class="table-cell"
-                  >
-                     {{ header.label }}
-                  </th>
-               </tr>
-            </thead>
-            <tbody>
-               <tr v-if="filteredAlarms.length === 0">
-                  <td colspan="8" class="empty-message">
-                     {{ $t('components.alarm-table.no-alarms') }}
-                  </td>
-               </tr>
-               <tr
-                  v-for="alarm in filteredAlarms"
-                  :key="`${alarm.stationName}-${alarm.measurement}-${alarm.alarm.name}`"
-                  :class="getRowClass(alarm.alarm.priority)"
-               >
-                  <td
-                     v-for="header in tableHeaders"
-                     :key="header.key"
-                     class="table-cell"
-                  >
-                     <template v-if="header.key === 'priority'">
-                        <span
-                           :class="getPriorityBadgeClass(alarm.alarm.priority)"
-                        >
-                           {{
-                              $t(
-                                 `components.alarm-table.priority.${alarm.alarm.priority}`
-                              )
-                           }}
-                        </span>
-                     </template>
-                     <template v-else-if="header.key === 'timestamp'">
-                        {{ formatDate(alarm.timestamp) }}
-                     </template>
-                     <template v-else-if="header.key === 'measurement'">
-                        {{ alarm.measurement }}
-                     </template>
-                     <template v-else-if="header.key === 'stationName'">
-                        {{ alarm.stationName }}
-                     </template>
-                     <template v-else-if="header.key === 'coordinates'">
-                        {{ formatCoordinates(alarm.coordinates) }}
-                     </template>
-                     <template v-else-if="header.key === 'alarmName'">
-                        {{ alarm.alarm.name }}
-                     </template>
-                     <template v-else-if="header.key === 'description'">
-                        {{ alarm.alarm.description }}
-                     </template>
-                     <template v-else-if="header.key === 'value'">
-                        {{ alarm.value }}
-                     </template>
-                  </td>
-               </tr>
-            </tbody>
-         </table>
-      </div>
+      <TableWithStickyHeader>
+         <template #header-cols>
+            <TableHeaderCell
+               v-for="header in tableHeaders"
+               :key="header.key"
+               class="bg-grey"
+            >
+               {{ header.label }}
+            </TableHeaderCell>
+         </template>
+         <template #body-rows>
+            <tr v-if="filteredAlarms.length === 0">
+               <TableCell colspan="8" class="empty-message">
+                  {{ $t('components.alarm-table.no-alarms') }}
+               </TableCell>
+            </tr>
+            <tr
+               v-for="alarm in filteredAlarms"
+               :key="`${alarm.stationName}-${alarm.measurement}-${alarm.alarm.name}`"
+               :class="{
+                  [getRowClass(alarm.alarm.priority)]: true,
+               }"
+            >
+               <TableCell v-for="header in tableHeaders" :key="header.key">
+                  <template v-if="header.key === 'priority'">
+                     <span :class="getPriorityBadgeClass(alarm.alarm.priority)">
+                        {{
+                           $t(
+                              `components.alarm-table.priority.${alarm.alarm.priority}`
+                           )
+                        }}
+                     </span>
+                  </template>
+                  <template v-else-if="header.key === 'timestamp'">
+                     {{ formatDate(alarm.timestamp) }}
+                  </template>
+                  <template v-else-if="header.key === 'measurement'">
+                     {{ alarm.measurement }}
+                  </template>
+                  <template v-else-if="header.key === 'stationName'">
+                     {{ alarm.stationName }}
+                  </template>
+                  <template v-else-if="header.key === 'coordinates'">
+                     {{ formatCoordinates(alarm.coordinates) }}
+                  </template>
+                  <template v-else-if="header.key === 'alarmName'">
+                     {{ alarm.alarm.name }}
+                  </template>
+                  <template v-else-if="header.key === 'description'">
+                     {{ alarm.alarm.description }}
+                  </template>
+                  <template v-else-if="header.key === 'value'">
+                     {{ alarm.value }}
+                  </template>
+               </TableCell>
+            </tr>
+         </template>
+      </TableWithStickyHeader>
    </div>
 </template>
 
@@ -80,8 +72,13 @@ SPDX-License-Identifier: AGPL-3.0-or-later
 import { computed } from 'vue'
 import { useI18n } from 'vue-i18n'
 import { format } from 'date-fns'
+
 import { AlarmEvent } from '../../../types/alarm-config'
+
 import Loader from '../Loader.vue'
+import TableWithStickyHeader from '../../table/TableWithStickyHeader.vue'
+import TableCell from '../../table/TableCell.vue'
+import TableHeaderCell from '../../table/TableHeaderCell.vue'
 
 const props = defineProps<{
    alarms: AlarmEvent[]
@@ -143,24 +140,8 @@ const getPriorityBadgeClass = (priority: string): string => {
 .alarm-table {
    @apply relative w-full;
 
-   & .table-container {
-      @apply overflow-x-auto;
-   }
-
-   & .alarm-table-content {
-      @apply min-w-full border border-gray-200 bg-white;
-
-      & .table-header {
-         @apply bg-gray-100;
-      }
-
-      & .table-cell {
-         @apply border-b px-4 py-2 text-left;
-      }
-
-      & .empty-message {
-         @apply px-4 py-4 text-center text-gray-500;
-      }
+   & .empty-message {
+      @apply px-4 py-4 text-center text-gray-500;
    }
 }
 </style>

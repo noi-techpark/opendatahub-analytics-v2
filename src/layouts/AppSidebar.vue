@@ -18,7 +18,9 @@ SPDX-License-Identifier: AGPL-3.0-or-later
             v-if="page === 'map' && (!!route.hash || sidebarMapContent)"
          />
          <SidebarChartsContent v-if="page === 'charts' && !route.hash" />
-         <SidebarEventsContent v-if="page === 'events'" />
+         <SidebarEventsContent
+            v-if="page === 'events' || page === 'events-alarms'"
+         />
       </div>
 
       <div class="sidebar-footer" v-if="showFooter">
@@ -104,7 +106,13 @@ const showAlarms = ref<boolean>(false)
 
 const showFooter = ref<boolean>(true)
 const page = ref<
-   'map' | 'charts' | 'charts-add' | 'charts-edit' | 'events' | 'about'
+   | 'map'
+   | 'charts'
+   | 'charts-add'
+   | 'charts-edit'
+   | 'events'
+   | 'events-alarms'
+   | 'about'
 >()
 
 const mapLayerSelection = computed(() => route.name === 'map')
@@ -113,7 +121,7 @@ const back = computed(() => {
    const isVisible =
       !['/', '/charts', '/events', '/events/alarms'].includes(route.path) ||
       !!route.hash ||
-      sidebarMapContent.value
+      (sidebarMapContent.value && page.value === 'map')
 
    const title =
       route.hash || sidebarMapContent.value
@@ -167,6 +175,13 @@ watch(route, (newRoute, oldRoute) => {
          page.value = 'events'
          break
       }
+
+      case '/events/alarms': {
+         showFooter.value = true
+         page.value = 'events-alarms'
+         break
+      }
+
       case '/about': {
          showFooter.value = false
          page.value = 'about'

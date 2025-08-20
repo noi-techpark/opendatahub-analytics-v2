@@ -55,9 +55,15 @@ import { useNotificationsStore } from '../stores/notifications'
 import { watchDebounced } from '@vueuse/core'
 import { differenceInHours, subHours } from 'date-fns'
 import {
-   getInfoMarkerColorDifferenceThreshold,
-   infoIconHoursThresholds,
+   getIconForStationType,
+   getBaseMarkerSvgUrl,
+   createMarkerIcon,
 } from '../utils/marker-alert-utils'
+import { AlarmConfig, Alarm } from '../types/alarm-config'
+import {
+   loadAlarmConfig,
+   getDefaultAlarmConfigUrl,
+} from '../utils/alarm-config-loader'
 import {
    getUrlQueryParams,
    updateUrlQueryParams,
@@ -77,6 +83,7 @@ const autoRefreshStore = useAutoRefreshStore()
 const loading = ref<number>(0)
 const markers = ref<DataMarker[]>([])
 const selectedScode = ref<string>()
+const alarmConfig = ref<AlarmConfig>({})
 const selectedMarker = ref<MapMarkerDetails>()
 const { isTogglingAll, uniqueOrigins, selectedFilterOrigins, lastMarkersSet } =
    storeToRefs(layerStore)
@@ -98,6 +105,121 @@ const handleSelectMarker = async (data?: MapMarkerDetails) => {
 
 const setCurrentFilter = (filter: string) => {
    currentFilter.value = filter
+}
+
+// Helper function to get measurement types and periods from alarm config
+const getMeasurementTypesFromAlarmConfig = (
+   stationType: string
+): Record<string, Record<string, boolean>> => {
+   const result: Record<string, Record<string, boolean>> = {}
+
+   // Check if we have alarms configured for this station type
+   const stationAlarms = alarmConfig.value[stationType]
+   if (!stationAlarms) return result
+
+   // Extract measurement types from the alarm config
+   for (const measurementType in stationAlarms) {
+      result[measurementType] = {}
+
+      // Get periods from alarm definitions
+      const measurementConfig = stationAlarms[measurementType]
+      if (measurementConfig.alarms && measurementConfig.alarms.length > 0) {
+         // Collect all unique periods from alarm definitions
+         const uniquePeriods = new Set<string>()
+
+         // First pass: collect all periods from alarm definitions
+         for (const alarm of measurementConfig.alarms) {
+            if (alarm.periods && alarm.periods.length > 0) {
+               for (const period of alarm.periods) {
+                  uniquePeriods.add(period.toString())
+               }
+            }
+         }
+
+         // If we found periods in alarm definitions, use those
+         if (uniquePeriods.size > 0) {
+            for (const period of uniquePeriods) {
+               result[measurementType][period] = true
+            }
+         } else {
+            // Fallback to default periods if no periods found in alarm definitions
+            if (
+               measurementType === 'temperature' ||
+               measurementType === 'air-temperature'
+            ) {
+               result[measurementType]['600'] = true
+               result[measurementType]['86400'] = true
+            } else if (measurementType === 'precipitation') {
+               result[measurementType]['600'] = true
+               result[measurementType]['86400'] = true
+            } else {
+               // Default to 600 seconds (10 minutes) for other measurement types
+               result[measurementType]['600'] = true
+            }
+         }
+      }
+   }
+
+   return result
+}
+
+const getMarkerColorFromAlarmConfig = (
+   stationType: string,
+   dataType: string,
+   value: number,
+   hoursFromNow: number,
+   period?: number
+): string | undefined => {
+   if (hoursFromNow > 24) return '#ddd'
+
+   const stationAlarms = alarmConfig.value[stationType]
+   if (!stationAlarms) return undefined
+
+   const measurementAlarms = stationAlarms[dataType]
+   if (!measurementAlarms || !measurementAlarms.alarms) return undefined
+
+   let alarmsToCheck: Alarm[] = []
+
+   if (period) {
+      alarmsToCheck = measurementAlarms.alarms.filter(
+         (alarm) => alarm.periods && alarm.periods.includes(period)
+      )
+
+      if (alarmsToCheck.length === 0) {
+         alarmsToCheck = measurementAlarms.alarms.filter(
+            (alarm) => !alarm.periods || alarm.periods.length === 0
+         )
+      }
+   } else {
+      alarmsToCheck = measurementAlarms.alarms
+   }
+
+   if (alarmsToCheck.length === 0) return undefined
+
+   const sortedAlarms = [...alarmsToCheck].sort((a, b) => {
+      const priorityMap: Record<string, number> = { high: 0, medium: 1, low: 2 }
+      return (
+         priorityMap[a.priority as keyof typeof priorityMap] -
+         priorityMap[b.priority as keyof typeof priorityMap]
+      )
+   })
+
+   for (const alarm of sortedAlarms) {
+      if (value >= alarm.thresholds.min && value <= alarm.thresholds.max) {
+         switch (alarm.priority) {
+            case 'high':
+               return '#ff4d4f'
+            case 'medium':
+               return '#ffd600'
+            case 'low':
+               return '#34c759'
+            default:
+               return '#ddd'
+         }
+      }
+   }
+
+   return undefined
 }
 
 watchDebounced(
@@ -301,13 +423,12 @@ const fetchStationData = async (
                let query_where_datatypes = ''
                let datatype_period_duplicates: Record<string, boolean> = {}
 
-               if (infoIconHoursThresholds[typedDataPoint.stype]) {
-                  for (const tnameKey in infoIconHoursThresholds[
-                     typedDataPoint.stype
-                  ]) {
-                     for (const mperiodKey in infoIconHoursThresholds[
-                        typedDataPoint.stype
-                     ][tnameKey]) {
+               const measurementTypes = getMeasurementTypesFromAlarmConfig(
+                  typedDataPoint.stype
+               )
+               if (Object.keys(measurementTypes).length > 0) {
+                  for (const tnameKey in measurementTypes) {
+                     for (const mperiodKey in measurementTypes[tnameKey]) {
                         const duplicatesKey = tnameKey + '_' + mperiodKey
                         if (!datatype_period_duplicates[duplicatesKey]) {
                            datatype_period_duplicates[duplicatesKey] = true
@@ -402,12 +523,12 @@ const fetchStationData = async (
                infoColor: isProvinceEvents
                   ? undefined
                   : lastMeasurement
-                    ? getInfoMarkerColorDifferenceThreshold(
+                    ? getMarkerColorFromAlarmConfig(
                          stype,
                          lastMeasurement.dataType,
-                         lastMeasurement.mperiod,
                          Number(lastMeasurement.mvalue),
-                         lastDiffHours || 0
+                         lastDiffHours || 0,
+                         lastMeasurement.mperiod // Pass the measurement period
                       )
                     : undefined,
 
@@ -633,6 +754,19 @@ const updateUrlWithStoreValues = (filterOrigins: SelectedFilterOrigins) => {
    updateUrlQueryParams(params)
 }
 
+// Synchronize the component state with URL parameters
+const syncStateWithUrl = async () => {
+   // Update URL with current selected layers
+   if (layerStore.getSelectedLayers.length > 0) {
+      updateUrlWithSelectedLayers(layerStore.getSelectedLayers)
+   }
+
+   // Update URL with current filter origins
+   if (selectedFilterOrigins.value.stype) {
+      updateUrlWithStoreValues(selectedFilterOrigins.value)
+   }
+}
+
 const updateUrlWithSelectedLayers = (layers: Layer[]) => {
    const params: Record<string, string | null> = {}
 
@@ -801,9 +935,18 @@ onMounted(async () => {
       await toggleAllLayers(layerStore.getSelectedLayers)
    }
 
-   nextTick(() => {
-      isInitialLoad.value = false
+   try {
+      alarmConfig.value = await loadAlarmConfig(getDefaultAlarmConfigUrl())
+   } catch (error) {
+      console.error('Failed to load alarm configuration:', error)
+   }
 
+   await syncStateWithUrl()
+   if (isInitialLoad.value) {
+      isInitialLoad.value = false
+   }
+
+   nextTick(() => {
       setTimeout(() => {
          isRestoringFromSessionStorage.value = false
       }, 1000)
@@ -826,6 +969,7 @@ onMounted(async () => {
 
 @media (max-width: theme('screens.md')) {
    .map-view {
+      @apply w-full;
    }
 }
 </style>

@@ -3,35 +3,37 @@
 // SPDX-License-Identifier: AGPL-3.0-or-later
 
 export interface AlarmThreshold {
-  min: number
-  max: number
+   min: number
+   max: number
 }
 
 export interface Alarm {
-  name: string
-  description: string
-  priority: 'high' | 'medium' | 'low'
-  thresholds: AlarmThreshold
+   name: string
+   description: string
+   priority: 'high' | 'medium' | 'low'
+   thresholds: AlarmThreshold
+   periods?: number[]
 }
 
 export interface MeasurementAlarms {
-  alarms: Alarm[]
+   alarms: Alarm[]
+   periods?: number[]
 }
 
 export interface StationTypeAlarms {
-  [measurement: string]: MeasurementAlarms
+   [measurement: string]: MeasurementAlarms
 }
 
 export interface AlarmConfig {
-  [stationType: string]: StationTypeAlarms
+   [stationType: string]: StationTypeAlarms
 }
 
 export interface AlarmEvent {
-  timestamp: Date
-  value: number
-  stationName: string
-  coordinates: [number, number]
-  alarm: Alarm
-  stationType: string
-  measurement: string
+   timestamp: Date
+   value: number
+   stationName: string
+   coordinates: [number, number]
+   alarm: Alarm
+   stationType: string
+   measurement: string
 }
