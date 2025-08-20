@@ -512,6 +512,51 @@ export const infoIconHoursThresholds: Record<
    PROVINCE_BZ: {},
 }
 
+const PROVINCE_MARKER_GREY = '#666A66'
+const PROVINCE_MARKER_RED = '#D40000'
+const PROVINCE_MARKER_ORANGE = '#FFB347'
+const PROVINCE_MARKER_BLUE = '#1B6EF3'
+
+export const needsWhiteIcon = (color: string): boolean => {
+   return (
+      color === PROVINCE_MARKER_GREY ||
+      color === PROVINCE_MARKER_RED ||
+      color === PROVINCE_MARKER_BLUE
+   )
+}
+
+export const getProvinceColorForType = (stationType: string): string => {
+   if (!stationType || !stationType.startsWith('PROVINCE_BZ')) return '#ddd'
+
+   const t = stationType
+
+   // Restrictions / no access / immediate danger
+   if (
+      t.includes('/SPERRE') ||
+      t.includes('/STAU') ||
+      t.includes('/RADWEG_SPERRE') ||
+      t.includes('/UNFALL')
+   ) {
+      return PROVINCE_MARKER_RED
+   }
+   // Mobile controls
+   if (t.includes('/RADAR')) {
+      return PROVINCE_MARKER_BLUE
+   }
+
+   // Warnings / hazards
+   if (
+      t.includes('/BAUSTELLE') ||
+      t.includes('/VORSICHT') ||
+      t.includes('/EINENGUNG') ||
+      t.includes('/AMPELREGELUNG')
+   ) {
+      return PROVINCE_MARKER_ORANGE
+   }
+
+   return PROVINCE_MARKER_GREY
+}
+
 export const getInfoMarkerColorDifferenceThreshold = (
    stationType: string,
    dataType: string,
@@ -534,12 +579,7 @@ export const getInfoMarkerColorDifferenceThreshold = (
    return '#ddd'
 }
 
-/**
- * Returns the PNG icon path for a given station type.
- * This is a basic mapping based on the provided JSON config and available PNGs in public/markers/icons.
- * If no match is found, returns a default icon.
- */
-export function getIconForStationType(stationType: string): string {
+export const getIconForStationType = (stationType: string): string => {
    const map: Record<string, string> = {
       MeteoStation: '/markers/icons/weather.svg',
       EnvironmentStation: '/markers/icons/air-quality.svg',
@@ -612,13 +652,17 @@ export function getIconForStationType(stationType: string): string {
 export const createMarkerIcon = async (
    svgUrl: string,
    iconUrl?: string,
-   iconBoxSize: number = 22
+   iconBoxSize: number = 22,
+   iconYOffset?: number,
+   overlayTintColor?: string,
+   centerFullCircle?: boolean
 ): Promise<HTMLCanvasElement> => {
    return new Promise((resolve, reject) => {
       const svgImg = new window.Image()
+      svgImg.crossOrigin = 'anonymous'
       svgImg.onload = () => {
          const canvas = document.createElement('canvas')
-         // Render at 2x for crisper text, then register with pixelRatio: 2
+         // Render at 1.5x for crisper text, then register with pixelRatio: 1.5
          const scale = 1.5
          const baseWidth = 69
          const baseHeight = 76
@@ -636,29 +680,50 @@ export const createMarkerIcon = async (
          }
 
          const iconImg = new window.Image()
+         iconImg.crossOrigin = 'anonymous'
          iconImg.onload = () => {
-            // Draw the icon centered inside the inner circle area
-            let drawWidth = iconImg.width
-            let drawHeight = iconImg.height
-            if (drawWidth > drawHeight) {
-               drawHeight = iconBoxSize * scale * (drawHeight / drawWidth)
+            let natW = (iconImg as any).naturalWidth || iconImg.width || 0
+            let natH = (iconImg as any).naturalHeight || iconImg.height || 0
+
+            let drawWidth: number
+            let drawHeight: number
+            if (natW > natH) {
+               drawHeight = iconBoxSize * scale * (natH / natW)
                drawWidth = iconBoxSize * scale
             } else {
-               drawWidth = iconBoxSize * scale * (drawWidth / drawHeight)
+               drawWidth = iconBoxSize * scale * (natW / natH)
                drawHeight = iconBoxSize * scale
             }
             // Precisely center inside the upper part of the ellipse (cx=34.7162, cy=30.7162)
             const ellipseCx = 34.7162
             const ellipseCy = 30.7162
-            const hemisphereUpNudge = 3.7 // px upward to stay in the upper white area
+            const hemisphereUpNudge = centerFullCircle ? 0 : 3.7 // full circle centers vertically
             const innerBoxX = (ellipseCx - iconBoxSize / 2) * scale
             const innerBoxY =
                (ellipseCy - iconBoxSize / 2 - hemisphereUpNudge) * scale
             const iconX = innerBoxX + (iconBoxSize * scale - drawWidth) / 2
-            const iconYOffset = -5
+            const defaultYOffset = -5
             const iconY =
-               innerBoxY + (iconBoxSize * scale - drawHeight) / 2 + iconYOffset
-            ctx.drawImage(iconImg, iconX, iconY, drawWidth, drawHeight)
+               innerBoxY +
+               (iconBoxSize * scale - drawHeight) / 2 +
+               (iconYOffset ?? defaultYOffset)
+
+            if (overlayTintColor) {
+               // Draw and tint on an offscreen canvas to avoid affecting the base marker
+               const off = document.createElement('canvas')
+               off.width = Math.ceil(drawWidth)
+               off.height = Math.ceil(drawHeight)
+               const octx = off.getContext('2d')!
+               octx.imageSmoothingEnabled = ctx.imageSmoothingEnabled
+               octx.drawImage(iconImg, 0, 0, drawWidth, drawHeight)
+               octx.globalCompositeOperation = 'source-in'
+               octx.fillStyle = overlayTintColor
+               octx.fillRect(0, 0, off.width, off.height)
+               octx.globalCompositeOperation = 'source-over'
+               ctx.drawImage(off, iconX, iconY)
+            } else {
+               ctx.drawImage(iconImg, iconX, iconY, drawWidth, drawHeight)
+            }
 
             resolve(canvas)
          }
@@ -689,9 +754,9 @@ export const createMarkerIcon = async (
 export const getBaseMarkerSvgUrl = (
    markerColor: string,
    letter?: string,
-   showOne?: boolean
+   showOne?: boolean,
+   fullCircle: boolean = false
 ) => {
-   // Teardrop marker approximating the provided example, with an inner circle filled by markerColor
    const safeLetter = (letter || '').slice(0, 1).toUpperCase()
    const letterSvg = safeLetter
       ? `<text x="50%" y="35%" dominant-baseline="middle" text-anchor="middle" fill="#1C1B1F" font-size="18" font-weight="700" font-family="SourceSansPro, Arial, sans-serif">${safeLetter}</text>`
@@ -709,7 +774,7 @@ export const getBaseMarkerSvgUrl = (
      <g>
        <path filter="url(#markerShadow)" d="M54.8432 53.2249C61.0773 47.6404 65 39.5283 65 30.5C65 13.6553 51.3447 0 34.5 0C17.6553 0 4 13.6553 4 30.5C4 39.5283 7.92275 47.6404 14.1568 53.2249C14.1776 53.246 14.1984 53.2669 14.2194 53.2879L24.591 63.6595C30.0636 69.1321 38.9364 69.1321 44.409 63.6595L54.7806 53.2879C54.8016 53.2669 54.8224 53.246 54.8432 53.2249Z" fill="white" stroke="#DADADA" stroke-width="1"/>
        <ellipse cx="34.7162" cy="30.7162" rx="24.7162" ry="24.7162" fill="${markerColor}" />
-       <path d="M23.5 55.5L11.5 43.5L9.5 39.5H60.5L59.5 43L52.5 53.5L45 56.5L31 58L23.5 55.5Z" fill="white"/>
+       ${fullCircle ? '' : '<path d="M23.5 55.5L11.5 43.5L9.5 39.5H60.5L59.5 43L52.5 53.5L45 56.5L31 58L23.5 55.5Z" fill="white"/>'}
        ${letterSvg}
        ${oneSvg}
      </g>

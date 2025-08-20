@@ -78,7 +78,7 @@ const handleLayerToggle = (index: number) => {
          @apply flex items-center pl-3 pr-[6px];
 
          & .layer-item-color {
-            @apply size-3 rounded-full;
+            @apply size-3 shrink-0 rounded-full;
          }
       }
    }

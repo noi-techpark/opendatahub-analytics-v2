@@ -51,6 +51,8 @@ import {
    createMarkerIcon,
    getBaseMarkerSvgUrl,
    getIconForStationType,
+   getProvinceColorForType,
+   needsWhiteIcon,
 } from '../../../utils/marker-alert-utils'
 
 import { Map, Marker } from 'maplibre-gl'
@@ -194,7 +196,7 @@ const setMapClusterSource = async () => {
          source: key,
          filter: ['has', 'point_count'],
          layout: {
-            'icon-image': `custom-marker-${key}-value`,
+            'icon-image': `custom-marker-${key}-cluster`,
             'icon-size': 1,
             'icon-allow-overlap': true,
          },
@@ -219,27 +221,78 @@ const setMapClusterSource = async () => {
          },
       })
 
-      const iconId = `custom-marker-${key}-value`
+      const clusterIconId = `custom-marker-${key}-cluster`
+      const singleIconId = `custom-marker-${key}-single`
       const layerForStype = mapLayerStore.getLayerByStationType(key)
       const letter = layerForStype?.id?.[0]?.toUpperCase() || ''
       const isProvince = key.startsWith('PROVINCE_BZ')
-      const iconUrl = isProvince
-         ? getIconForStationType(value[0].stype)
-         : undefined
-
-      const svgUrl = getBaseMarkerSvgUrl(
-         value[0].iconColor || value[0].color,
+      // Build CLUSTER icon
+      const clusterBaseColor = value[0].iconColor || value[0].color
+      const clusterSvgUrl = getBaseMarkerSvgUrl(
+         clusterBaseColor,
          letter,
+         false,
          false
       )
-
-      if (!map.value?.hasImage(iconId)) {
+      if (!map.value?.hasImage(clusterIconId)) {
          try {
-            const markerCanvas = await createMarkerIcon(svgUrl, iconUrl)
-            const bitmap = await createImageBitmap(markerCanvas)
-            map.value?.addImage(iconId, bitmap, { pixelRatio: 1.5 })
+            // For province clusters, use generic cluster icon and force white overlay on grey
+            const clusterOverlayUrl = isProvince
+               ? getIconForStationType('PROVINCE_BZ')
+               : undefined
+            const clusterYOffset = isProvince ? -4 : undefined
+            const clusterTint = isProvince ? '#FFFFFF' : undefined
+            const clusterCanvas = await createMarkerIcon(
+               clusterSvgUrl,
+               clusterOverlayUrl,
+               24,
+               clusterYOffset,
+               clusterTint,
+               false
+            )
+            const clusterBitmap = await createImageBitmap(clusterCanvas)
+            map.value?.addImage(clusterIconId, clusterBitmap, {
+               pixelRatio: 1.5,
+            })
          } catch (e) {
-            console.error('Failed to create marker icon', e)
+            console.error('Failed to create cluster marker icon', e)
+         }
+      }
+
+      // Build SINGLE icon
+      const singleIconOverlay = isProvince
+         ? getIconForStationType(value[0].stype)
+         : undefined
+      const singleBaseColor = isProvince
+         ? getProvinceColorForType(value[0].stype)
+         : value[0].iconColor || value[0].color
+      const singleSvgUrl = getBaseMarkerSvgUrl(
+         singleBaseColor,
+         letter,
+         false,
+         isProvince /* fullCircle for province */
+      )
+      if (!map.value?.hasImage(singleIconId)) {
+         try {
+            // Province singles: 28x28 inner box, white overlay for red/blue, slight recenter
+            const iconBox = isProvince ? 28 : 22
+            const overlayTint =
+               isProvince && needsWhiteIcon(singleBaseColor)
+                  ? '#FFFFFF'
+                  : undefined
+            const yOffset = isProvince ? -1 : undefined
+            const singleCanvas = await createMarkerIcon(
+               singleSvgUrl,
+               singleIconOverlay,
+               iconBox,
+               yOffset,
+               overlayTint,
+               isProvince
+            )
+            const singleBitmap = await createImageBitmap(singleCanvas)
+            map.value?.addImage(singleIconId, singleBitmap, { pixelRatio: 1.5 })
+         } catch (e) {
+            console.error('Failed to create single marker icon', e)
          }
       }
 
@@ -249,30 +302,33 @@ const setMapClusterSource = async () => {
          source: key,
          filter: ['!', ['has', 'point_count']],
          layout: {
-            'icon-image': iconId,
+            'icon-image': singleIconId,
             'icon-size': 1,
             'icon-allow-overlap': true,
          },
       })
 
-      map.value?.addLayer({
-         id: unclusteredCountLayerId,
-         type: 'symbol',
-         source: key,
-         filter: ['!', ['has', 'point_count']],
-         layout: {
-            'text-field': '1',
-            'text-font': ['Open Sans Regular'],
-            'text-size': 10,
-            'text-allow-overlap': true,
-         },
-         paint: {
-            'text-color': '#000',
-            'text-halo-width': 0,
-            'text-translate': [0, 12],
-            'text-translate-anchor': 'map',
-         },
-      })
+      // For province singles, do NOT render the '1' count
+      if (!isProvince) {
+         map.value?.addLayer({
+            id: unclusteredCountLayerId,
+            type: 'symbol',
+            source: key,
+            filter: ['!', ['has', 'point_count']],
+            layout: {
+               'text-field': '1',
+               'text-font': ['Open Sans Regular'],
+               'text-size': 10,
+               'text-allow-overlap': true,
+            },
+            paint: {
+               'text-color': '#000',
+               'text-halo-width': 0,
+               'text-translate': [0, 12],
+               'text-translate-anchor': 'map',
+            },
+         })
+      }
 
       map.value?.addLayer({
          id: unclusteredMarkerInfoLayerId,
