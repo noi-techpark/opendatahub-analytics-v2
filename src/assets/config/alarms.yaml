@@ -10,28 +10,28 @@ MeteoStation:
            thresholds:
               min: 0.1
               max: 0.5
-           periods: [600] # Only applies to 10-minute data
+           periods: [600]
          - name: 'Heavy Rain (10min)'
            description: 'Heavy precipitation detected in last 10 minutes'
            priority: 'high'
            thresholds:
               min: 0.5
               max: 99999
-           periods: [600] # Only applies to 10-minute data
+           periods: [600]
          - name: 'Light Daily Rain'
            description: 'Light precipitation accumulated over 24 hours'
            priority: 'medium'
            thresholds:
               min: 5
               max: 20
-           periods: [86400] # Only applies to 24-hour data
+           periods: [86400]
          - name: 'Heavy Daily Rain'
            description: 'Heavy precipitation accumulated over 24 hours'
            priority: 'high'
            thresholds:
               min: 20
               max: 99999
-           periods: [86400] # Only applies to 24-hour data
+           periods: [86400]
          - name: 'Light Rain'
            description: 'Light precipitation detected'
            priority: 'medium'
@@ -54,14 +54,14 @@ MeteoStation:
            thresholds:
               min: -99999
               max: -2
-           periods: [86400] # Only applies to 24-hour data
+           periods: [86400]
          - name: 'Daily Average Near Freezing'
            description: 'Daily average temperature near freezing'
            priority: 'medium'
            thresholds:
               min: -2
               max: 2
-           periods: [86400] # Only applies to 24-hour data
+           periods: [86400]
          - name: 'Freezing Temperature'
            description: 'Temperature below freezing point'
            priority: 'high'
@@ -86,14 +86,14 @@ EnvironmentStation:
            thresholds:
               min: 40
               max: 60
-           periods: [600] # 10-minute data
+           periods: [600]
          - name: 'High NO2 Level'
            description: 'Nitrogen dioxide levels are high'
            priority: 'high'
            thresholds:
               min: 60
               max: 99999
-           periods: [600] # 10-minute data
+           periods: [600]
    particulate-matter10:
       alarms:
          - name: 'Moderate PM10 Level'
@@ -102,14 +102,14 @@ EnvironmentStation:
            thresholds:
               min: 50
               max: 100
-           periods: [600] # 10-minute data
+           periods: [600]
          - name: 'High PM10 Level'
            description: 'Particulate matter (PM10) levels are high'
            priority: 'high'
            thresholds:
               min: 100
               max: 99999
-           periods: [600] # 10-minute data
+           periods: [600]
 
 RWISstation:
    ground-surface-temperature:
@@ -120,14 +120,14 @@ RWISstation:
            thresholds:
               min: -5
               max: 0
-           periods: [600] # 10-minute data
+           periods: [600]
          - name: 'Below Freezing'
            description: 'Road surface temperature below freezing point'
            priority: 'high'
            thresholds:
               min: -99999
               max: -5
-           periods: [600] # 10-minute data
+           periods: [600]
 
 TrafficSensor:
    average-vehicle-speed:
@@ -138,18 +138,18 @@ TrafficSensor:
            thresholds:
               min: 0
               max: 25
-           periods: [600] # 10-minute data
+           periods: [600]
          - name: 'Fast Traffic'
            description: 'Traffic moving at high speed'
            priority: 'medium'
            thresholds:
               min: 50
               max: 99999
-           periods: [600] # 10-minute data
+           periods: [600]
          - name: 'Moderate Traffic'
            description: 'Traffic moving at moderate speed'
            priority: 'low'
            thresholds:
               min: 25
               max: 50
-           periods: [600] # 10-minute data
+           periods: [600]
