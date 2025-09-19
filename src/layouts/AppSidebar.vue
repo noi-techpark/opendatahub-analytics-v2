@@ -10,17 +10,17 @@ SPDX-License-Identifier: AGPL-3.0-or-later
    >
       <div class="sidebar-navigation">
          <SidebarNavigation :back="back" />
-         <SidebarMapHeader v-if="page === 'map'" />
+         <SidebarMapHeader v-if="page === 'map' || page === 'alarms'" />
       </div>
 
       <div class="sidebar-content">
          <SidebarMapContent
-            v-if="page === 'map' && (!!route.hash || sidebarMapContent)"
+            v-if="
+               (page === 'map' || page === 'alarms') &&
+               (!!route.hash || sidebarMapContent)
+            "
          />
          <SidebarChartsContent v-if="page === 'charts' && !route.hash" />
-         <SidebarEventsContent
-            v-if="page === 'events' || page === 'events-alarms'"
-         />
       </div>
 
       <div class="sidebar-footer" v-if="showFooter">
@@ -75,7 +75,6 @@ import { useRoute, useRouter } from 'vue-router'
 import { computed, watch } from 'vue'
 import SidebarMapContent from '../components/nav/SidebarMapContent.vue'
 import SidebarChartsContent from '../components/nav/SidebarChartsContent.vue'
-import SidebarEventsContent from '../components/nav/SidebarEventsContent.vue'
 import IconText from '../components/ui/IconText.vue'
 import InfoIcon from '../components/ui/svg/InfoIcon.vue'
 import SidebarMapHeader from '../components/nav/SidebarMapHeader.vue'
@@ -106,22 +105,17 @@ const showAlarms = ref<boolean>(false)
 
 const showFooter = ref<boolean>(true)
 const page = ref<
-   | 'map'
-   | 'charts'
-   | 'charts-add'
-   | 'charts-edit'
-   | 'events'
-   | 'events-alarms'
-   | 'about'
+   'map' | 'charts' | 'charts-add' | 'charts-edit' | 'alarms' | 'about'
 >()
 
 const mapLayerSelection = computed(() => route.name === 'map')
 
 const back = computed(() => {
    const isVisible =
-      !['/', '/charts', '/events', '/events/alarms'].includes(route.path) ||
+      !['/', '/charts', '/alarms'].includes(route.path) ||
       !!route.hash ||
-      (sidebarMapContent.value && page.value === 'map')
+      (sidebarMapContent.value &&
+         (page.value === 'map' || page.value === 'alarms'))
 
    const title =
       route.hash || sidebarMapContent.value
@@ -143,6 +137,12 @@ const back = computed(() => {
    }
 })
 
+const selectLayerFromHash = () => {
+   if (route.hash) {
+      layerStore.selectLayer(route.hash.split('#')[1])
+   }
+}
+
 watch(route, (newRoute, oldRoute) => {
    const isGoingToMap = newRoute.name === 'map'
 
@@ -152,9 +152,7 @@ watch(route, (newRoute, oldRoute) => {
 
    switch (route.path) {
       case '/': {
-         if (route.hash) {
-            layerStore.selectLayer(route.hash.split('#')[1])
-         }
+         selectLayerFromHash()
          showFooter.value = true
          page.value = 'map'
          break
@@ -170,15 +168,10 @@ watch(route, (newRoute, oldRoute) => {
             route.path === '/charts/add' ? 'charts-add' : 'charts-edit'
          showFooter.value = false
          break
-      case '/events': {
+      case '/alarms': {
+         selectLayerFromHash()
          showFooter.value = true
-         page.value = 'events'
-         break
-      }
-
-      case '/events/alarms': {
-         showFooter.value = true
-         page.value = 'events-alarms'
+         page.value = 'alarms'
          break
       }
 

@@ -53,7 +53,7 @@ const { sidebarMapContent } = storeToRefs(layoutStore)
 const links = computed(() => [
    { id: 'map', title: t('components.sidebar.map'), route: '/' },
    { id: 'charts', title: t('components.sidebar.charts'), route: '/charts' },
-   { id: 'events', title: t('components.sidebar.events'), route: '/events' },
+   { id: 'alarms', title: t('components.sidebar.alarms'), route: '/alarms' },
 ])
 
 watch(route, () => {
@@ -75,9 +75,8 @@ onMounted(() => {
       case '/charts':
          selectedId.value = 'charts'
          break
-      case '/events':
-      case '/events/alarms':
-         selectedId.value = 'events'
+      case '/alarms':
+         selectedId.value = 'alarms'
          break
       default:
          selectedId.value = 'map'
@@ -93,10 +92,5 @@ onMounted(() => {
 
 .back-link {
    @apply inline-block w-full;
-}
-
-@media only screen and (max-width: theme('screens.md')) {
-   .sidebar-navigation {
-   }
 }
 </style>

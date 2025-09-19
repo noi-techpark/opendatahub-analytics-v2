@@ -6,7 +6,6 @@ import { createRouter, createWebHistory } from 'vue-router'
 // Implement lazy loading for components
 const MapView = () => import('../views/MapView.vue')
 const ChartsView = () => import('../views/ChartsView.vue')
-const EventsView = () => import('../views/EventsView.vue')
 const AboutView = () => import('../views/AboutView.vue')
 const ChartsAddEditView = () => import('../views/ChartsAddEditView.vue')
 const AlarmsView = () => import('../views/AlarmsView.vue')
@@ -35,13 +34,8 @@ const router = createRouter({
          component: ChartsAddEditView,
       },
       {
-         path: '/events',
-         name: 'events',
-         component: EventsView,
-      },
-      {
-         path: '/events/alarms',
-         name: 'events-alarms',
+         path: '/alarms',
+         name: 'alarms',
          component: AlarmsView,
       },
       {

@@ -4,152 +4,86 @@
 MeteoStation:
    precipitation:
       alarms:
-         - name: 'Light Rain (10min)'
-           description: 'Light precipitation detected in last 10 minutes'
-           priority: 'medium'
-           thresholds:
-              min: 0.1
-              max: 0.5
-           periods: [600]
          - name: 'Heavy Rain (10min)'
            description: 'Heavy precipitation detected in last 10 minutes'
            priority: 'high'
            thresholds:
-              min: 0.5
+              min: 1
               max: 99999
            periods: [600]
-         - name: 'Light Daily Rain'
-           description: 'Light precipitation accumulated over 24 hours'
-           priority: 'medium'
-           thresholds:
-              min: 5
-              max: 20
-           periods: [86400]
-         - name: 'Heavy Daily Rain'
-           description: 'Heavy precipitation accumulated over 24 hours'
-           priority: 'high'
-           thresholds:
-              min: 20
-              max: 99999
-           periods: [86400]
-         - name: 'Light Rain'
-           description: 'Light precipitation detected'
-           priority: 'medium'
-           thresholds:
-              min: 0.1
-              max: 1.0
-           # No periods specified means this is a fallback for any period not covered above
-         - name: 'Heavy Rain'
-           description: 'Heavy precipitation detected'
-           priority: 'high'
-           thresholds:
-              min: 1.0
-              max: 99999
-           # No periods specified means this is a fallback for any period not covered above
    air-temperature:
       alarms:
-         - name: 'Daily Average Below Freezing'
+         - name: 'Below Zero Air Temperature (10min)'
            description: 'Daily average temperature below freezing'
            priority: 'high'
            thresholds:
-              min: -99999
+              min: -100
               max: -2
-           periods: [86400]
-         - name: 'Daily Average Near Freezing'
-           description: 'Daily average temperature near freezing'
-           priority: 'medium'
-           thresholds:
-              min: -2
-              max: 2
-           periods: [86400]
-         - name: 'Freezing Temperature'
-           description: 'Temperature below freezing point'
+           periods: [600]
+         - name: 'Below Zero Air Temperature (15min)'
+           description: 'Daily average temperature below freezing'
            priority: 'high'
            thresholds:
-              min: -99999
-              max: 0
-           # No periods specified means this is a fallback for any period not covered above
-         - name: 'High Temperature'
+              min: -100
+              max: -2
+           periods: [900]
+         - name: 'High Temperature (10min)'
            description: 'Unusually high temperature'
            priority: 'medium'
            thresholds:
               min: 30
               max: 99999
-           # No periods specified means this is a fallback for any period not covered above
-
+           periods: [600]
+         - name: 'High Temperature (15min)'
+           description: 'Unusually high temperature'
+           priority: 'medium'
+           thresholds:
+              min: 30
+              max: 99999
+           periods: [900]
+          
+          
+          
 EnvironmentStation:
    nitrogen-dioxide:
       alarms:
-         - name: 'Moderate NO2 Level'
-           description: 'Nitrogen dioxide levels are moderate'
-           priority: 'medium'
-           thresholds:
-              min: 40
-              max: 60
-           periods: [600]
          - name: 'High NO2 Level'
            description: 'Nitrogen dioxide levels are high'
            priority: 'high'
            thresholds:
-              min: 60
+              min: 40
               max: 99999
-           periods: [600]
+           periods: [3600]
+
    particulate-matter10:
       alarms:
-         - name: 'Moderate PM10 Level'
-           description: 'Particulate matter (PM10) levels are moderate'
-           priority: 'medium'
-           thresholds:
-              min: 50
-              max: 100
-           periods: [600]
          - name: 'High PM10 Level'
            description: 'Particulate matter (PM10) levels are high'
            priority: 'high'
            thresholds:
-              min: 100
+              min: 30
               max: 99999
-           periods: [600]
+           periods: [3600]
 
 RWISstation:
    ground-surface-temperature:
       alarms:
-         - name: 'Near Freezing'
+         - name: 'Below Zero Road Temperature'
            description: 'Road surface temperature near freezing point'
            priority: 'medium'
            thresholds:
-              min: -5
-              max: 0
-           periods: [600]
-         - name: 'Below Freezing'
-           description: 'Road surface temperature below freezing point'
-           priority: 'high'
-           thresholds:
-              min: -99999
-              max: -5
-           periods: [600]
+              min: -100
+              max: -3
+           periods: [1]
+
 
 TrafficSensor:
-   average-vehicle-speed:
+   average-speed-light-vehicles:
       alarms:
          - name: 'Slow Traffic'
            description: 'Traffic moving slower than normal'
-           priority: 'medium'
+           priority: 'high'
            thresholds:
               min: 0
               max: 25
-           periods: [600]
-         - name: 'Fast Traffic'
-           description: 'Traffic moving at high speed'
-           priority: 'medium'
-           thresholds:
-              min: 50
-              max: 99999
-           periods: [600]
-         - name: 'Moderate Traffic'
-           description: 'Traffic moving at moderate speed'
-           priority: 'low'
-           thresholds:
-              min: 25
-              max: 50
            periods: [600]
