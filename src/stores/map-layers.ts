@@ -74,7 +74,12 @@ export const useMapLayerStore = defineStore('map-layers', () => {
          })
       })
       selectedLayers.value = initialState
-      selectedLayerId.value = null
+
+      // Default to the primary group 'stations' if available
+      const hasStations = allLayers.value.some((g) => g.id === 'stations')
+      selectedLayerId.value = hasStations
+         ? 'stations'
+         : allLayers.value[0]?.id || null
    }
 
    const selectLayer = (layerId: string) => {

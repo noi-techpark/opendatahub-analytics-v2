@@ -5,7 +5,7 @@ import { defineStore } from 'pinia'
 import { ref } from 'vue'
 
 export const useLayoutStore = defineStore('layout', () => {
-   const sidebarMapContent = ref<boolean>(false)
+   const sidebarMapContent = ref<boolean>(true)
    const isSidebarVisible = ref<boolean>(false)
 
    const toggleSidebar = () => {
