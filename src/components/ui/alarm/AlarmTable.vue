@@ -9,26 +9,30 @@ SPDX-License-Identifier: AGPL-3.0-or-later
 
       <TableWithStickyHeader>
          <template #header-cols>
-            <TableHeaderCell
-               v-for="header in tableHeaders"
-               :key="header.key"
-               class="bg-grey"
-            >
-               {{ header.label }}
+            <TableHeaderCell v-for="header in tableHeaders" :key="header.key">
+               <SortHeader
+                  :title="header.label"
+                  :column-key="header.key"
+                  :current-sort-key="sortKey"
+                  :current-sort-dir="sortDir"
+                  @update:sort="onUpdateSort"
+               />
             </TableHeaderCell>
          </template>
          <template #body-rows>
-            <tr v-if="filteredAlarms.length === 0">
+            <tr v-if="sortedAlarms.length === 0">
                <TableCell colspan="8" class="empty-message">
-                  {{ $t('components.alarm-table.no-alarms') }}
+                  {{
+                     hasSelection
+                        ? $t('components.alarm-table.no-alarms')
+                        : $t('components.alarm-table.select-station-to-see-alarms')
+                  }}
                </TableCell>
             </tr>
             <tr
-               v-for="alarm in filteredAlarms"
+               v-for="alarm in sortedAlarms"
                :key="`${alarm.stationName}-${alarm.measurement}-${alarm.alarm.name}`"
-               :class="{
-                  [getRowClass(alarm.alarm.priority)]: true,
-               }"
+               class="table-row"
             >
                <TableCell v-for="header in tableHeaders" :key="header.key">
                   <template v-if="header.key === 'priority'">
@@ -79,10 +83,13 @@ import Loader from '../Loader.vue'
 import TableWithStickyHeader from '../../table/TableWithStickyHeader.vue'
 import TableCell from '../../table/TableCell.vue'
 import TableHeaderCell from '../../table/TableHeaderCell.vue'
+import SortHeader from '../../table/SortHeader.vue'
+import { useTableSort, type SortDir } from '../../table/useTableSort'
 
 const props = defineProps<{
    alarms: AlarmEvent[]
    loading: boolean
+   hasSelection?: boolean
 }>()
 
 const { t } = useI18n()
@@ -98,8 +105,70 @@ const tableHeaders = [
    { key: 'value', label: t('components.alarm-table.value') },
 ]
 
-const filteredAlarms = computed(() => {
-   return props.alarms
+const { sortKey, sortDir, setSort } = useTableSort(null, 'none')
+
+const onUpdateSort = (payload: { key: string | null; dir: SortDir }) => {
+   setSort(payload.key, payload.dir)
+}
+
+const priorityOrder: Record<string, number> = { high: 3, medium: 2, low: 1 }
+
+const compareValues = (a: unknown, b: unknown, key: string): number => {
+   // Custom handling per column
+   if (key === 'priority') {
+      const av = priorityOrder[(a as string) || 'low'] || 0
+      const bv = priorityOrder[(b as string) || 'low'] || 0
+      return av - bv
+   }
+   if (key === 'timestamp') {
+      const av =
+         a instanceof Date ? a.getTime() : new Date(a as string).getTime()
+      const bv =
+         b instanceof Date ? b.getTime() : new Date(b as string).getTime()
+      return av - bv
+   }
+   if (typeof a === 'number' && typeof b === 'number') return a - b
+   return String(a ?? '').localeCompare(String(b ?? ''), undefined, {
+      numeric: true,
+      sensitivity: 'base',
+   })
+}
+
+const sortedAlarms = computed(() => {
+   if (!sortKey.value || sortDir.value === 'none') return props.alarms
+
+   const key = sortKey.value
+   const dir = sortDir.value
+
+   const getFieldValue = (alarm: AlarmEvent): unknown => {
+      switch (key) {
+         case 'priority':
+            return alarm.alarm.priority
+         case 'timestamp':
+            return alarm.timestamp
+         case 'measurement':
+            return alarm.measurement
+         case 'stationName':
+            return alarm.stationName
+         case 'coordinates':
+            return alarm.coordinates?.join(', ') || ''
+         case 'alarmName':
+            return alarm.alarm.name
+         case 'description':
+            return alarm.alarm.description
+         case 'value':
+            return alarm.value as unknown as number | string
+         default:
+            return ''
+      }
+   }
+
+   return [...props.alarms].sort((a, b) => {
+      const av = getFieldValue(a)
+      const bv = getFieldValue(b)
+      const cmp = compareValues(av, bv, key)
+      return dir === 'asc' ? cmp : -cmp
+   })
 })
 
 const formatDate = (date: Date): string => {
@@ -108,17 +177,6 @@ const formatDate = (date: Date): string => {
 
 const formatCoordinates = (coordinates: [number, number]): string => {
    return `${coordinates[0].toFixed(6)}, ${coordinates[1].toFixed(6)}`
-}
-
-const getRowClass = (priority: string): string => {
-   switch (priority) {
-      case 'high':
-         return 'bg-red-50/80'
-      case 'medium':
-         return 'bg-orange-50/60'
-      default:
-         return ''
-   }
 }
 
 const getPriorityBadgeClass = (priority: string): string => {
@@ -142,6 +200,14 @@ const getPriorityBadgeClass = (priority: string): string => {
 
    & .empty-message {
       @apply px-4 py-4 text-center text-gray-500;
+   }
+
+   & .table-row {
+      @apply hover:bg-green/10;
+   }
+
+   & .table-row:hover {
+      @apply bg-green/10;
    }
 }
 </style>

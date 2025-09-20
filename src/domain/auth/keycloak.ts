@@ -27,3 +27,27 @@ keycloak
          })
       }, 6000)
    })
+
+const appBaseUrl = new URL(
+   import.meta.env.BASE_URL || '/',
+   window.location.origin
+).toString()
+
+const originalLogin = keycloak.login.bind(keycloak)
+const originalRegister = keycloak.register.bind(keycloak)
+const originalLogout = keycloak.logout.bind(keycloak)
+const originalCreateAccountUrl = keycloak.createAccountUrl.bind(keycloak)
+
+type LoginOptions = Parameters<typeof keycloak.login>[0]
+type RegisterOptions = Parameters<typeof keycloak.register>[0]
+type LogoutOptions = Parameters<typeof keycloak.logout>[0]
+type AccountOptions = Parameters<typeof keycloak.createAccountUrl>[0]
+
+keycloak.login = (options?: LoginOptions) =>
+   originalLogin({ redirectUri: appBaseUrl, ...(options || {}) })
+keycloak.register = (options?: RegisterOptions) =>
+   originalRegister({ redirectUri: appBaseUrl, ...(options || {}) })
+keycloak.logout = (options?: LogoutOptions) =>
+   originalLogout({ redirectUri: appBaseUrl, ...(options || {}) })
+keycloak.createAccountUrl = (options?: AccountOptions) =>
+   originalCreateAccountUrl({ redirectUri: appBaseUrl, ...(options || {}) })

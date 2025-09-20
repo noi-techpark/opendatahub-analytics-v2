@@ -9,7 +9,10 @@ SPDX-License-Identifier: AGPL-3.0-or-later
       <colgroup v-if="isColgroupColsSlotDefined">
          <slot name="colgroup-cols"></slot>
       </colgroup>
-      <TableHeader v-if="isHeaderColsSlotDefined" class="sticky top-0 z-10">
+      <TableHeader
+         v-if="isHeaderColsSlotDefined"
+         class="sticky top-0 z-10 bg-gray-50"
+      >
          <slot name="header-cols"></slot>
       </TableHeader>
       <TableBody v-if="isBodyRowsSlotDefined">

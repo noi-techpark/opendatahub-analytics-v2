@@ -32,6 +32,11 @@
       "profile": "Profile"
    },
    "components": {
+      "table": {
+         "sort": "Sort",
+         "ascending": "Ascending",
+         "descending": "Descending"
+      },
       "alarm-table": {
          "title": "Active Alarms",
          "timestamp": "Timestamp",
@@ -48,7 +53,8 @@
             "medium": "Medium",
             "low": "Low"
          },
-         "no-alarms": "No active alarms"
+         "no-alarms": "No active alarms",
+         "select-station-to-see-alarms": "Select at least one station to see alarms"
       },
       "sidebar": {
          "map": "Maps",
@@ -103,7 +109,7 @@
    "views": {
       "alarms": {
          "title": "Real-time Alarms",
-         "description": "Monitor active alarms across all stations and measurements",
+         "description": "Monitor active alarms across stations and measurements",
          "real-time-data": "Real-time data",
          "refresh": "Refresh"
       },

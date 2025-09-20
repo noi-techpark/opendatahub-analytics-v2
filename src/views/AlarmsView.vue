@@ -10,7 +10,11 @@ SPDX-License-Identifier: AGPL-3.0-or-later
          <P>{{ $t('views.alarms.description') }}</P>
       </div>
 
-      <AlarmTable :alarms="activeAlarms" :loading="loading" />
+      <AlarmTable
+         :alarms="activeAlarms"
+         :loading="loading"
+         :has-selection="layerStore.getSelectedLayers.length > 0"
+      />
    </div>
 </template>
 
@@ -55,9 +59,7 @@ async function fetchAndEvaluateAlarms() {
    } catch (error) {
       console.error('Error fetching and evaluating alarms:', error)
    } finally {
-      setTimeout(() => {
-         loading.value = false
-      }, 1000)
+      loading.value = false
    }
 }
 
