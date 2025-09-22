@@ -126,9 +126,11 @@ const back = computed(() => {
    const previousRoute =
       page.value === 'map'
          ? '/'
-         : routerState && routerState.back
-           ? routerState.back.toString()
-           : '/'
+         : page.value === 'alarms'
+           ? '/alarms'
+           : routerState && routerState.back
+             ? routerState.back.toString()
+             : '/'
 
    return {
       title,
@@ -145,8 +147,9 @@ const selectLayerFromHash = () => {
 
 watch(route, (newRoute, oldRoute) => {
    const isGoingToMap = newRoute.name === 'map'
+   const isGoingToAlarms = newRoute.name === 'alarms'
 
-   if (isGoingToMap) {
+   if (isGoingToMap || isGoingToAlarms) {
       restoreQueryParamsFromSessionStorage(newRoute.hash)
    }
 

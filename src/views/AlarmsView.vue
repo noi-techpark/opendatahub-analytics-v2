@@ -10,7 +10,7 @@ SPDX-License-Identifier: AGPL-3.0-or-later
          <P>{{ $t('views.alarms.description') }}</P>
       </div>
 
-      <AlarmTable
+      <AlarmsTable
          :alarms="activeAlarms"
          :loading="loading"
          :has-selection="layerStore.getSelectedLayers.length > 0"
@@ -22,7 +22,7 @@ SPDX-License-Identifier: AGPL-3.0-or-later
 import { ref, onMounted, watch } from 'vue'
 import H from '../components/ui/tags/H.vue'
 import P from '../components/ui/tags/P.vue'
-import AlarmTable from '../components/ui/alarm/AlarmTable.vue'
+import AlarmsTable from '../components/ui/alarm/AlarmsTable.vue'
 import { AlarmEvent } from '../types/alarm-config'
 import {
    StationMeasurement,

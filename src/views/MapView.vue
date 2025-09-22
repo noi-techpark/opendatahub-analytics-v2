@@ -30,6 +30,7 @@ SPDX-License-Identifier: AGPL-3.0-or-later
       :loading="loading > 0"
       :markers
       :selectedScode
+      :focusScode
       @markerSelected="handleSelectMarker"
    />
 </template>
@@ -58,15 +59,21 @@ import { useLayerDataFetcher } from '../composables/useLayerDataFetcher'
 import { useQueryInit } from '../composables/useQueryInit'
 import { useLayoutStore } from '../stores/layout'
 import { useAutoRefreshStore } from '../stores/auto-refresh'
+import { useRoute } from 'vue-router'
+import { getColorForPriority } from '../utils/marker-alert-utils'
 
 const layoutStore = useLayoutStore()
 const { sidebarMapContent } = storeToRefs(layoutStore)
+const route = useRoute()
 
 const { t } = useI18n()
 const layerStore = useMapLayerStore()
 const autoRefreshStore = useAutoRefreshStore()
 const loading = ref<number>(0)
 const selectedScode = ref<string>()
+const focusHandled = ref<boolean>(false)
+const focusScode = ref<string | undefined>(undefined)
+
 const layerDataStore = useLayerDataStore()
 const {
    alarmConfig,
@@ -140,16 +147,7 @@ const getMarkerColorFromAlarmConfig = (
 
    for (const alarm of sortedAlarms) {
       if (value >= alarm.thresholds.min && value <= alarm.thresholds.max) {
-         switch (alarm.priority) {
-            case 'high':
-               return '#ff4d4f'
-            case 'medium':
-               return '#ffd600'
-            case 'low':
-               return '#34c759'
-            default:
-               return '#ddd'
-         }
+         return getColorForPriority(alarm.priority)
       }
    }
 
@@ -251,6 +249,7 @@ watch(
    markers,
    (newVal) => {
       sharedLastMarkersSet.value = newVal
+      tryFocusFromQuery()
    },
    { deep: true }
 )
@@ -305,25 +304,42 @@ const refetchForDataTypeWithFilters = async (newVal: SelectedFilterOrigins) => {
    loading.value -= 1
 }
 
-const setLayersToMap = async (curr: Layer[], old: Layer[]) => {
-   loading.value += 1
-   const updated = await setLayersFromFetcher(curr, old, {
-      markers: markers.value,
-      selectedFilterOrigins: selectedFilterOrigins.value,
-      uniqueOrigins: uniqueOrigins.value,
-      t,
-      computeInfoColor: ({ stype, dataType, value, diffHours, period }) =>
-         getMarkerColorFromAlarmConfig(
-            stype,
-            dataType,
-            value,
-            diffHours,
-            period
-         ),
-   })
-   markers.value = updated
+const tryFocusFromQuery = () => {
+   if (focusHandled.value) return
+   const q = route.query as Record<string, string | undefined>
+   const focusScodeParam = q.focusScode
+   const focusCoords = q.focusCoords
+   const focusName = q.focusName
+   if (!markers.value || markers.value.length === 0) return
 
-   loading.value -= 1
+   let target: DataMarker | undefined
+   // Prefer scode when provided
+   if (focusScodeParam) {
+      target = markers.value.find((m) => m.scode === focusScodeParam)
+   }
+   if (focusCoords) {
+      const parts = focusCoords.split(',').map((v) => Number(v))
+      if (parts.length === 2 && parts.every((n) => Number.isFinite(n))) {
+         const [x, y] = parts as [number, number]
+         // Find exact or very close coordinate match
+         target = markers.value.find((m) => {
+            const [mx, my] = m.coordinates || [NaN, NaN]
+            return Math.abs(mx - x) < 1e-6 && Math.abs(my - y) < 1e-6
+         })
+      }
+   }
+   if (!target && focusName) {
+      const nameLc = focusName.toLowerCase()
+      target = markers.value.find(
+         (m) => (m.sname || '').toLowerCase() === nameLc
+      )
+   }
+
+   if (target) {
+      // Do not change selection; only pan/zoom via focusScode
+      focusScode.value = target.scode
+      focusHandled.value = true
+   }
 }
 
 onMounted(async () => {
@@ -346,18 +362,18 @@ onMounted(async () => {
    }
 
    const { bootstrapFromUrl } = useQueryInit()
-  await bootstrapFromUrl({
-     afterInit: async () => {
-        if (
-           selectedFilterOrigins.value.stype &&
-           selectedFilterOrigins.value.sorigin[
-              selectedFilterOrigins.value.stype
-           ]?.length > 0
-        ) {
-           await refetchForDataTypeWithFilters(selectedFilterOrigins.value)
-        }
-     },
-  })
+   await bootstrapFromUrl({
+      afterInit: async () => {
+         if (
+            selectedFilterOrigins.value.stype &&
+            selectedFilterOrigins.value.sorigin[
+               selectedFilterOrigins.value.stype
+            ]?.length > 0
+         ) {
+            await refetchForDataTypeWithFilters(selectedFilterOrigins.value)
+         }
+      },
+   })
 
    if (markers.value.length === 0 && layerStore.getSelectedLayers.length > 0) {
       loading.value += 1
@@ -386,8 +402,8 @@ onMounted(async () => {
    }
 
    if (isInitialLoad.value) {
-     isInitialLoad.value = false
-  }
+      isInitialLoad.value = false
+   }
 
    nextTick(() => {
       setTimeout(() => {

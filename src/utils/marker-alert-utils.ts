@@ -557,26 +557,17 @@ export const getProvinceColorForType = (stationType: string): string => {
    return PROVINCE_MARKER_GREY
 }
 
-export const getInfoMarkerColorDifferenceThreshold = (
-   stationType: string,
-   dataType: string,
-   periodTaken: string | number,
-   value: number,
-   hoursFromNow: number
-): string | undefined => {
-   if (hoursFromNow > 24) return '#ddd'
-
-   const threshold = infoIconHoursThresholds[stationType][dataType][periodTaken]
-   if (!threshold) return undefined
-
-   if (value >= threshold.green.min && hoursFromNow <= threshold.green.max)
-      return '#34c759'
-   if (value >= threshold.yellow.min && hoursFromNow <= threshold.yellow.max)
-      return '#ffd600'
-   if (value >= threshold.red.min && hoursFromNow <= threshold.red.max)
-      return '#ff4d4f'
-
-   return '#ddd'
+export const getColorForPriority = (priority: string): string => {
+   switch (priority) {
+      case 'high':
+         return '#ff4d4f'
+      case 'medium':
+         return '#ffd600'
+      case 'low':
+         return '#34c759'
+      default:
+         return '#ddd'
+   }
 }
 
 export const getIconForStationType = (stationType: string): string => {

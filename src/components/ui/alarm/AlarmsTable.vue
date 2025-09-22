@@ -9,7 +9,11 @@ SPDX-License-Identifier: AGPL-3.0-or-later
 
       <TableWithStickyHeader>
          <template #header-cols>
-            <TableHeaderCell v-for="header in tableHeaders" :key="header.key">
+            <TableHeaderCell
+               v-for="header in tableHeaders"
+               :key="header.key"
+               :class="header.class"
+            >
                <SortHeader
                   :title="header.label"
                   :column-key="header.key"
@@ -25,18 +29,28 @@ SPDX-License-Identifier: AGPL-3.0-or-later
                   {{
                      hasSelection
                         ? $t('components.alarm-table.no-alarms')
-                        : $t('components.alarm-table.select-station-to-see-alarms')
+                        : $t(
+                             'components.alarm-table.select-station-to-see-alarms'
+                          )
                   }}
                </TableCell>
             </tr>
             <tr
                v-for="alarm in sortedAlarms"
                :key="`${alarm.stationName}-${alarm.measurement}-${alarm.alarm.name}`"
-               class="table-row"
+               class="__clickable table-row"
+               @click="navigateToMap(alarm)"
             >
                <TableCell v-for="header in tableHeaders" :key="header.key">
                   <template v-if="header.key === 'priority'">
-                     <span :class="getPriorityBadgeClass(alarm.alarm.priority)">
+                     <span
+                        :class="getPriorityBadgeClass(alarm.alarm.priority)"
+                        :style="{
+                           backgroundColor: getColorForPriority(
+                              alarm.alarm.priority
+                           ),
+                        }"
+                     >
                         {{
                            $t(
                               `components.alarm-table.priority.${alarm.alarm.priority}`
@@ -76,6 +90,7 @@ SPDX-License-Identifier: AGPL-3.0-or-later
 import { computed } from 'vue'
 import { useI18n } from 'vue-i18n'
 import { format } from 'date-fns'
+import { useRouter, useRoute } from 'vue-router'
 
 import { AlarmEvent } from '../../../types/alarm-config'
 
@@ -85,6 +100,7 @@ import TableCell from '../../table/TableCell.vue'
 import TableHeaderCell from '../../table/TableHeaderCell.vue'
 import SortHeader from '../../table/SortHeader.vue'
 import { useTableSort, type SortDir } from '../../table/useTableSort'
+import { getColorForPriority } from '../../../utils/marker-alert-utils'
 
 const props = defineProps<{
    alarms: AlarmEvent[]
@@ -93,16 +109,50 @@ const props = defineProps<{
 }>()
 
 const { t } = useI18n()
+const router = useRouter()
+const route = useRoute()
 
 const tableHeaders = [
-   { key: 'priority', label: t('components.alarm-table.priority.title') },
-   { key: 'timestamp', label: t('components.alarm-table.timestamp') },
-   { key: 'measurement', label: t('components.alarm-table.measurement') },
-   { key: 'stationName', label: t('components.alarm-table.station') },
-   { key: 'coordinates', label: t('components.alarm-table.coordinates') },
-   { key: 'alarmName', label: t('components.alarm-table.alarm') },
-   { key: 'description', label: t('components.alarm-table.description') },
-   { key: 'value', label: t('components.alarm-table.value') },
+   {
+      key: 'priority',
+      label: t('components.alarm-table.priority.title'),
+      class: 'w-32',
+   },
+   {
+      key: 'timestamp',
+      label: t('components.alarm-table.timestamp'),
+      class: 'w-44',
+   },
+   {
+      key: 'measurement',
+      label: t('components.alarm-table.measurement'),
+      class: 'w-44',
+   },
+   {
+      key: 'stationName',
+      label: t('components.alarm-table.station'),
+      class: 'w-44',
+   },
+   {
+      key: 'coordinates',
+      label: t('components.alarm-table.coordinates'),
+      class: 'w-44',
+   },
+   {
+      key: 'alarmName',
+      label: t('components.alarm-table.alarm'),
+      class: 'w-44',
+   },
+   {
+      key: 'description',
+      label: t('components.alarm-table.description'),
+      class: 'w-44',
+   },
+   {
+      key: 'value',
+      label: t('components.alarm-table.value'),
+      class: 'w-32',
+   },
 ]
 
 const { sortKey, sortDir, setSort } = useTableSort(null, 'none')
@@ -183,14 +233,27 @@ const getPriorityBadgeClass = (priority: string): string => {
    const baseClasses = 'px-2 py-1 rounded text-xs font-semibold'
    switch (priority) {
       case 'high':
-         return `${baseClasses} bg-red-100 text-red-800`
+         return `${baseClasses} text-white `
       case 'medium':
-         return `${baseClasses} bg-orange-100 text-orange-600`
+         return `${baseClasses} text-white`
       case 'low':
-         return `${baseClasses} bg-grey text-black`
+         return `${baseClasses} text-white`
       default:
          return baseClasses
    }
+}
+
+const navigateToMap = (alarm: AlarmEvent) => {
+   const query = {
+      ...route.query,
+      focusName: alarm.stationName,
+      focusCoords: alarm.coordinates
+         ? `${alarm.coordinates[0]},${alarm.coordinates[1]}`
+         : undefined,
+      focusPriority: alarm.alarm.priority,
+   } as Record<string, string>
+
+   router.push({ name: 'map', query, hash: '#stations' })
 }
 </script>
 

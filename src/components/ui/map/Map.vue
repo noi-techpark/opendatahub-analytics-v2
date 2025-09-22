@@ -68,12 +68,13 @@ type Props = {
    loading?: boolean
    markers?: DataMarker[]
    selectedScode?: string
+   focusScode?: string
    preventZoomOnSelected?: boolean
    showSearch?: boolean | string
 }
 
 type Emit = {
-   markerSelected: [MapMarkerDetails | undefined]
+   markerSelected: [MapMarkerDetails | DataMarker | undefined]
 }
 
 const props = withDefaults(defineProps<Props>(), {})
@@ -417,6 +418,16 @@ watch(
    () => props.selectedScode,
    (curr) => {
       localSelected.value = curr
+   }
+)
+
+watch(
+   () => props.focusScode,
+   (curr) => {
+      const marker = props.markers?.find((m) => m.scode === curr)
+      if (marker) {
+         handleMarkerSelected(marker)
+      }
    }
 )
 

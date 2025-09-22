@@ -4,6 +4,7 @@
 
 import { parse } from 'yaml'
 import { AlarmConfig } from '../types/alarm-config'
+import alarmsConfigUrl from '../assets/config/alarms.yaml?url'
 
 export function parseAlarmConfig(yamlContent: string): AlarmConfig {
    try {
@@ -24,6 +25,13 @@ export async function loadAlarmConfig(configUrl: string): Promise<AlarmConfig> {
          )
       }
       const yamlContent = await response.text()
+      // Basic guard: if the response is HTML (e.g., index.html due to misrouted path),
+      // parsing as YAML will throw a confusing error. Detect and throw clearer message.
+      if (/^\s*<!|^\s*<!--/i.test(yamlContent)) {
+         throw new Error(
+            'Unexpected HTML received when fetching alarms.yaml (check asset URL or server history fallback)'
+         )
+      }
       return parseAlarmConfig(yamlContent)
    } catch (error) {
       console.error('Error loading alarm configuration:', error)
@@ -32,5 +40,5 @@ export async function loadAlarmConfig(configUrl: string): Promise<AlarmConfig> {
 }
 
 export function getDefaultAlarmConfigUrl(): string {
-   return '/src/assets/config/alarms.yaml'
+   return alarmsConfigUrl
 }
