@@ -10,11 +10,13 @@ SPDX-License-Identifier: AGPL-3.0-or-later
          <P>{{ $t('views.alarms.description') }}</P>
       </div>
 
-      <AlarmsTable
-         :alarms="activeAlarms"
-         :loading="loading"
-         :has-selection="layerStore.getSelectedLayers.length > 0"
-      />
+      <div class="alarms-table-wrapper">
+         <AlarmsTable
+            :alarms="activeAlarms"
+            :loading="loading"
+            :has-selection="layerStore.getSelectedLayers.length > 0"
+         />
+      </div>
    </div>
 </template>
 
@@ -111,8 +113,13 @@ onMounted(async () => {
 
 <style lang="postcss" scoped>
 .alarms-view {
+   @apply w-full;
    & .alarms-header {
       @apply mb-6;
+   }
+
+   & .alarms-table-wrapper {
+      @apply w-full overflow-x-auto;
    }
 }
 </style>
