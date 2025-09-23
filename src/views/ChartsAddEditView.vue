@@ -306,8 +306,9 @@ const save = () => {
    router.push({ name: 'charts' })
 }
 
-const handleSelectMarker = (data?: MapMarkerDetails) => {
-   const name = stations.value.find((s) => s.scode === data?.scode)?.sname
+const handleSelectMarker = (data?: MapMarkerDetails | DataMarker) => {
+   const scode = data?.scode
+   const name = stations.value.find((s) => s.scode === scode)?.sname
    if (name) {
       selection.value.station = name
    }

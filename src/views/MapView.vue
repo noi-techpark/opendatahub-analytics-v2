@@ -96,10 +96,23 @@ const totalOriginsFilters = computed(
    () => Object.values(selectedFilterOrigins.value.sorigin).flat().length
 )
 
-const handleSelectMarker = async (data?: MapMarkerDetails) => {
-   selectedScode.value = data?.scode
-   selectedMarker.value = data
-   layerStore.selectMarker(data)
+const handleSelectMarker = async (data?: MapMarkerDetails | DataMarker) => {
+   const normalized: MapMarkerDetails | undefined = data
+      ? {
+           scode: data.scode,
+           stype: (data as MapMarkerDetails | DataMarker).stype,
+           eventData:
+              typeof (data as any).eventData === 'string'
+                 ? (data as any).eventData
+                 : (data as any).eventData
+                   ? JSON.stringify((data as any).eventData)
+                   : undefined,
+        }
+      : undefined
+
+   selectedScode.value = normalized?.scode
+   selectedMarker.value = normalized
+   layerStore.selectMarker(normalized)
 }
 
 const setCurrentFilter = (filter: string) => {

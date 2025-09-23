@@ -35,10 +35,10 @@ import {
    CategoryScale,
    LinearScale,
    PointElement,
-   type ChartOptions, // Import ChartOptions type
-   type ChartType, // Import ChartType for module augmentation
+   type ChartOptions,
+   type ChartType,
 } from 'chart.js'
-import { computed, onMounted, ref } from 'vue'
+import { computed, ref } from 'vue'
 import P from '../tags/P.vue'
 import { useTimeSeriesStore } from '../../../stores/time-series'
 import { getReadableDateWithTime } from '../../../utils/date-utils'
@@ -73,9 +73,10 @@ ChartJS.register({
 ChartJS.register({
    id: 'verticalLine',
    afterDraw: (chart) => {
-      if (chart.tooltip?._active && chart.tooltip._active.length) {
+      const active = (chart as any).getActiveElements?.()
+      if (active && active.length) {
          const ctx = chart.ctx
-         const activePoint = chart.tooltip._active[0]
+         const activePoint = active[0]
          const x = activePoint.element.x
          const topY = chart.scales.y.top
          const bottomY = chart.scales.y.bottom

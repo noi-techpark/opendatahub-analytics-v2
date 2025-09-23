@@ -50,7 +50,9 @@ export const useMapLayerStore = defineStore('map-layers', () => {
             const layer = allLayers.value.find((l) => l.id === layerId)
             return layer?.layers[Number(layerIndex)]
          })
-         .filter((layer) => layer !== undefined)
+         .filter(
+            (layer): layer is NonNullable<typeof layer> => layer !== undefined
+         )
    )
 
    const getSelectedMarker = computed(() => selectedMarker.value)
