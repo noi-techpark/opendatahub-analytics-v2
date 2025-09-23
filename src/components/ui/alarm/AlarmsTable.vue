@@ -100,7 +100,7 @@ import TableCell from '../../table/TableCell.vue'
 import TableHeaderCell from '../../table/TableHeaderCell.vue'
 import SortHeader from '../../table/SortHeader.vue'
 import { useTableSort, type SortDir } from '../../table/useTableSort'
-import { getColorForPriority } from '../../../utils/marker-alert-utils'
+import { getColorForPriority } from '../../../utils/marker-utils'
 
 const props = defineProps<{
    alarms: AlarmEvent[]

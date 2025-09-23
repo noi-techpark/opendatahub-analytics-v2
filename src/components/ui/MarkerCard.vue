@@ -115,7 +115,7 @@ SPDX-License-Identifier: AGPL-3.0-or-later
 </template>
 
 <script lang="ts" setup>
-import { computed, ref, watch } from 'vue'
+import { computed, onMounted, ref, watch } from 'vue'
 import MenuButtons from './MenuButtons.vue'
 import CloseIcon from './svg/CloseIcon.vue'
 import H from './tags/H.vue'
@@ -137,6 +137,7 @@ import AirIcon from './svg/AirIcon.vue'
 
 type Props = {
    marker: MapMarkerDetails
+   openOnMeasurements?: boolean
 }
 
 const props = withDefaults(defineProps<Props>(), {})
@@ -274,8 +275,10 @@ const fetchMarkerData = async () => {
    const { data: dataResponse } = await useFetchWithAuth(dataUrl).json()
    const resData = (dataResponse.value?.data?.[0] || {}) as MarkerInfo
 
-   const { data: measurementsResponse } = await useFetchWithAuth(measurementsUrl).json()
-   const resMeasurements = (measurementsResponse.value?.data || []) as MarkerMeasurements[]
+   const { data: measurementsResponse } =
+      await useFetchWithAuth(measurementsUrl).json()
+   const resMeasurements = (measurementsResponse.value?.data ||
+      []) as MarkerMeasurements[]
 
    const mainMetadata: Partial<MarkerInfo> = { ...resData }
    delete mainMetadata.smetadata
@@ -297,6 +300,12 @@ watch(links, () => {
 })
 
 fetchMarkerData()
+
+onMounted(() => {
+   if (props.openOnMeasurements) {
+      selectedId.value = 'measurements'
+   }
+})
 </script>
 
 <style lang="postcss" scoped>

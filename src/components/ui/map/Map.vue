@@ -44,7 +44,7 @@ SPDX-License-Identifier: AGPL-3.0-or-later
 
 <script setup lang="ts">
 import 'maplibre-gl/dist/maplibre-gl.css'
-import { computed, h, nextTick, onMounted, ref, watch } from 'vue'
+import { computed, nextTick, onMounted, ref, watch } from 'vue'
 import { DataMarker, StationMapMarker } from '../../../types/api'
 import { initMap } from '../../../utils/map-utils'
 import {
@@ -53,9 +53,9 @@ import {
    getIconForStationType,
    getProvinceColorForType,
    needsWhiteIcon,
-} from '../../../utils/marker-alert-utils'
+} from '../../../utils/marker-utils'
 
-import { Map, Marker } from 'maplibre-gl'
+import { Map } from 'maplibre-gl'
 import { MapMarkerDetails } from '../../../types/map-layer'
 import InputSearch from '../input/InputSearch.vue'
 import IconText from '../IconText.vue'

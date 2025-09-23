@@ -22,6 +22,8 @@ SPDX-License-Identifier: AGPL-3.0-or-later
          v-if="selectedMarker && selectedScode"
          :key="selectedMarker.scode"
          :marker="selectedMarker"
+         :open-on-measurements="!!focusScode"
+         @vue:beforeUnmount="focusScode = undefined"
          @close="handleSelectMarker()"
       />
    </main>
@@ -60,7 +62,7 @@ import { useQueryInit } from '../composables/useQueryInit'
 import { useLayoutStore } from '../stores/layout'
 import { useAutoRefreshStore } from '../stores/auto-refresh'
 import { useRoute } from 'vue-router'
-import { getColorForPriority } from '../utils/marker-alert-utils'
+import { getColorForPriority } from '../utils/marker-utils'
 
 const layoutStore = useLayoutStore()
 const { sidebarMapContent } = storeToRefs(layoutStore)
@@ -108,11 +110,8 @@ const getMarkerColorFromAlarmConfig = (
    stationType: string,
    dataType: string,
    value: number,
-   hoursFromNow: number,
    period?: number
 ): string | undefined => {
-   if (hoursFromNow > 24) return '#ddd'
-
    const stationAlarms = alarmConfig.value[stationType]
    if (!stationAlarms) return undefined
 
@@ -193,14 +192,8 @@ watch(
             selectedFilterOrigins: selectedFilterOrigins.value,
             uniqueOrigins: uniqueOrigins.value,
             t,
-            computeInfoColor: ({ stype, dataType, value, diffHours, period }) =>
-               getMarkerColorFromAlarmConfig(
-                  stype,
-                  dataType,
-                  value,
-                  diffHours,
-                  period
-               ),
+            computeInfoColor: ({ stype, dataType, value, period }) =>
+               getMarkerColorFromAlarmConfig(stype, dataType, value, period),
          })
          markers.value = updated
          loading.value -= 1
@@ -229,14 +222,8 @@ watch(isTogglingAll, async (newVal) => {
          uniqueOrigins: uniqueOrigins.value,
          markers: markers.value,
          t,
-         computeInfoColor: ({ stype, dataType, value, diffHours, period }) =>
-            getMarkerColorFromAlarmConfig(
-               stype,
-               dataType,
-               value,
-               diffHours,
-               period
-            ),
+         computeInfoColor: ({ stype, dataType, value, period }) =>
+            getMarkerColorFromAlarmConfig(stype, dataType, value, period),
       })
       loading.value -= 1
    } else {
@@ -264,14 +251,8 @@ watch(
             uniqueOrigins: uniqueOrigins.value,
             markers: markers.value,
             t,
-            computeInfoColor: ({ stype, dataType, value, diffHours, period }) =>
-               getMarkerColorFromAlarmConfig(
-                  stype,
-                  dataType,
-                  value,
-                  diffHours,
-                  period
-               ),
+            computeInfoColor: ({ stype, dataType, value, period }) =>
+               getMarkerColorFromAlarmConfig(stype, dataType, value, period),
          })
          loading.value -= 1
       }
@@ -291,14 +272,8 @@ const refetchForDataTypeWithFilters = async (newVal: SelectedFilterOrigins) => {
       currentMarkers: markers.value,
       uniqueOrigins: uniqueOrigins.value,
       t,
-      computeInfoColor: ({ stype, dataType, value, diffHours, period }) =>
-         getMarkerColorFromAlarmConfig(
-            stype,
-            dataType,
-            value,
-            diffHours,
-            period
-         ),
+      computeInfoColor: ({ stype, dataType, value, period }) =>
+         getMarkerColorFromAlarmConfig(stype, dataType, value, period),
    })
    if (updated) markers.value = updated
    loading.value -= 1
@@ -382,14 +357,8 @@ onMounted(async () => {
          uniqueOrigins: uniqueOrigins.value,
          markers: markers.value,
          t,
-         computeInfoColor: ({ stype, dataType, value, diffHours, period }) =>
-            getMarkerColorFromAlarmConfig(
-               stype,
-               dataType,
-               value,
-               diffHours,
-               period
-            ),
+         computeInfoColor: ({ stype, dataType, value, period }) =>
+            getMarkerColorFromAlarmConfig(stype, dataType, value, period),
       })
       loading.value -= 1
    }
