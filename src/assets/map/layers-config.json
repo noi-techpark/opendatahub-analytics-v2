@@ -174,8 +174,8 @@
             "format": "road_events",
             "projection": "xxx",
             "custom-function": null,
-            "color": "#1e1e1e",
-            "iconColor": "#f5f5f5",
+            "color": "#666A66",
+            "iconColor": "#666A66",
             "main-data": []
          }
       ]

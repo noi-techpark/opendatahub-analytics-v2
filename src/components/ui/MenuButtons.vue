@@ -45,7 +45,7 @@ const props = withDefaults(defineProps<Props>(), {})
    @apply inline-flex select-none;
 
    & .menu-buttons {
-      @apply min-w-20 flex-grow border border-l-0 bg-grey px-5 py-1 text-center text-sm font-semibold transition-all;
+      @apply min-w-20 flex-grow truncate border border-l-0 bg-grey px-5 py-1 text-center text-sm font-semibold transition-all;
 
       &.first {
          @apply rounded-l border-l;

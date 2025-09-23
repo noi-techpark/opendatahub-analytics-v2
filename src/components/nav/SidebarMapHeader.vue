@@ -5,7 +5,7 @@ SPDX-License-Identifier: AGPL-3.0-or-later
 
 <template>
    <div
-      v-if="!route.hash"
+      v-if="!route.hash && !sidebarMapContent"
       v-for="(item, i) in layerStore.getAllLayers"
       class="__clickable"
    >
@@ -19,7 +19,7 @@ SPDX-License-Identifier: AGPL-3.0-or-later
       </RouterLink>
    </div>
 
-   <Divider v-if="!route.hash" :noTop="!!route.hash" />
+   <Divider v-if="!route.hash && !sidebarMapContent" :noTop="!!route.hash" />
 </template>
 
 <script lang="ts" setup>
@@ -31,9 +31,13 @@ import ArrowRightIcon from '../ui/svg/ArrowRightIcon.vue'
 import ExploreIcon from '../ui/svg/ExploreIcon.vue'
 import LocationSearchingIcon from '../ui/svg/LocationSearchingIcon.vue'
 import Divider from '../ui/Divider.vue'
+import { useLayoutStore } from '../../stores/layout'
+import { storeToRefs } from 'pinia'
 
 const route = useRoute()
 const layerStore = useMapLayerStore()
+const layoutStore = useLayoutStore()
+const { sidebarMapContent } = storeToRefs(layoutStore)
 </script>
 
 <style lang="postcss" scoped>

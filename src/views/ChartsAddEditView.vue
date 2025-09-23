@@ -18,22 +18,20 @@ SPDX-License-Identifier: AGPL-3.0-or-later
                   <H tag="h2">{{ t('views.charts-add-edit.provider') }}</H>
                   <P>{{ t('views.charts-add-edit.provider-description') }}</P>
                </div>
-               <ChardAddSelectWrapper>
-                  <SelectPopover
-                     v-model="selection.provider"
-                     :text="
-                        selection.provider ||
-                        t('views.charts-add-edit.provider-select')
-                     "
-                     :search-label-placeholder="
-                        t('views.charts-add-edit.search-for-dataprovider')
-                     "
-                     :loading="loadingState.provider"
-                     :options="providerOptions"
-                     show-search
-                     @search="useFetchProviderOptions"
-                  />
-               </ChardAddSelectWrapper>
+               <SelectPopover
+                  v-model="selection.provider"
+                  :text="
+                     selection.provider ||
+                     t('views.charts-add-edit.provider-select')
+                  "
+                  :search-label-placeholder="
+                     t('views.charts-add-edit.search-for-dataprovider')
+                  "
+                  :loading="loadingState.provider"
+                  :options="providerOptions"
+                  show-search
+                  @search="useFetchProviderOptions"
+               />
             </div>
          </div>
 
@@ -177,9 +175,9 @@ import P from '../components/ui/tags/P.vue'
 import Switch from '../components/ui/Switch.vue'
 import { computed, nextTick, onMounted, ref, watch } from 'vue'
 import SelectPopover from '../components/ui/popover/SelectPopover.vue'
-import { useFetch, useSessionStorage } from '@vueuse/core'
+import { useSessionStorage } from '@vueuse/core'
+import { useFetchWithAuth } from '../utils/api'
 import { SelectOption } from '../types/select'
-import ChardAddSelectWrapper from '../components/ui/chart/ChardAddSelectWrapper.vue'
 import { TimeSeries } from '../types/time-series'
 import { useTimeSeriesStore } from '../stores/time-series'
 import IconText from '../components/ui/IconText.vue'
@@ -189,6 +187,7 @@ import { MapMarkerDetails } from '../types/map-layer'
 import { DataMarker, DataPoint } from '../types/api'
 import { storeToRefs } from 'pinia'
 import { useI18n } from 'vue-i18n'
+import { useLayoutStore } from '../stores/layout'
 
 const {
    addTimeSeries,
@@ -205,6 +204,9 @@ const seriesToEditFromStorage = useSessionStorage(
 const { t } = useI18n()
 
 const { hasToLoad } = storeToRefs(useTimeSeriesStore())
+
+const layoutStore = useLayoutStore()
+const { isSidebarVisible } = storeToRefs(layoutStore)
 
 const router = useRouter()
 const route = useRoute()
@@ -304,8 +306,9 @@ const save = () => {
    router.push({ name: 'charts' })
 }
 
-const handleSelectMarker = (data?: MapMarkerDetails) => {
-   const name = stations.value.find((s) => s.scode === data?.scode)?.sname
+const handleSelectMarker = (data?: MapMarkerDetails | DataMarker) => {
+   const scode = data?.scode
+   const name = stations.value.find((s) => s.scode === scode)?.sname
    if (name) {
       selection.value.station = name
    }
@@ -328,7 +331,7 @@ const useFetchProviderOptions = async (searchVal?: string) => {
 
    const dataUrl = `${import.meta.env.VITE_ODH_MOBILITY_API_URI}/flat/%2A?limit=-1&offset=0&where=${searchString}&select=sorigin&shownull=false&distinct=true`
 
-   const { data } = await useFetch(dataUrl).json()
+   const { data } = await useFetchWithAuth(dataUrl).json()
    providers.value = data.value.data
 
    loadingState.value.provider = false
@@ -345,7 +348,7 @@ const useFetchDatasetOptions = async (searchVal?: string) => {
 
    const dataUrl = `${import.meta.env.VITE_ODH_MOBILITY_API_URI}/flat/%2A?limit=-1&offset=0&select=stype&where=and(${searchString ? searchString + ',' : ''}sorigin.eq.${selection.value.provider})&shownull=false&distinct=true`
 
-   const { data } = await useFetch(dataUrl).json()
+   const { data } = await useFetchWithAuth(dataUrl).json()
    datasets.value = data.value.data
 
    loadingState.value.dataset = false
@@ -377,7 +380,7 @@ const useFetchStationOptions = async (searchVal?: string, page = 1) => {
 
    const dataUrl = `${import.meta.env.VITE_ODH_MOBILITY_API_URI}/flat/${selection.value.dataset}?limit=${limit}&offset=${offset}&select=sname,scode,scoordinate,stype&where=and(${searchString ? searchString + ',' : ''}sorigin.eq.${selection.value.provider})&shownull=false&distinct=true`
 
-   const { data } = await useFetch(dataUrl).json()
+   const { data } = await useFetchWithAuth(dataUrl).json()
    const stationsData = data.value.data
    const stationsDataLength = stationsData?.length || 0
 
@@ -425,7 +428,7 @@ const useFetchDatatypeOptions = async (searchVal?: string, page = 1) => {
 
    const dataUrl = `${import.meta.env.VITE_ODH_MOBILITY_API_URI}/flat/${selection.value.dataset}/*?limit=${limit}&offset=${offset}&select=tname,tdescription&where=and(${searchString ? searchString + ',' : ''}sorigin.eq.${selection.value.provider})&shownull=false&distinct=true`
 
-   const { data } = await useFetch(dataUrl).json()
+   const { data } = await useFetchWithAuth(dataUrl).json()
 
    const datatypesData = data.value.data
    const datatypesDataLength = datatypesData?.length || 0
@@ -502,9 +505,9 @@ const onScrollEndDatatypes = () => {
    useFetchDatatypeOptions(lastSearchVal, lastPage)
 }
 
-onMounted(async () => {
-   await useFetchProviderOptions()
-
+onMounted(() => {
+   useFetchProviderOptions()
+   isSidebarVisible.value = false
    if (route.query.id) {
       setSelectionToEdit()
    }
@@ -512,66 +515,36 @@ onMounted(async () => {
 
 watch(
    () => selection.value.provider,
-   (newVal) => {
-      if (!isSettingSelectionToEdit.value) {
-         selection.value.dataset = ''
+   () => {
+      if (selection.value.provider) {
+         useFetchDatasetOptions()
       }
-
-      if (!newVal) {
-         return
-      }
-
-      useFetchDatasetOptions()
    }
 )
 
 watch(
    () => selection.value.dataset,
-   (newVal) => {
-      if (!isSettingSelectionToEdit.value) {
-         selection.value.station = ''
+   () => {
+      if (selection.value.dataset) {
+         useFetchStationOptions()
       }
-
-      if (!newVal) {
-         return
-      }
-
-      pagination.value.stations.lastPage = 1
-      pagination.value.stations.lastSearchVal = ''
-      pagination.value.stations.reachedMaxData = false
-
-      useFetchStationOptions()
    }
 )
 
 watch(
    () => selection.value.station,
-   (newVal) => {
-      if (!isSettingSelectionToEdit.value) {
-         selection.value.datatype = ''
+   () => {
+      if (selection.value.station) {
+         useFetchDatatypeOptions()
       }
-
-      if (!newVal) {
-         return
-      }
-
-      pagination.value.datatypes.lastPage = 1
-      pagination.value.datatypes.lastSearchVal = ''
-      pagination.value.datatypes.reachedMaxData = false
-
-      useFetchDatatypeOptions()
    }
 )
 
 watch(
    () => selection.value.datatype,
-   (newVal) => {
+   () => {
       if (!isSettingSelectionToEdit.value) {
          selection.value.period = ''
-      }
-
-      if (!newVal) {
-         return
       }
    }
 )
@@ -615,7 +588,32 @@ watch(
 }
 
 @media (max-width: theme('screens.md')) {
-   .charts-view {
+   .charts-add-view {
+      @apply px-2;
+
+      & .input-cards-ct {
+         @apply w-full pb-20;
+
+         & .input-card {
+            @apply p-3;
+
+            & .input-card-header {
+               @apply flex-col;
+
+               & .input-card-text {
+                  @apply mb-2;
+               }
+            }
+
+            & .map-ct {
+               @apply h-64;
+            }
+         }
+
+         & .buttons-ct {
+            @apply w-full justify-end;
+         }
+      }
    }
 }
 </style>

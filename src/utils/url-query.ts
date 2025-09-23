@@ -4,6 +4,8 @@
 
 const DEFAULT_SESSION_STORAGE_KEY = 'odh_map_query_params'
 
+const getHashFromString = (value: string): string => value.replace(/^#/, '')
+
 export const updateUrlQueryParams = (
    params: Record<string, string | null>
 ): void => {
@@ -20,7 +22,12 @@ export const updateUrlQueryParams = (
 
    saveQueryParamsToSessionStorage(currentSearch)
 
-   const newUrl = `${currentPath}${currentSearch.toString() ? '?' + currentSearch.toString() : ''}`
+   const hashPart = getHashFromString(window.location.hash)
+
+   const queryString = currentSearch.toString()
+      ? `?${currentSearch.toString()}`
+      : ''
+   const newUrl = `${currentPath}${queryString}${hashPart ? '#' + hashPart : ''}`
    window.history.replaceState({}, '', newUrl)
 }
 
@@ -68,7 +75,9 @@ export const restoreQueryParamsFromSessionStorage = (
 
    if (storedParams && storedParams !== currentSearchString) {
       const currentPath = window.location.pathname
-      const newUrl = `${currentPath}${hash ? hash : ''}${storedParams ? '?' + storedParams : ''}`
+      const hashPart = getHashFromString(hash)
+
+      const newUrl = `${currentPath}${storedParams ? '?' + storedParams : ''}${hashPart ? '#' + hashPart : ''}`
 
       window.history.replaceState({}, '', newUrl)
       return true

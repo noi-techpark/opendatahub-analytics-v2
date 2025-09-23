@@ -1,6 +1,6 @@
 <template>
    <div class="chart-ct">
-      <Loader :active="loading" />
+      <Loader :active="!!loading" />
 
       <div class="chart-title">
          <P bold>{{ title }}</P>
@@ -35,10 +35,12 @@ import {
    CategoryScale,
    LinearScale,
    PointElement,
-   type ChartOptions, // Import ChartOptions type
-   type ChartType, // Import ChartType for module augmentation
+   type ChartOptions,
+   type ChartType,
+   type ActiveElement,
+   type Scale,
 } from 'chart.js'
-import { computed, onMounted, ref } from 'vue'
+import { computed, ref } from 'vue'
 import P from '../tags/P.vue'
 import { useTimeSeriesStore } from '../../../stores/time-series'
 import { getReadableDateWithTime } from '../../../utils/date-utils'
@@ -72,13 +74,15 @@ ChartJS.register({
 
 ChartJS.register({
    id: 'verticalLine',
-   afterDraw: (chart) => {
-      if (chart.tooltip?._active && chart.tooltip._active.length) {
+   afterDraw: (chart: ChartJS) => {
+      const active = chart.getActiveElements() as ActiveElement[]
+      if (active && active.length) {
          const ctx = chart.ctx
-         const activePoint = chart.tooltip._active[0]
-         const x = activePoint.element.x
-         const topY = chart.scales.y.top
-         const bottomY = chart.scales.y.bottom
+         const activePointEl = active[0].element as PointElement
+         const x = activePointEl.x
+         const yScale = chart.scales.y as Scale
+         const topY = yScale.top
+         const bottomY = yScale.bottom
 
          ctx.save()
          ctx.beginPath()
@@ -272,7 +276,7 @@ const chartOptions = computed((): ChartOptions<'line'> => {
          },
          y: {
             type: 'linear',
-            display: (showBothScales || scaleToShow === 'y'),
+            display: showBothScales || scaleToShow === 'y',
             position: props.axisPosition === 'all-right' ? 'right' : 'left',
             grid: {
                color: '#D8DEE4',
@@ -318,7 +322,9 @@ const chartOptions = computed((): ChartOptions<'line'> => {
          },
          y1: {
             type: 'linear',
-            display: (showBothScales || scaleToShow === 'y1') && timeSeriesList.length > 1,
+            display:
+               (showBothScales || scaleToShow === 'y1') &&
+               timeSeriesList.length > 1,
             position:
                props.axisPosition !== 'default'
                   ? props.axisPosition === 'all-right'

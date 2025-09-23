@@ -30,6 +30,9 @@ export const useMapLayerStore = defineStore('map-layers', () => {
 
    // Getters
    const getAllLayers = computed(() => allLayers.value)
+   const getAllLayersFlat = computed(() =>
+      allLayers.value.flatMap((l) => l.layers)
+   )
 
    const getSelectedLayer = computed(() =>
       allLayers.value.find((layer) => layer.id === selectedLayerId.value)
@@ -47,7 +50,9 @@ export const useMapLayerStore = defineStore('map-layers', () => {
             const layer = allLayers.value.find((l) => l.id === layerId)
             return layer?.layers[Number(layerIndex)]
          })
-         .filter((layer) => layer !== undefined)
+         .filter(
+            (layer): layer is NonNullable<typeof layer> => layer !== undefined
+         )
    )
 
    const getSelectedMarker = computed(() => selectedMarker.value)
@@ -71,7 +76,12 @@ export const useMapLayerStore = defineStore('map-layers', () => {
          })
       })
       selectedLayers.value = initialState
-      selectedLayerId.value = null
+
+      // Default to the primary group 'stations' if available
+      const hasStations = allLayers.value.some((g) => g.id === 'stations')
+      selectedLayerId.value = hasStations
+         ? 'stations'
+         : allLayers.value[0]?.id || null
    }
 
    const selectLayer = (layerId: string) => {
@@ -143,6 +153,7 @@ export const useMapLayerStore = defineStore('map-layers', () => {
 
       // Getters
       getAllLayers,
+      getAllLayersFlat,
       getSelectedLayer,
       getSelectedCount,
       getSelectedLayers,

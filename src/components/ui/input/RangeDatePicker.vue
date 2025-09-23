@@ -105,7 +105,10 @@ const onCancel = () => {
 }
 
 onMounted(() => {
-   isSelectionRange.value = !isEqual(date.value[0], date.value[1])
+   const d = date.value
+   isSelectionRange.value = !!(
+      d && d.length > 1 && d[0] instanceof Date && d[1] instanceof Date && !isEqual(d[0], d[1])
+   )
 })
 </script>
 

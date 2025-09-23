@@ -1,0 +1,89 @@
+# SPDX-FileCopyrightText: NOI Techpark <digital@noi.bz.it>
+# SPDX-License-Identifier: AGPL-3.0-or-later
+
+MeteoStation:
+   precipitation:
+      alarms:
+         - name: 'Heavy Rain (10min)'
+           description: 'Heavy precipitation detected in last 10 minutes'
+           priority: 'high'
+           thresholds:
+              min: 1
+              max: 99999
+           periods: [600]
+   air-temperature:
+      alarms:
+         - name: 'Below Zero Air Temperature (10min)'
+           description: 'Daily average temperature below freezing'
+           priority: 'high'
+           thresholds:
+              min: -100
+              max: -2
+           periods: [600]
+         - name: 'Below Zero Air Temperature (15min)'
+           description: 'Daily average temperature below freezing'
+           priority: 'high'
+           thresholds:
+              min: -100
+              max: -2
+           periods: [900]
+         - name: 'High Temperature (10min)'
+           description: 'Unusually high temperature'
+           priority: 'medium'
+           thresholds:
+              min: 30
+              max: 99999
+           periods: [600]
+         - name: 'High Temperature (15min)'
+           description: 'Unusually high temperature'
+           priority: 'medium'
+           thresholds:
+              min: 30
+              max: 99999
+           periods: [900]
+          
+          
+          
+EnvironmentStation:
+   nitrogen-dioxide:
+      alarms:
+         - name: 'High NO2 Level'
+           description: 'Nitrogen dioxide levels are high'
+           priority: 'high'
+           thresholds:
+              min: 40
+              max: 99999
+           periods: [3600]
+
+   particulate-matter10:
+      alarms:
+         - name: 'High PM10 Level'
+           description: 'Particulate matter (PM10) levels are high'
+           priority: 'high'
+           thresholds:
+              min: 30
+              max: 99999
+           periods: [3600]
+
+RWISstation:
+   ground-surface-temperature:
+      alarms:
+         - name: 'Below Zero Road Temperature'
+           description: 'Road surface temperature near freezing point'
+           priority: 'medium'
+           thresholds:
+              min: -100
+              max: -3
+           periods: [1]
+
+
+TrafficSensor:
+   average-speed-light-vehicles:
+      alarms:
+         - name: 'Slow Traffic'
+           description: 'Traffic moving slower than normal'
+           priority: 'high'
+           thresholds:
+              min: 0
+              max: 25
+           periods: [600]
