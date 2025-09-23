@@ -22,6 +22,12 @@ import Notifications from './components/ui/Notifications.vue'
 
 <style lang="postcss" scoped>
 .main-ct {
-   @apply relative flex-grow overflow-y-auto px-6 py-2;
+   @apply relative h-full flex-grow overflow-y-auto px-6 py-2;
+}
+
+@media (max-width: theme('screens.md')) {
+   .main-ct {
+      @apply px-3 py-2;
+   }
 }
 </style>

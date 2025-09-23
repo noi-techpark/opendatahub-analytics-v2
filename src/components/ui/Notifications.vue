@@ -67,6 +67,16 @@ const { removeNotification } = store
    }
 }
 
+@media (max-width: theme('screens.md')) {
+   .notifications-wrapper {
+      @apply right-3 top-3 left-3;
+      
+      & .notification {
+         @apply min-w-0 max-w-full;
+      }
+   }
+}
+
 /* Animations */
 .notif-fade-enter-active,
 .notif-fade-leave-active {

@@ -4,20 +4,45 @@ SPDX-License-Identifier: AGPL-3.0-or-later
 -->
 
 <template>
-   <aside class="app-sidebar">
+   <aside
+      class="app-sidebar"
+      :class="{ 'sidebar-mobile-hidden': !isSidebarVisible }"
+   >
       <div class="sidebar-navigation">
          <SidebarNavigation :back="back" />
-         <SidebarMapHeader v-if="page === 'map'" />
+         <SidebarMapHeader v-if="page === 'map' || page === 'alarms'" />
       </div>
 
       <div class="sidebar-content">
-         <SidebarMapContent v-if="page === 'map' && !!route.hash" />
+         <SidebarMapContent
+            v-if="
+               (page === 'map' || page === 'alarms') &&
+               (!!route.hash || sidebarMapContent)
+            "
+         />
          <SidebarChartsContent v-if="page === 'charts' && !route.hash" />
-         <SidebarEventsContent v-if="page === 'events'" />
       </div>
 
       <div class="sidebar-footer" v-if="showFooter">
          <Divider />
+
+         <Switch
+            :model-value="isAutoRefreshEnabled"
+            @update:model-value="toggleAutoRefresh"
+            expand
+            expand-slot
+            class="auto-refresh-toggle"
+         >
+            <IconText
+               :text="$t('layouts.app-sidebar.auto-refresh')"
+               noPaddingX
+               reverse
+               class="grow"
+               :hover="false"
+            >
+               <RefreshIcon class="size-5" />
+            </IconText>
+         </Switch>
 
          <Switch
             v-if="mapLayerSelection"
@@ -36,7 +61,7 @@ SPDX-License-Identifier: AGPL-3.0-or-later
             </IconText>
          </Switch>
 
-         <RouterLink to="/about" v-else>
+         <RouterLink to="/about">
             <IconText :text="$t('common.about')">
                <InfoIcon />
             </IconText>
@@ -50,7 +75,6 @@ import { useRoute, useRouter } from 'vue-router'
 import { computed, watch } from 'vue'
 import SidebarMapContent from '../components/nav/SidebarMapContent.vue'
 import SidebarChartsContent from '../components/nav/SidebarChartsContent.vue'
-import SidebarEventsContent from '../components/nav/SidebarEventsContent.vue'
 import IconText from '../components/ui/IconText.vue'
 import InfoIcon from '../components/ui/svg/InfoIcon.vue'
 import SidebarMapHeader from '../components/nav/SidebarMapHeader.vue'
@@ -61,31 +85,52 @@ import { useI18n } from 'vue-i18n'
 import { ref } from 'vue'
 import Switch from '../components/ui/Switch.vue'
 import { restoreQueryParamsFromSessionStorage } from '../utils/url-query'
+import { useLayoutStore } from '../stores/layout'
+import { useAutoRefreshStore } from '../stores/auto-refresh'
+import { storeToRefs } from 'pinia'
+import RefreshIcon from '../components/ui/svg/RefreshIcon.vue'
 
 const route = useRoute()
 const router = useRouter()
 const layerStore = useMapLayerStore()
+const layoutStore = useLayoutStore()
+const autoRefreshStore = useAutoRefreshStore()
+
+const { sidebarMapContent, isSidebarVisible } = storeToRefs(layoutStore)
+const { isAutoRefreshEnabled } = storeToRefs(autoRefreshStore)
+const { toggleSidebar } = layoutStore
+const { toggleAutoRefresh } = autoRefreshStore
 const { t } = useI18n()
 const showAlarms = ref<boolean>(false)
 
 const showFooter = ref<boolean>(true)
 const page = ref<
-   'map' | 'charts' | 'charts-add' | 'charts-edit' | 'events' | 'about'
+   'map' | 'charts' | 'charts-add' | 'charts-edit' | 'alarms' | 'about'
 >()
 
-const mapLayerSelection = computed(() => route.name === 'map' && !!route.hash)
+const mapLayerSelection = computed(() => route.name === 'map')
 
 const back = computed(() => {
    const isVisible =
-      !['/', '/charts', '/events', '/events/weather'].includes(route.path) ||
-      !!route.hash
-   const title = route.hash
-      ? layerStore.getSelectedLayer?.title || t('common.back')
-      : t('common.back')
+      !['/', '/charts', '/alarms'].includes(route.path) ||
+      !!route.hash ||
+      (sidebarMapContent.value &&
+         (page.value === 'map' || page.value === 'alarms'))
+
+   const title =
+      route.hash || sidebarMapContent.value
+         ? layerStore.getSelectedLayer?.title || t('common.back')
+         : t('common.back')
 
    const routerState = router.options.history.state
    const previousRoute =
-      routerState && routerState.back ? routerState.back.toString() : '/'
+      page.value === 'map'
+         ? '/'
+         : page.value === 'alarms'
+           ? '/alarms'
+           : routerState && routerState.back
+             ? routerState.back.toString()
+             : '/'
 
    return {
       title,
@@ -94,18 +139,23 @@ const back = computed(() => {
    }
 })
 
+const selectLayerFromHash = () => {
+   if (route.hash) {
+      layerStore.selectLayer(route.hash.split('#')[1])
+   }
+}
+
 watch(route, (newRoute, oldRoute) => {
    const isGoingToMap = newRoute.name === 'map'
+   const isGoingToAlarms = newRoute.name === 'alarms'
 
-   if (isGoingToMap) {
+   if (isGoingToMap || isGoingToAlarms) {
       restoreQueryParamsFromSessionStorage(newRoute.hash)
    }
 
    switch (route.path) {
       case '/': {
-         if (route.hash) {
-            layerStore.selectLayer(route.hash.split('#')[1])
-         }
+         selectLayerFromHash()
          showFooter.value = true
          page.value = 'map'
          break
@@ -121,11 +171,13 @@ watch(route, (newRoute, oldRoute) => {
             route.path === '/charts/add' ? 'charts-add' : 'charts-edit'
          showFooter.value = false
          break
-      case '/events': {
+      case '/alarms': {
+         selectLayerFromHash()
          showFooter.value = true
-         page.value = 'events'
+         page.value = 'alarms'
          break
       }
+
       case '/about': {
          showFooter.value = false
          page.value = 'about'
@@ -137,10 +189,20 @@ watch(route, (newRoute, oldRoute) => {
 
 <style lang="postcss" scoped>
 .app-sidebar {
-   @apply relative z-20 flex h-full w-[300px] flex-shrink-0 flex-col overflow-y-auto border-r bg-white px-3;
+   @apply relative z-20 flex h-full w-[300px] flex-shrink-0 flex-col overflow-y-auto border-r bg-white px-3 transition-all duration-300;
 
    & .sidebar-footer {
       @apply mt-auto pb-2 pt-10;
+   }
+}
+
+@media (max-width: theme('screens.md')) {
+   .app-sidebar {
+      @apply fixed bottom-0 left-0 top-0 w-5/6 shadow-lg;
+
+      &.sidebar-mobile-hidden {
+         @apply -translate-x-full;
+      }
    }
 }
 </style>

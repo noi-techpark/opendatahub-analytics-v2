@@ -69,7 +69,7 @@ export const useTimeSeriesStore = defineStore('time-series', () => {
       'datatype',
       'period',
       'color',
-   ]
+   ] as const
 
    const timeSeriesList = ref<TimeSeries[]>([])
 
@@ -93,14 +93,19 @@ export const useTimeSeriesStore = defineStore('time-series', () => {
    }
 
    const getTimeSeriesForEmbedCode = () => {
+      type EmbeddableKey = (typeof embeddableKeys)[number]
+
       const data = [...timeSeriesList.value].map((item, index) => {
-         return Object.keys(item)
-            .map((key: string) =>
-               embeddableKeys.includes(key)
-                  ? `${key}_${index}=${encodeURIComponent(item[key])}`
-                  : ''
+         return (Object.keys(item) as (keyof typeof item)[])
+            .filter((key): key is EmbeddableKey =>
+               embeddableKeys.includes(key as EmbeddableKey)
             )
-            .filter((item) => item)
+            .map((key) => {
+               const value = item[key]
+               return `${key}_${index}=${encodeURIComponent(
+                  (value ?? '').toString()
+               )}`
+            })
             .join('&')
       })
 

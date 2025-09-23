@@ -19,6 +19,17 @@ export default {
             'grey-3': '#687182',
             'green-light': '#EDF1EA',
             yellow: '#FFC000',
+            gray: {
+               50: '#f4f8f9',
+               100: '#f1f3f4',
+               200: '#efefef',
+               250: '#e3e4e7',
+               300: '#dcdde1',
+               400: '#e0e1e5',
+               600: '#707c7e',
+               700: '#494d50',
+               900: '#3c4043',
+            },
          },
          fontFamily: {
             title: ['SourceSansPro', 'sans-serif'],

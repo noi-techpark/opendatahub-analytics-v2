@@ -6,18 +6,11 @@ SPDX-License-Identifier: AGPL-3.0-or-later
 <template>
    <div class="sidebar-events-content">
       <div class="checkbox-ct">
-         <RouterLink to="/events">
+         <RouterLink to="/alarms">
             <Checkbox
-               :checked="!page"
+               :checked="page === 'alarms'"
                rounded
-               :label="$t('components.sidebar-events-content.events')"
-            />
-         </RouterLink>
-         <RouterLink to="/events/weather">
-            <Checkbox
-               :checked="page === 'weather'"
-               rounded
-               :label="$t('components.sidebar-events-content.weather')"
+               :label="$t('components.sidebar-events-content.alarms')"
             />
          </RouterLink>
       </div>
@@ -35,16 +28,12 @@ type Props = {}
 const props = withDefaults(defineProps<Props>(), {})
 
 const route = useRoute()
-const page = ref<'events' | 'weather'>()
+const page = ref<'alarms'>()
 
 watch(route, () => {
    switch (route.path) {
-      case '/events': {
-         page.value = undefined
-         break
-      }
-      case '/events/weather': {
-         page.value = 'weather'
+      case '/alarms': {
+         page.value = 'alarms'
          break
       }
    }
@@ -59,9 +48,5 @@ watch(route, () => {
       @apply flex flex-col px-3;
    }
 }
-
-@media only screen and (max-width: theme('screens.md')) {
-   .sidebar-events-content {
-   }
-}
+ 
 </style>

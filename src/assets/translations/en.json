@@ -32,10 +32,35 @@
       "profile": "Profile"
    },
    "components": {
+      "table": {
+         "sort": "Sort",
+         "ascending": "Ascending",
+         "descending": "Descending"
+      },
+      "alarm-table": {
+         "title": "Active Alarms",
+         "timestamp": "Timestamp",
+         "measurement": "Measurement",
+         "station": "Station",
+         "coordinates": "Coordinates",
+         "alarm": "Alarm",
+         "description": "Description",
+         "value": "Value",
+         "priority": {
+            "title": "Priority",
+            "all": "All",
+            "high": "High",
+            "medium": "Medium",
+            "low": "Low"
+         },
+         "no-alarms": "No active alarms",
+         "select-station-to-see-alarms": "Select at least one station to see alarms"
+      },
       "sidebar": {
          "map": "Maps",
          "charts": "Charts",
-         "events": "Events"
+         "events": "Events",
+         "alarms": "Alarms"
       },
       "sidebar-map-content": {
          "deselect": "Deselect all",
@@ -43,6 +68,7 @@
       },
       "sidebar-events-content": {
          "events": "Events",
+         "alarms": "Alarms",
          "weather": "Weather"
       },
       "marker-card": {
@@ -81,6 +107,12 @@
       }
    },
    "views": {
+      "alarms": {
+         "title": "Real-time Alarms",
+         "description": "Monitor active alarms across stations and measurements",
+         "real-time-data": "Real-time data",
+         "refresh": "Refresh"
+      },
       "charts": {
          "title": "Headline for Charts",
          "timeseries-data": "Timeseries data",
@@ -159,7 +191,9 @@
          "logo": "opendatahub"
       },
       "app-sidebar": {
-         "alarms": "Highlight alarms on dataset"
+         "alarms": "Highlight alarms on dataset",
+         "auto-refresh": "Auto-refresh data every minute",
+         "view-alarms": "View Alarms"
       }
    },
    "pages": {}

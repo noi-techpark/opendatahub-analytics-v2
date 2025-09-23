@@ -5,26 +5,29 @@ SPDX-License-Identifier: AGPL-3.0-or-later
 
 <template>
    <div class="sidebar-map-content">
-      <ul v-if="layerStore.getSelectedLayer" class="layer-list">
+      <ul v-if="layerStore.getAllLayersFlat.length > 0" class="layer-list">
          <Checkbox
             class="layer-item"
             :checked="
                layerStore.areAllLayersInGroupSelected(
-                  layerStore.getSelectedLayer.id
+                  layerStore.getSelectedLayer?.id || ''
                )
             "
             @change="handleToggleAll"
             :label="$t('common.all')"
          />
          <li
-            v-for="(layer, j) in layerStore.getSelectedLayer.layers"
+            v-for="(layer, j) in layerStore.getAllLayersFlat"
             :key="layer.id"
             class="layer-item"
          >
             <Checkbox
                class="flex-grow"
                :checked="
-                  layerStore.isLayerSelected(layerStore.getSelectedLayer.id, j)
+                  layerStore.isLayerSelected(
+                     layerStore.getSelectedLayer?.id || '',
+                     j
+                  )
                "
                @change="() => handleLayerToggle(j)"
                :label="layer.id"
@@ -32,7 +35,10 @@ SPDX-License-Identifier: AGPL-3.0-or-later
 
             <div
                v-if="
-                  layerStore.isLayerSelected(layerStore.getSelectedLayer.id, j)
+                  layerStore.isLayerSelected(
+                     layerStore.getSelectedLayer?.id || '',
+                     j
+                  )
                "
                class="layer-item-color"
                :style="{
@@ -72,7 +78,7 @@ const handleLayerToggle = (index: number) => {
          @apply flex items-center pl-3 pr-[6px];
 
          & .layer-item-color {
-            @apply size-3 rounded-full;
+            @apply size-3 shrink-0 rounded-full;
          }
       }
    }

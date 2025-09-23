@@ -43,4 +43,7 @@ img {
 }
 
 @media (max-width: theme('screens.md')) {
+   .maplibregl-ctrl-attrib.maplibregl-compact {
+      @apply !mr-14;
+   }
 }

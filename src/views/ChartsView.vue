@@ -170,9 +170,11 @@ import IconText from '../components/ui/IconText.vue'
 import ContentCopyIcon from '../components/ui/svg/ContentCopyIcon.vue'
 import Chart from '../components/ui/chart/Chart.vue'
 
-import { startOfDay, subDays, subMonths } from 'date-fns'
+import { startOfDay, subDays, subMonths, isToday } from 'date-fns'
 import { useTimeSeriesStore } from '../stores/time-series'
-import { useClipboard, useFetch } from '@vueuse/core'
+import { useAutoRefreshStore } from '../stores/auto-refresh'
+import { useClipboard } from '@vueuse/core'
+import { useFetchWithAuth } from '../utils/api'
 import SelectPopover from '../components/ui/popover/SelectPopover.vue'
 import IconCheck from '../components/ui/svg/IconCheck.vue'
 import { randomId } from '../components/utils/useRandomId'
@@ -196,6 +198,7 @@ const {
 } = useTimeSeriesStore()
 
 const { hasToLoad, timeSeriesList } = storeToRefs(useTimeSeriesStore())
+const autoRefreshStore = useAutoRefreshStore()
 
 const { copy, copied } = useClipboard()
 
@@ -216,6 +219,8 @@ const axisPositionOptions = computed(() => [
 
 const selectedTimeId = ref<TimeEnum>(TimeEnum.DAY)
 const rangeCustom = ref<TimeRange>([new Date(), new Date()])
+
+const now = ref(new Date())
 
 const selectedPlotHeight = ref<number>(0)
 
@@ -242,8 +247,7 @@ const plotHeights = computed(() => [
 ])
 
 const selectedTime = computed(() => {
-   const date = new Date()
-
+   const date = now.value
    switch (selectedTimeId.value) {
       case TimeEnum.WEEK:
          return {
@@ -282,7 +286,7 @@ const getTimeseriesData = async () => {
 
    for (const element of timeSeriesList.value) {
       const dataUrl = `${import.meta.env.VITE_ODH_MOBILITY_API_URI}/flat/${encodeURIComponent(element.dataset)}/${encodeURIComponent(element.datatype)}/${from}/${to}?limit=-1&offset=0&select=mvalue,mvalidtime,mperiod&where=sname.eq.${encodeURIComponent(element.station)},sorigin.eq.${encodeURIComponent(element.provider)},mperiod.eq.${element.period},sactive.eq.true&shownull=false&distinct=true`
-      const { data } = await useFetch(dataUrl).json()
+      const { data } = await useFetchWithAuth(dataUrl).json()
       const labels = []
       const values = []
 
@@ -435,7 +439,7 @@ const setSavedTimeseries = async () => {
 
       ;(data[+index] ??= getBaseTimeSeriesObj())[timeSeriesKey] = configToLoad[
          key
-      ] as string & number[]
+      ] as string & number[] & string[]
    }
 
    for (const item of data) {
@@ -479,7 +483,10 @@ const setRangeFromQueryParams = () => {
 
    if (!query.from || !query.to) return
 
-   rangeCustom.value = [new Date(query.from), new Date(query.to)]
+   rangeCustom.value = [
+      new Date(query.from.toString()),
+      new Date(query.to.toString()),
+   ]
    selectedTimeId.value = TimeEnum.CUSTOM
 }
 
@@ -493,6 +500,19 @@ watch(
       if (!newVal) return
 
       getTimeseriesData()
+   }
+)
+
+// Watch for auto-refresh changes and only refresh if selected end date is today
+watch(
+   () => autoRefreshStore.lastRefreshTime,
+   (newTime) => {
+      if (newTime && timeSeriesList.value.length > 0) {
+         if (isToday(selectedTime.value.to)) {
+            now.value = new Date()
+            getTimeseriesData()
+         }
+      }
    }
 )
 
@@ -561,6 +581,27 @@ onMounted(async () => {
 
 @media (max-width: theme('screens.md')) {
    .charts-view {
+      @apply px-2;
+
+      & .chart-content-ct {
+         @apply flex-col;
+
+         & .chart-content {
+            @apply w-full;
+
+            & .chart-control {
+               @apply flex-col;
+            }
+         }
+
+         & .chart-side {
+            @apply w-full;
+
+            & .card {
+               @apply w-full;
+            }
+         }
+      }
    }
 }
 </style>
