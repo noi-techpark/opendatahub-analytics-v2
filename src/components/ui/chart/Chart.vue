@@ -37,6 +37,8 @@ import {
    PointElement,
    type ChartOptions,
    type ChartType,
+   type ActiveElement,
+   type Scale,
 } from 'chart.js'
 import { computed, ref } from 'vue'
 import P from '../tags/P.vue'
@@ -72,14 +74,15 @@ ChartJS.register({
 
 ChartJS.register({
    id: 'verticalLine',
-   afterDraw: (chart) => {
-      const active = (chart as any).getActiveElements?.()
+   afterDraw: (chart: ChartJS) => {
+      const active = chart.getActiveElements() as ActiveElement[]
       if (active && active.length) {
          const ctx = chart.ctx
-         const activePoint = active[0]
-         const x = activePoint.element.x
-         const topY = chart.scales.y.top
-         const bottomY = chart.scales.y.bottom
+         const activePointEl = active[0].element as PointElement
+         const x = activePointEl.x
+         const yScale = chart.scales.y as Scale
+         const topY = yScale.top
+         const bottomY = yScale.bottom
 
          ctx.save()
          ctx.beginPath()
