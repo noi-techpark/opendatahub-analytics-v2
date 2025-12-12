@@ -54,6 +54,7 @@ const links = computed(() => [
    { id: 'map', title: t('components.sidebar.map'), route: '/' },
    { id: 'charts', title: t('components.sidebar.charts'), route: '/charts' },
    { id: 'alarms', title: t('components.sidebar.alarms'), route: '/alarms' },
+   { id: 'events', title: t('components.sidebar.events'), route: '/events' },
 ])
 
 watch(route, () => {
@@ -77,6 +78,9 @@ onMounted(() => {
          break
       case '/alarms':
          selectedId.value = 'alarms'
+         break
+      case '/events':
+         selectedId.value = 'events'
          break
       default:
          selectedId.value = 'map'

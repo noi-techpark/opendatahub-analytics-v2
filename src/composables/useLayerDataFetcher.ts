@@ -9,7 +9,12 @@ import {
 } from '../utils/alarm-config-loader'
 import type { AlarmConfig } from '../types/alarm-config'
 import { useFetchWithAuth } from '../utils/api'
-import type { DataMarker, DataPoint, EventPoint } from '../types/api'
+import type {
+   AnnouncementEvent,
+   DataMarker,
+   DataPoint,
+   EventPoint,
+} from '../types/api'
 import type { Layer, SelectedFilterOrigins } from '../types/map-layer'
 import { differenceInHours } from 'date-fns'
 import type { StationMeasurement } from '../utils/alarm-evaluator'
@@ -150,27 +155,51 @@ export function useLayerDataFetcher() {
               ]
             : [...opts.currentMarkers]
          const newMarkers: DataMarker[] = []
-         let datasetType = 'node'
-         const activeQuery = 'sactive.eq.true'
-         let query = 'select=scoordinate%2Cscode%2Cstype%2Csorigin&where='
+
+         let flatData: EventPoint[] | DataPoint[] | AnnouncementEvent[] = []
+
          if (isProvinceEvents) {
-            datasetType = 'event'
-            query = ''
-         }
+            const baseUrl = import.meta.env.VITE_ODH_CONTENT_API_URI
+            const pagesize = 200000
+            const queryParams =
+               `?pagesize=${pagesize}` +
+               '&tagfilter=announcement%3Atraffic-event' +
+               '&removenullvalues=false' +
+               '&getasidarray=false'
+            const url = `${baseUrl}/Announcement${queryParams}`
 
-         if (opts.filter?.filterString) {
-            query += `and(${activeQuery},${opts.filter.filterString})`
+            const { data } = await useFetchWithAuth(url).json()
+            const apiResponse = (data.value || {}) as {
+               Items?: AnnouncementEvent[]
+            }
+            const items = apiResponse.Items || []
+
+            const isActiveByTime = (item: AnnouncementEvent) => {
+               if (!item.StartTime) return false
+               const start = new Date(item.StartTime)
+               const end = item.EndTime ? new Date(item.EndTime) : null
+               return now >= start && (!end || now <= end)
+            }
+
+            flatData = items.filter(
+               (item) => item.Active === true && isActiveByTime(item)
+            )
          } else {
-            query += activeQuery
+            let datasetType = 'node'
+            const activeQuery = 'sactive.eq.true'
+            let query = 'select=scoordinate%2Cscode%2Cstype%2Csorigin&where='
+
+            if (opts.filter?.filterString) {
+               query += `and(${activeQuery},${opts.filter.filterString})`
+            } else {
+               query += activeQuery
+            }
+
+            const url = `${import.meta.env.VITE_ODH_MOBILITY_API_URI}/flat,${datasetType}/${layer.stationType}/?limit=-1&distinct=true&${query}`
+
+            const { data } = await useFetchWithAuth(url).json()
+            flatData = ((data.value?.data as DataPoint[]) || []) as DataPoint[]
          }
-
-         const url = `${import.meta.env.VITE_ODH_MOBILITY_API_URI}/flat,${datasetType}/${isProvinceEvents ? 'PROVINCE_BZ/' + new Date().toISOString() : layer.stationType}/?limit=-1&distinct=true&${query}`
-
-         const { data } = await useFetchWithAuth(url).json()
-
-         const flatData = isProvinceEvents
-            ? (data.value?.data as EventPoint[]) || []
-            : (data.value?.data as DataPoint[]) || []
 
          if (flatData && flatData.length > 0) {
             const fetchedEvents: Record<
@@ -200,15 +229,30 @@ export function useLayerDataFetcher() {
             const newPoints: DataMarker[] = []
             for (const d of flatData) {
                const typedDataPoint = d as DataPoint
-               const typedEventPoint = d as EventPoint
+               const typedAnnouncement = d as AnnouncementEvent
                const stype = isProvinceEvents
-                  ? `PROVINCE_BZ/${typedEventPoint.evmetadata?.subTycodeValue}`
+                  ? (() => {
+                       const tags = typedAnnouncement.TagIds || []
+                       // Example:
+                       // ["announcement:traffic-event", "traffic-event:current", "traffic-event:accident"]
+                       // -> take last entry as classification
+                       const lastTag =
+                          tags.length > 0 ? tags[tags.length - 1] : undefined
+                       const classification =
+                          lastTag && lastTag.startsWith('traffic-event:')
+                             ? lastTag
+                             : 'traffic-event:restriction'
+
+                       return `PROVINCE_BZ/${classification}`
+                    })()
                   : typedDataPoint.stype
                if (!opts.uniqueOrigins[stype]) {
                   opts.uniqueOrigins[stype] = new Set()
                }
                const origin = isProvinceEvents
-                  ? 'PROVINCE_BZ'
+                  ? typedAnnouncement.Source ||
+                    typedAnnouncement._Meta?.Source ||
+                    'PROVINCE_BZ'
                   : typedDataPoint.sorigin
                opts.uniqueOrigins[stype].add(origin)
 
@@ -263,7 +307,7 @@ export function useLayerDataFetcher() {
                }
 
                const scode = isProvinceEvents
-                  ? typedEventPoint.evuuid
+                  ? typedAnnouncement.Id
                   : typedDataPoint.scode
 
                let lastDiffHours: number | undefined = undefined
@@ -308,13 +352,19 @@ export function useLayerDataFetcher() {
                newPoints.push({
                   scode,
                   sname: isProvinceEvents
-                     ? typedEventPoint.evname
+                     ? typedAnnouncement.Shortname ||
+                       typedAnnouncement.Detail?.it?.Title ||
+                       typedAnnouncement.Detail?.de?.Title ||
+                       typedAnnouncement.Id
                      : typedDataPoint.sname,
                   color: (layer as any).color,
                   iconColor: (layer as any).iconColor,
                   stype,
                   coordinates: isProvinceEvents
-                     ? typedEventPoint.evlgeometry.coordinates
+                     ? [
+                          typedAnnouncement.Geo?.position?.Longitude || 0,
+                          typedAnnouncement.Geo?.position?.Latitude || 0,
+                       ]
                      : [
                           typedDataPoint.scoordinate?.x || 0,
                           typedDataPoint.scoordinate?.y || 0,
@@ -331,7 +381,7 @@ export function useLayerDataFetcher() {
                          })
                        : undefined,
                   eventData: isProvinceEvents
-                     ? (typedEventPoint as any)
+                     ? (typedAnnouncement as AnnouncementEvent)
                      : undefined,
                })
             }
@@ -471,6 +521,7 @@ export function useLayerDataFetcher() {
       ctx: {
          selectedFilterOrigins: SelectedFilterOrigins
          t: (key: string, params?: any) => string
+         skipProvinceEvents?: boolean
       }
    ): Promise<StationMeasurement[]> => {
       const stationInfo: Record<
@@ -496,6 +547,10 @@ export function useLayerDataFetcher() {
             stypeList: string[],
             filterString?: string
          ) => {
+            if (ctx.skipProvinceEvents && stypeList.includes('PROVINCE_BZ')) {
+               return
+            }
+
             const activeQuery = 'sactive.eq.true'
             let query =
                'select=scoordinate%2Cscode%2Cstype%2Csname%2Csorigin&where='

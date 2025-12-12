@@ -121,7 +121,12 @@ import CloseIcon from './svg/CloseIcon.vue'
 import H from './tags/H.vue'
 import { useI18n } from 'vue-i18n'
 import { MapMarkerDetails } from '../../types/map-layer'
-import { EventPoint, MarkerInfo, MarkerMeasurements } from '../../types/api'
+import {
+   AnnouncementEvent,
+   EventPoint,
+   MarkerInfo,
+   MarkerMeasurements,
+} from '../../types/api'
 import { asyncComputed, formatDate } from '@vueuse/core'
 import { useFetchWithAuth } from '../../utils/api'
 import { useMapLayerStore } from '../../stores/map-layers'
@@ -235,6 +240,41 @@ const onMoreDetails = (measurement: MarkerMeasurements) => {
    })
 }
 
+const buildAnnouncementMetadata = (
+   ev: AnnouncementEvent,
+   tFn: (key: string) => string
+): { name: string; metadata: Record<string, unknown> } => {
+   const formatEventDate = (value?: string | null): string => {
+      if (!value) return ''
+      return formatDate(new Date(value), 'YYYY-MM-DD HH:mm')
+   }
+
+   const getCategory = (event: AnnouncementEvent, index: number): string => {
+      if (!event.TagIds || event.TagIds.length <= index) return ''
+      const tag = event.TagIds.at(index)
+      return tag || ''
+   }
+
+   const openEndEvent = !ev.EndTime ? tFn('common.yes') : tFn('common.no')
+
+   const name =
+      ev.Shortname || ev.Detail?.it?.Title || ev.Detail?.de?.Title || ''
+
+   const metadata: Record<string, unknown> = {
+      startTime: formatEventDate(ev.StartTime),
+      endTime: formatEventDate(ev.EndTime),
+      openEndEvent,
+      provider: ev.Source || ev._Meta?.Source || '',
+      category: getCategory(ev, -2),
+      subcategory: getCategory(ev, -1),
+      descriptionDe: ev.Detail?.de?.BaseText || '',
+      descriptionIt: ev.Detail?.it?.BaseText || '',
+      shortname: ev.Shortname || '',
+   }
+
+   return { name, metadata }
+}
+
 const fetchMarkerData = async () => {
    isLoading.value = true
 
@@ -246,23 +286,26 @@ const fetchMarkerData = async () => {
          return {}
       }
 
-      const parsedData = JSON.parse(resData)
+      try {
+         const ev =
+            typeof resData === 'string'
+               ? (JSON.parse(resData) as AnnouncementEvent)
+               : (resData as AnnouncementEvent)
 
-      const { evmetadata } = parsedData
-      let name = evmetadata.messageGradDescIt || ''
-
-      if (evmetadata.messageGradDescDe) {
-         name += name
-            ? ' - ' + evmetadata.messageGradDescDe
-            : evmetadata.messageGradDescDe
-      }
-
-      data.value = {
-         name: name,
-         color: layerStore.getLayerByStationType(props.marker.stype)?.color,
-         metadata: evmetadata,
-         alarms: [],
-         measurements: [],
+         if (ev && ev.StartTime) {
+            const built = buildAnnouncementMetadata(ev, t)
+            data.value = {
+               name: built.name,
+               color: layerStore.getAllLayersFlat.find(
+                  (l) => l.id === 'Traffic Events'
+               )?.color,
+               metadata: built.metadata,
+               alarms: [],
+               measurements: [],
+            }
+         }
+      } catch (e) {
+         // ignore malformed data; leave metadata empty
       }
       isLoading.value = false
 

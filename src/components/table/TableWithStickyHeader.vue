@@ -5,7 +5,10 @@ SPDX-License-Identifier: AGPL-3.0-or-later
 -->
 
 <template>
-   <TableCustom :id="id" class="overflow-y-auto pb-12 md:pb-0">
+   <TableCustom
+      :id="id"
+      :class="['overflow-y-auto', noBottomPadding ? 'pb-0' : 'pb-12 md:pb-0']"
+   >
       <colgroup v-if="isColgroupColsSlotDefined">
          <slot name="colgroup-cols"></slot>
       </colgroup>
@@ -22,13 +25,17 @@ SPDX-License-Identifier: AGPL-3.0-or-later
 </template>
 
 <script setup lang="ts">
-import { useSlots } from 'vue'
+import { computed, useSlots } from 'vue'
 import TableBody from './TableBody.vue'
 import TableHeader from './TableHeader.vue'
 import TableCustom from './TableCustom.vue'
 import { randomId } from '../utils/useRandomId'
 
-withDefaults(defineProps<{ id?: string }>(), { id: randomId() })
+const props = defineProps<{ id?: string; noBottomPadding?: boolean }>()
+
+const generatedId = randomId()
+const id = computed(() => props.id ?? generatedId)
+const noBottomPadding = computed(() => props.noBottomPadding ?? false)
 
 const slots = useSlots()
 

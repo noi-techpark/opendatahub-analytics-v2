@@ -16,6 +16,7 @@ SPDX-License-Identifier: AGPL-3.0-or-later
          center,
          outline,
          grow,
+         small,
       }"
    >
       <IconText bold :text="value" :hover="false">
@@ -35,10 +36,12 @@ type Props = {
    center?: boolean
    outline?: boolean
    grow?: boolean
+   small?: boolean
 }
 
 const props = withDefaults(defineProps<Props>(), {
    primary: true,
+   small: false,
 })
 </script>
 
@@ -56,6 +59,11 @@ const props = withDefaults(defineProps<Props>(), {
 
    min-width: 50px;
    line-height: 42px;
+
+   &.small {
+      @apply h-6 leading-tight;
+      line-height: 1.5rem;
+   }
 
    & .svg-ct {
       @apply mr-2 inline-block h-full align-top;

@@ -5,6 +5,8 @@
       "about": "About",
       "back": "Back",
       "all": "All",
+      "yes": "Yes",
+      "no": "No",
       "updated-at": "last updated on {time}",
       "last-update": "last update: {time}",
       "auto": "Auto",
@@ -55,6 +57,18 @@
          },
          "no-alarms": "No active alarms",
          "select-station-to-see-alarms": "Select at least one station to see alarms"
+      },
+      "events-table": {
+         "start-time": "Start time",
+         "end-time": "End time",
+         "open-end-event": "Open-end event",
+         "data-provider": "Data provider",
+         "category": "Category",
+         "subcategory": "Subcategory",
+         "description-de": "Description (DE)",
+         "description-it": "Description (IT)",
+         "shortname": "Short name",
+         "no-events": "No active events"
       },
       "sidebar": {
          "map": "Maps",
@@ -174,7 +188,7 @@
          "map-tooltip": "To make your selection, you can simply click on the pins on the map or use the search!"
       },
       "events": {
-         "title": "Headline for Tables"
+         "title": "Events"
       },
       "events-weather": {
          "title": "Headline for Tables"
@@ -196,5 +210,12 @@
          "view-alarms": "View Alarms"
       }
    },
-   "pages": {}
+   "pages": {},
+   "datasets": {
+      "listView": {
+         "rowsPerPage": "Rows per page",
+         "go": "GO",
+         "of": "of {pageCount}"
+      }
+   }
 }

@@ -15,7 +15,10 @@ SPDX-License-Identifier: AGPL-3.0-or-later
 
       <PopoverTransition>
          <PopoverPanel
-            class="absolute left-auto right-0 z-20 mt-2 w-full rounded border bg-white md:w-[300px]"
+            :class="[
+               'absolute left-auto right-0 z-20 w-full rounded border bg-white md:w-[300px]',
+               placement === 'top' ? 'bottom-full mb-2' : 'top-full mt-2',
+            ]"
          >
             <header v-if="showSearch" class="border-b p-2">
                <label
@@ -115,9 +118,12 @@ type Props = {
    disabled?: boolean
    showSearch?: boolean
    multiple?: boolean
+   placement?: 'bottom' | 'top'
 }
 
-const props = defineProps<Props>()
+const props = withDefaults(defineProps<Props>(), {
+   placement: 'bottom',
+})
 
 const emit = defineEmits(['save', 'cancel', 'search', 'scrollEnd'])
 

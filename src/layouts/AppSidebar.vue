@@ -105,14 +105,20 @@ const showAlarms = ref<boolean>(false)
 
 const showFooter = ref<boolean>(true)
 const page = ref<
-   'map' | 'charts' | 'charts-add' | 'charts-edit' | 'alarms' | 'about'
+   | 'map'
+   | 'charts'
+   | 'charts-add'
+   | 'charts-edit'
+   | 'alarms'
+   | 'events'
+   | 'about'
 >()
 
 const mapLayerSelection = computed(() => route.name === 'map')
 
 const back = computed(() => {
    const isVisible =
-      !['/', '/charts', '/alarms'].includes(route.path) ||
+      !['/', '/charts', '/alarms', '/events'].includes(route.path) ||
       !!route.hash ||
       (sidebarMapContent.value &&
          (page.value === 'map' || page.value === 'alarms'))
@@ -128,9 +134,11 @@ const back = computed(() => {
          ? '/'
          : page.value === 'alarms'
            ? '/alarms'
-           : routerState && routerState.back
-             ? routerState.back.toString()
-             : '/'
+           : page.value === 'events'
+             ? '/events'
+             : routerState && routerState.back
+               ? routerState.back.toString()
+               : '/'
 
    return {
       title,
@@ -178,6 +186,12 @@ watch(route, (newRoute, oldRoute) => {
          break
       }
 
+      case '/events': {
+         showFooter.value = true
+         page.value = 'events'
+         break
+      }
+
       case '/about': {
          showFooter.value = false
          page.value = 'about'
@@ -189,7 +203,7 @@ watch(route, (newRoute, oldRoute) => {
 
 <style lang="postcss" scoped>
 .app-sidebar {
-   @apply relative z-20 flex h-full w-[300px] flex-shrink-0 flex-col overflow-y-auto border-r bg-white px-3 transition-all duration-300;
+   @apply relative z-20 flex h-full w-[400px] flex-shrink-0 flex-col overflow-y-auto border-r bg-white px-3 transition-all duration-300;
 
    & .sidebar-footer {
       @apply mt-auto pb-2 pt-10;
