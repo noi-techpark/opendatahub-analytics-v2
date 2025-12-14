@@ -14,7 +14,7 @@ SPDX-License-Identifier: AGPL-3.0-or-later
       </div>
 
       <RouterLink
-         v-if="back?.visible"
+         v-if="back?.visible && !hideBack"
          :to="{ path: back?.route, query: route.query }"
          class="back-link"
          @click="onBackClick"
@@ -25,7 +25,7 @@ SPDX-License-Identifier: AGPL-3.0-or-later
       </RouterLink>
    </div>
 
-   <Divider v-if="back?.visible" :noTop="!!back?.visible" />
+   <Divider v-if="back?.visible && !hideBack" :noTop="!!back?.visible" />
 </template>
 
 <script lang="ts" setup>
@@ -45,6 +45,7 @@ type Props = {
       title: string
       route: string
    }
+   hideBack?: boolean
 }
 const props = withDefaults(defineProps<Props>(), {})
 
@@ -114,5 +115,11 @@ onMounted(() => {
 
 .back-link {
    @apply inline-block w-full;
+}
+
+@media (max-width: theme('screens.md')) {
+   .sidebar-navigation {
+      @apply px-4;
+   }
 }
 </style>

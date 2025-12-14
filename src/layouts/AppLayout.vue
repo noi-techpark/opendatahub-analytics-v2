@@ -8,6 +8,9 @@ SPDX-License-Identifier: AGPL-3.0-or-later
       <div v-if="showAppHeader" ref="appHeader">
          <AppHeader :is-menu-open="isMenuOpen" @toggle-menu="toggleMenu" />
       </div>
+      <div v-if="showAppSidebar" class="mobile-navigation">
+         <SidebarNavigation :back="back" hide-back />
+      </div>
       <div
          class="content-ct"
          :class="{ 'sidebar-hidden': !isSidebarVisible && showAppSidebar }"
@@ -36,20 +39,24 @@ SPDX-License-Identifier: AGPL-3.0-or-later
 <script setup lang="ts">
 import AppSidebar from './AppSidebar.vue'
 import AppHeader from './AppHeader.vue'
+import SidebarNavigation from '../components/nav/SidebarNavigation.vue'
 import { computed, ref } from 'vue'
-import { useRoute } from 'vue-router'
+import { useRoute, useRouter } from 'vue-router'
 import { useI18n } from 'vue-i18n'
 import { useLayoutStore } from '../stores/layout'
 import { storeToRefs } from 'pinia'
 import ArrowDownIcon from '../components/ui/svg/ArrowDownIcon.vue'
+import { useMapLayerStore } from '../stores/map-layers'
 
 const route = useRoute()
+const router = useRouter()
 const { t } = useI18n()
 const isMenuOpen = ref(false)
 const appHeader = ref<HTMLElement>()
 const layoutStore = useLayoutStore()
-const { isSidebarVisible } = storeToRefs(layoutStore)
+const { isSidebarVisible, sidebarMapContent } = storeToRefs(layoutStore)
 const { toggleSidebar } = layoutStore
+const layerStore = useMapLayerStore()
 
 const headerHeight = computed(() => `${appHeader.value?.offsetHeight}px`)
 const isEmbedMode = computed(() => route.query.viewMode === 'embed')
@@ -72,11 +79,54 @@ const sidebarMessage = computed(() => {
 function toggleMenu() {
    isMenuOpen.value = !isMenuOpen.value
 }
+
+const page = computed(() => {
+   if (route.path === '/') return 'map'
+   if (route.path === '/charts') return 'charts'
+   if (route.path === '/alarms') return 'alarms'
+   if (route.path === '/events') return 'events'
+   return 'map'
+})
+
+const back = computed(() => {
+   const isVisible =
+      !['/', '/charts', '/alarms', '/events'].includes(route.path) ||
+      !!route.hash ||
+      (sidebarMapContent.value &&
+         (page.value === 'map' || page.value === 'alarms'))
+
+   const title =
+      route.hash || sidebarMapContent.value
+         ? layerStore.getSelectedLayer?.title || t('common.back')
+         : t('common.back')
+
+   const routerState = router.options.history.state
+   const previousRoute =
+      page.value === 'map'
+         ? '/'
+         : page.value === 'alarms'
+           ? '/alarms'
+           : page.value === 'events'
+             ? '/events'
+             : routerState && routerState.back
+               ? routerState.back.toString()
+               : '/'
+
+   return {
+      title,
+      visible: isVisible,
+      route: previousRoute,
+   }
+})
 </script>
 
 <style lang="postcss" scoped>
 .app-layout {
    @apply flex h-full flex-col overflow-y-auto;
+
+   & .mobile-navigation {
+      @apply hidden;
+   }
 
    & .content-ct {
       @apply flex h-screen;
@@ -94,8 +144,14 @@ function toggleMenu() {
 
 @media (max-width: theme('screens.md')) {
    .app-layout {
+      & .mobile-navigation {
+         @apply fixed left-0 right-0 z-10 block border-b bg-white shadow-sm;
+         top: v-bind('headerHeight');
+      }
+
       & .content-ct {
          @apply relative;
+         padding-top: 49px;
 
          &.sidebar-hidden {
             & .main-content {

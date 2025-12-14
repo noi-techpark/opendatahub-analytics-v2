@@ -8,8 +8,24 @@ SPDX-License-Identifier: AGPL-3.0-or-later
       class="app-sidebar"
       :class="{ 'sidebar-mobile-hidden': !isSidebarVisible }"
    >
+      <div class="sidebar-navigation-mobile">
+         <RouterLink
+            v-if="back?.visible"
+            :to="{ path: back?.route, query: route.query }"
+            class="back-link"
+            @click="onBackClick"
+         >
+            <IconText :text="back?.title" class="w-full">
+               <ArrowLeftIcon />
+            </IconText>
+         </RouterLink>
+         <Divider v-if="back?.visible" :noTop="!!back?.visible" />
+      </div>
+
       <div class="sidebar-navigation">
-         <SidebarNavigation :back="back" />
+         <div class="sidebar-navigation-desktop">
+            <SidebarNavigation :back="back" />
+         </div>
          <SidebarMapHeader v-if="page === 'map' || page === 'alarms'" />
       </div>
 
@@ -33,6 +49,9 @@ import SidebarChartsContent from '../components/nav/SidebarChartsContent.vue'
 import SidebarMapHeader from '../components/nav/SidebarMapHeader.vue'
 import { useMapLayerStore } from '../stores/map-layers'
 import SidebarNavigation from '../components/nav/SidebarNavigation.vue'
+import IconText from '../components/ui/IconText.vue'
+import ArrowLeftIcon from '../components/ui/svg/ArrowLeftIcon.vue'
+import Divider from '../components/ui/Divider.vue'
 import { useI18n } from 'vue-i18n'
 import { ref } from 'vue'
 import { restoreQueryParamsFromSessionStorage } from '../utils/url-query'
@@ -98,6 +117,10 @@ const selectLayerFromHash = () => {
    }
 }
 
+const onBackClick = () => {
+   sidebarMapContent.value = false
+}
+
 watch(route, (newRoute, oldRoute) => {
    const isGoingToMap = newRoute.name === 'map'
    const isGoingToAlarms = newRoute.name === 'alarms'
@@ -149,6 +172,10 @@ watch(route, (newRoute, oldRoute) => {
 <style lang="postcss" scoped>
 .app-sidebar {
    @apply relative z-20 flex h-full w-[400px] flex-shrink-0 flex-col overflow-y-auto border-r bg-white px-3 transition-all duration-300;
+
+   & .sidebar-navigation-mobile {
+      @apply hidden;
+   }
 }
 
 @media (max-width: theme('screens.md')) {
@@ -157,6 +184,14 @@ watch(route, (newRoute, oldRoute) => {
 
       &.sidebar-mobile-hidden {
          @apply translate-y-full;
+      }
+
+      & .sidebar-navigation-mobile {
+         @apply block;
+      }
+
+      & .sidebar-navigation-desktop {
+         @apply hidden;
       }
    }
 }
