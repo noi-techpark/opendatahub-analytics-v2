@@ -27,24 +27,6 @@ SPDX-License-Identifier: AGPL-3.0-or-later
          <Divider />
 
          <Switch
-            :model-value="isAutoRefreshEnabled"
-            @update:model-value="toggleAutoRefresh"
-            expand
-            expand-slot
-            class="auto-refresh-toggle"
-         >
-            <IconText
-               :text="$t('layouts.app-sidebar.auto-refresh')"
-               noPaddingX
-               reverse
-               class="grow"
-               :hover="false"
-            >
-               <RefreshIcon class="size-5" />
-            </IconText>
-         </Switch>
-
-         <Switch
             v-if="mapLayerSelection"
             v-model="showAlarms"
             expand
@@ -86,20 +68,15 @@ import { ref } from 'vue'
 import Switch from '../components/ui/Switch.vue'
 import { restoreQueryParamsFromSessionStorage } from '../utils/url-query'
 import { useLayoutStore } from '../stores/layout'
-import { useAutoRefreshStore } from '../stores/auto-refresh'
 import { storeToRefs } from 'pinia'
-import RefreshIcon from '../components/ui/svg/RefreshIcon.vue'
 
 const route = useRoute()
 const router = useRouter()
 const layerStore = useMapLayerStore()
 const layoutStore = useLayoutStore()
-const autoRefreshStore = useAutoRefreshStore()
 
 const { sidebarMapContent, isSidebarVisible } = storeToRefs(layoutStore)
-const { isAutoRefreshEnabled } = storeToRefs(autoRefreshStore)
 const { toggleSidebar } = layoutStore
-const { toggleAutoRefresh } = autoRefreshStore
 const { t } = useI18n()
 const showAlarms = ref<boolean>(false)
 
