@@ -23,12 +23,12 @@ SPDX-License-Identifier: AGPL-3.0-or-later
          @click="toggleSidebar"
       ></div>
       <div
-         v-if="showAppSidebar"
+         v-if="showAppSidebar && route.path !== '/events'"
          class="sidebar-toggle-float"
          @click="toggleSidebar"
       >
-         <AnalysisIcon v-if="!isSidebarVisible" />
-         <CloseIcon v-else />
+         <ArrowDownIcon :class="{ 'rotate-180': !isSidebarVisible }" />
+         <div class="message">{{ sidebarMessage }}</div>
       </div>
    </div>
 </template>
@@ -38,13 +38,14 @@ import AppSidebar from './AppSidebar.vue'
 import AppHeader from './AppHeader.vue'
 import { computed, ref } from 'vue'
 import { useRoute } from 'vue-router'
+import { useI18n } from 'vue-i18n'
 import { useLayoutStore } from '../stores/layout'
 import { storeToRefs } from 'pinia'
-import AnalysisIcon from '../components/ui/svg/AnalysisIcon.vue'
-import CloseIcon from '../components/ui/svg/CloseIcon.vue'
+import ArrowDownIcon from '../components/ui/svg/ArrowDownIcon.vue'
 
 const route = useRoute()
-const isMenuOpen = ref(true)
+const { t } = useI18n()
+const isMenuOpen = ref(false)
 const appHeader = ref<HTMLElement>()
 const layoutStore = useLayoutStore()
 const { isSidebarVisible } = storeToRefs(layoutStore)
@@ -54,6 +55,19 @@ const headerHeight = computed(() => `${appHeader.value?.offsetHeight}px`)
 const isEmbedMode = computed(() => route.query.viewMode === 'embed')
 const showAppHeader = computed(() => !isEmbedMode.value)
 const showAppSidebar = computed(() => !isEmbedMode.value)
+
+const sidebarMessage = computed(() => {
+   switch (route.path) {
+      case '/charts':
+      case '/charts/add':
+      case '/charts/edit':
+         return t('components.sidebar-toggle.chart-settings')
+      case '/alarms':
+         return t('components.sidebar-toggle.select-dataset')
+      default:
+         return t('components.sidebar-toggle.select-dataset')
+   }
+})
 
 function toggleMenu() {
    isMenuOpen.value = !isMenuOpen.value
@@ -95,10 +109,14 @@ function toggleMenu() {
       }
 
       & .sidebar-toggle-float {
-         @apply fixed bottom-2 right-2 z-50 flex size-10 cursor-pointer items-center justify-center rounded-full border bg-white shadow-lg;
+         @apply fixed bottom-0 left-0 right-0 z-50 flex cursor-pointer items-center gap-2 border bg-white px-5 py-4 shadow-lg;
 
          & svg {
-            @apply size-5;
+            @apply size-5 transition-transform duration-300;
+         }
+
+         & .message {
+            @apply text-sm font-medium;
          }
       }
    }

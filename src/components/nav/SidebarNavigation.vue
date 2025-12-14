@@ -6,7 +6,11 @@ SPDX-License-Identifier: AGPL-3.0-or-later
 <template>
    <div>
       <div class="sidebar-navigation">
-         <MenuButtons :links :selected-id="selectedId" grow />
+         <MenuButtons
+            :links="linksWithActions"
+            :selected-id="selectedId"
+            grow
+         />
       </div>
 
       <RouterLink
@@ -57,6 +61,13 @@ const links = computed(() => [
    { id: 'events', title: t('components.sidebar.events'), route: '/events' },
 ])
 
+const linksWithActions = computed(() =>
+   links.value.map((link) => ({
+      ...link,
+      action: onLinkClick,
+   }))
+)
+
 watch(route, () => {
    const id = links.value.find((item) => item.route === route.path)?.id
 
@@ -69,6 +80,13 @@ watch(route, () => {
 
 const onBackClick = () => {
    sidebarMapContent.value = false
+}
+
+const onLinkClick = () => {
+   // Close sidebar on mobile when a navigation link is clicked
+   if (window.innerWidth < 768) {
+      layoutStore.isSidebarVisible = false
+   }
 }
 
 onMounted(() => {

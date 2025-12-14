@@ -276,6 +276,24 @@ watch(
    }
 )
 
+watch(
+   () => layerStore.hideInactiveSensors,
+   async () => {
+      if (layerStore.getSelectedLayers.length > 0) {
+         loading.value += 1
+         await refreshSelectedLayers(layerStore.getSelectedLayers, {
+            selectedFilterOrigins: selectedFilterOrigins.value,
+            uniqueOrigins: uniqueOrigins.value,
+            markers: markers.value,
+            t,
+            computeInfoColor: ({ stype, dataType, value, period }) =>
+               getMarkerColorFromAlarmConfig(stype, dataType, value, period),
+         })
+         loading.value -= 1
+      }
+   }
+)
+
 const {
    refetchForDataTypeWithFilters: refetchFromFetcher,
    setLayersToMap: setLayersFromFetcher,

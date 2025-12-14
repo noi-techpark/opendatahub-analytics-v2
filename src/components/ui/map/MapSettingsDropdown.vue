@@ -97,11 +97,6 @@ const handleSave = () => {
    showAlarms.value = localShowAlarms.value
    hideInactiveSensors.value = localHideInactiveSensors.value
    isOpen.value = false
-
-   // TODO: Implement hide inactive sensors functionality
-   if (hideInactiveSensors.value) {
-      console.log('TODO: Filter out inactive sensors from map markers')
-   }
 }
 </script>
 

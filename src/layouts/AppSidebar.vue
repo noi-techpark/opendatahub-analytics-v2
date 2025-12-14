@@ -22,16 +22,6 @@ SPDX-License-Identifier: AGPL-3.0-or-later
          />
          <SidebarChartsContent v-if="page === 'charts' && !route.hash" />
       </div>
-
-      <div class="sidebar-footer" v-if="showFooter">
-         <Divider />
-
-         <RouterLink to="/about">
-            <IconText :text="$t('common.about')">
-               <InfoIcon />
-            </IconText>
-         </RouterLink>
-      </div>
    </aside>
 </template>
 
@@ -40,10 +30,7 @@ import { useRoute, useRouter } from 'vue-router'
 import { computed, watch } from 'vue'
 import SidebarMapContent from '../components/nav/SidebarMapContent.vue'
 import SidebarChartsContent from '../components/nav/SidebarChartsContent.vue'
-import IconText from '../components/ui/IconText.vue'
-import InfoIcon from '../components/ui/svg/InfoIcon.vue'
 import SidebarMapHeader from '../components/nav/SidebarMapHeader.vue'
-import Divider from '../components/ui/Divider.vue'
 import { useMapLayerStore } from '../stores/map-layers'
 import SidebarNavigation from '../components/nav/SidebarNavigation.vue'
 import { useI18n } from 'vue-i18n'
@@ -162,18 +149,14 @@ watch(route, (newRoute, oldRoute) => {
 <style lang="postcss" scoped>
 .app-sidebar {
    @apply relative z-20 flex h-full w-[400px] flex-shrink-0 flex-col overflow-y-auto border-r bg-white px-3 transition-all duration-300;
-
-   & .sidebar-footer {
-      @apply mt-auto pb-2 pt-10;
-   }
 }
 
 @media (max-width: theme('screens.md')) {
    .app-sidebar {
-      @apply fixed bottom-0 left-0 top-0 w-5/6 shadow-lg;
+      @apply fixed bottom-0 left-0 right-0 h-[calc(100vh-200px)] w-full pb-14 pt-5 shadow-lg;
 
       &.sidebar-mobile-hidden {
-         @apply -translate-x-full;
+         @apply translate-y-full;
       }
    }
 }

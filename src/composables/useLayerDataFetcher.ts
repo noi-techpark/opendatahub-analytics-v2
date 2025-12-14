@@ -19,11 +19,14 @@ import type { Layer, SelectedFilterOrigins } from '../types/map-layer'
 import { differenceInHours } from 'date-fns'
 import type { StationMeasurement } from '../utils/alarm-evaluator'
 import { useNotificationsStore } from '../stores/notifications'
+import { useMapLayerStore } from '../stores/map-layers'
 
 export function useLayerDataFetcher() {
    const layerData = useLayerDataStore()
    const { alarmConfig } = storeToRefs(layerData)
    const { showNotification } = useNotificationsStore()
+   const layerStore = useMapLayerStore()
+   const { hideInactiveSensors } = storeToRefs(layerStore)
 
    const ensureAlarmConfigLoaded = async () => {
       if (!alarmConfig.value || Object.keys(alarmConfig.value).length === 0) {
@@ -186,12 +189,16 @@ export function useLayerDataFetcher() {
             )
          } else {
             let datasetType = 'node'
-            const activeQuery = 'sactive.eq.true'
+            const activeQuery = hideInactiveSensors.value
+               ? 'sactive.eq.true'
+               : null
             let query = 'select=scoordinate%2Cscode%2Cstype%2Csorigin&where='
 
             if (opts.filter?.filterString) {
-               query += `and(${activeQuery},${opts.filter.filterString})`
-            } else {
+               query += activeQuery
+                  ? `and(${activeQuery},${opts.filter.filterString})`
+                  : opts.filter.filterString
+            } else if (activeQuery) {
                query += activeQuery
             }
 
@@ -551,11 +558,18 @@ export function useLayerDataFetcher() {
                return
             }
 
-            const activeQuery = 'sactive.eq.true'
+            const activeQuery = hideInactiveSensors.value
+               ? 'sactive.eq.true'
+               : null
             let query =
                'select=scoordinate%2Cscode%2Cstype%2Csname%2Csorigin&where='
-            if (filterString) query += `and(${activeQuery},${filterString})`
-            else query += activeQuery
+            if (filterString) {
+               query += activeQuery
+                  ? `and(${activeQuery},${filterString})`
+                  : filterString
+            } else if (activeQuery) {
+               query += activeQuery
+            }
             const url = `${import.meta.env.VITE_ODH_MOBILITY_API_URI}/flat,node/${stypeList}/?limit=-1&distinct=true&${query}`
             const { data } = await useFetchWithAuth(url).json()
             const flat = (data.value?.data as DataPoint[]) || []

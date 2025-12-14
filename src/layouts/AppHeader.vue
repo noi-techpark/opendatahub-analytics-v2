@@ -11,6 +11,18 @@ SPDX-License-Identifier: AGPL-3.0-or-later
                <H tag="h2">{{ t('layouts.app-header.title') }}</H>
             </RouterLink>
 
+            <div class="header-auto-refresh-mobile">
+               <Switch
+                  :model-value="isAutoRefreshEnabled"
+                  @update:model-value="toggleAutoRefresh"
+                  class="auto-refresh-toggle"
+               >
+                  <div class="auto-refresh-content">
+                     <span class="auto-refresh-text">Autorefresh Data</span>
+                  </div>
+               </Switch>
+            </div>
+
             <div class="header-menu-icon">
                <CloseIcon v-if="props.isMenuOpen" @click="toggleMenu" />
                <MenuIcon v-else @click="toggleMenu" />
@@ -121,8 +133,24 @@ function toggleMenu() {
             @apply rounded border border-black px-2 uppercase;
          }
 
-         & .header-menu-icon {
+         & .header-auto-refresh-mobile {
             @apply ml-auto hidden;
+
+            & .auto-refresh-toggle {
+               @apply mr-3 flex items-center gap-2;
+
+               & .auto-refresh-content {
+                  @apply flex flex-row-reverse items-center gap-2;
+
+                  & .auto-refresh-text {
+                     @apply text-sm;
+                  }
+               }
+            }
+         }
+
+         & .header-menu-icon {
+            @apply hidden;
          }
       }
 
@@ -178,6 +206,10 @@ function toggleMenu() {
          & .header-links {
             @apply w-full;
 
+            & .header-auto-refresh-mobile {
+               @apply flex;
+            }
+
             & .header-menu-icon {
                @apply block;
             }
@@ -195,7 +227,7 @@ function toggleMenu() {
             }
 
             & .header-auto-refresh {
-               @apply w-full;
+               @apply hidden;
             }
 
             & .header-divider {

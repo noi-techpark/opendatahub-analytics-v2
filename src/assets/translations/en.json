@@ -77,6 +77,10 @@
          "events": "Events",
          "alarms": "Alarms"
       },
+      "sidebar-toggle": {
+         "select-dataset": "Tap to select dataset",
+         "chart-settings": "Tap to see chart settings"
+      },
       "sidebar-map-content": {
          "deselect": "Deselect all",
          "deselect-group": "Deselect group"
