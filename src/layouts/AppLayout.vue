@@ -5,7 +5,7 @@ SPDX-License-Identifier: AGPL-3.0-or-later
 
 <template>
    <div class="app-layout">
-      <div v-if="showAppHeader" ref="appHeader">
+      <div v-if="showAppHeader" ref="appHeader" class="z-20">
          <AppHeader :is-menu-open="isMenuOpen" @toggle-menu="toggleMenu" />
       </div>
       <div v-if="showAppSidebar" class="mobile-navigation">
