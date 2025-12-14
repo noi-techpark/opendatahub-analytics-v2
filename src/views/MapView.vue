@@ -6,12 +6,15 @@ SPDX-License-Identifier: AGPL-3.0-or-later
 <template>
    <main class="map-view">
       <div class="map-filters-ct">
-         <MapFilter
-            :title="t('common.dataprovider')"
-            :value="totalOriginsFilters.toString()"
-            :disabled="Object.keys(uniqueOrigins).length === 0"
-            @click="setCurrentFilter('origin')"
-         />
+         <div class="flex-grow">
+            <MapFilter
+               :title="t('common.dataprovider')"
+               :value="totalOriginsFilters.toString()"
+               :disabled="Object.keys(uniqueOrigins).length === 0"
+               @click="setCurrentFilter('origin')"
+            />
+         </div>
+         <MapSettingsDropdown />
       </div>
 
       <MapOriginFilterCard
@@ -46,6 +49,7 @@ import { DataMarker } from '../types/api'
 import MapOriginFilterCard from '../components/ui/map/MapOriginFilterCard.vue'
 import MarkerCard from '../components/ui/MarkerCard.vue'
 import MapFilter from '../components/ui/map/MapFilter.vue'
+import MapSettingsDropdown from '../components/ui/map/MapSettingsDropdown.vue'
 import {
    MapMarkerDetails,
    Layer,
@@ -397,7 +401,7 @@ onMounted(async () => {
 
 <style lang="postcss" scoped>
 .map-view {
-   @apply relative z-10 w-fit;
+   @apply relative z-10 w-full;
 
    & .map-filters-ct {
       @apply z-20 mb-2 flex gap-2 py-1;

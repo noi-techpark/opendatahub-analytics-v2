@@ -11,6 +11,7 @@
       "last-update": "last update: {time}",
       "auto": "Auto",
       "cancel": "Cancel",
+      "close": "Close",
       "search": "Search",
       "save": "Save",
       "no-data": "No data available",
@@ -207,7 +208,9 @@
       "app-sidebar": {
          "alarms": "Highlight alarms on dataset",
          "auto-refresh": "Auto-refresh data every minute",
-         "view-alarms": "View Alarms"
+         "view-alarms": "View Alarms",
+         "map-settings": "Map settings",
+         "hide-inactive-sensors": "Hide inactive sensors"
       }
    },
    "pages": {},

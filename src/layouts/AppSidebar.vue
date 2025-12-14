@@ -26,23 +26,6 @@ SPDX-License-Identifier: AGPL-3.0-or-later
       <div class="sidebar-footer" v-if="showFooter">
          <Divider />
 
-         <Switch
-            v-if="mapLayerSelection"
-            v-model="showAlarms"
-            expand
-            expand-slot
-         >
-            <IconText
-               :text="$t('layouts.app-sidebar.alarms')"
-               noPaddingX
-               reverse
-               class="grow"
-               :hover="false"
-            >
-               <InfoIcon class="size-5" />
-            </IconText>
-         </Switch>
-
          <RouterLink to="/about">
             <IconText :text="$t('common.about')">
                <InfoIcon />
@@ -65,7 +48,6 @@ import { useMapLayerStore } from '../stores/map-layers'
 import SidebarNavigation from '../components/nav/SidebarNavigation.vue'
 import { useI18n } from 'vue-i18n'
 import { ref } from 'vue'
-import Switch from '../components/ui/Switch.vue'
 import { restoreQueryParamsFromSessionStorage } from '../utils/url-query'
 import { useLayoutStore } from '../stores/layout'
 import { storeToRefs } from 'pinia'
@@ -78,7 +60,6 @@ const layoutStore = useLayoutStore()
 const { sidebarMapContent, isSidebarVisible } = storeToRefs(layoutStore)
 const { toggleSidebar } = layoutStore
 const { t } = useI18n()
-const showAlarms = ref<boolean>(false)
 
 const showFooter = ref<boolean>(true)
 const page = ref<
