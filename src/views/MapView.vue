@@ -281,10 +281,11 @@ watch(
    async () => {
       if (layerStore.getSelectedLayers.length > 0) {
          loading.value += 1
+         // Pass empty markers array to force a complete refresh
          await refreshSelectedLayers(layerStore.getSelectedLayers, {
             selectedFilterOrigins: selectedFilterOrigins.value,
             uniqueOrigins: uniqueOrigins.value,
-            markers: markers.value,
+            markers: [],
             t,
             computeInfoColor: ({ stype, dataType, value, period }) =>
                getMarkerColorFromAlarmConfig(stype, dataType, value, period),
