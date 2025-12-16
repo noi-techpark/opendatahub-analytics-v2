@@ -518,8 +518,14 @@ export function useLayerDataFetcher() {
       }
    ): Promise<DataMarker[]> => {
       const fetched = await toggleAllLayers(layers, ctx)
-      layerData.setMarkers(fetched)
-      return fetched
+      // Merge fetched markers with existing ones, removing duplicates by scode
+      const existingCodes = new Set(fetched.map((m) => m.scode))
+      const merged = [
+         ...fetched,
+         ...ctx.markers.filter((m) => !existingCodes.has(m.scode)),
+      ]
+      layerData.setMarkers(merged)
+      return merged
    }
 
    // Fetch all relevant measurements for selected layers to evaluate alarms

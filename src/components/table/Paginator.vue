@@ -23,7 +23,7 @@ SPDX-License-Identifier: AGPL-3.0-or-later
          <input
             :id="`${id}-page-input`"
             v-model="inputPageValue"
-            class="border-r-none border-grey-input focus:border-green-500 h-6 w-12 rounded rounded-r-none border-y border-l px-2"
+            class="border-r-none focus:border-green-500 h-6 w-12 rounded rounded-r-none border-y border-l border-grey-input px-2"
             :data-test="`${id}-page-input`"
             @keyup.enter="onChangePage(inputPageValue)"
          />
@@ -78,8 +78,8 @@ const emit = defineEmits<{
 const inputPageValue = ref(props.pagination.currentPage)
 
 watch(
-   () => props.pagination,
-   (pagination) => (inputPageValue.value = pagination.currentPage)
+   () => props.pagination.currentPage,
+   (currentPage) => (inputPageValue.value = currentPage)
 )
 
 const pageOfManyLabel = computed(() =>
