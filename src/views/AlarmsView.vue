@@ -55,6 +55,7 @@ async function fetchAndEvaluateAlarms() {
          await getMeasurementsForSelectedLayers(layerStore.getSelectedLayers, {
             selectedFilterOrigins: selectedFilterOrigins.value,
             t,
+            skipProvinceEvents: true,
          })
 
       activeAlarms.value = getAllActiveAlarms(measurements, alarmConfig.value)

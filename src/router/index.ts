@@ -9,6 +9,7 @@ const ChartsView = () => import('../views/ChartsView.vue')
 const AboutView = () => import('../views/AboutView.vue')
 const ChartsAddEditView = () => import('../views/ChartsAddEditView.vue')
 const AlarmsView = () => import('../views/AlarmsView.vue')
+const EventsView = () => import('../views/EventsView.vue')
 
 const router = createRouter({
    history: createWebHistory(import.meta.env.BASE_URL),
@@ -37,6 +38,11 @@ const router = createRouter({
          path: '/alarms',
          name: 'alarms',
          component: AlarmsView,
+      },
+      {
+         path: '/events',
+         name: 'events',
+         component: EventsView,
       },
       {
          path: '/about',

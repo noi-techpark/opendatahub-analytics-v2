@@ -6,11 +6,15 @@ SPDX-License-Identifier: AGPL-3.0-or-later
 <template>
    <div>
       <div class="sidebar-navigation">
-         <MenuButtons :links :selected-id="selectedId" grow />
+         <MenuButtons
+            :links="linksWithActions"
+            :selected-id="selectedId"
+            grow
+         />
       </div>
 
       <RouterLink
-         v-if="back?.visible"
+         v-if="back?.visible && !hideBack"
          :to="{ path: back?.route, query: route.query }"
          class="back-link"
          @click="onBackClick"
@@ -21,7 +25,7 @@ SPDX-License-Identifier: AGPL-3.0-or-later
       </RouterLink>
    </div>
 
-   <Divider v-if="back?.visible" :noTop="!!back?.visible" />
+   <Divider v-if="back?.visible && !hideBack" :noTop="!!back?.visible" />
 </template>
 
 <script lang="ts" setup>
@@ -41,6 +45,7 @@ type Props = {
       title: string
       route: string
    }
+   hideBack?: boolean
 }
 const props = withDefaults(defineProps<Props>(), {})
 
@@ -54,7 +59,15 @@ const links = computed(() => [
    { id: 'map', title: t('components.sidebar.map'), route: '/' },
    { id: 'charts', title: t('components.sidebar.charts'), route: '/charts' },
    { id: 'alarms', title: t('components.sidebar.alarms'), route: '/alarms' },
+   { id: 'events', title: t('components.sidebar.events'), route: '/events' },
 ])
+
+const linksWithActions = computed(() =>
+   links.value.map((link) => ({
+      ...link,
+      action: onLinkClick,
+   }))
+)
 
 watch(route, () => {
    const id = links.value.find((item) => item.route === route.path)?.id
@@ -70,6 +83,13 @@ const onBackClick = () => {
    sidebarMapContent.value = false
 }
 
+const onLinkClick = () => {
+   // Close sidebar on mobile when a navigation link is clicked
+   if (window.innerWidth < 768) {
+      layoutStore.isSidebarVisible = false
+   }
+}
+
 onMounted(() => {
    switch (route.path) {
       case '/charts':
@@ -77,6 +97,9 @@ onMounted(() => {
          break
       case '/alarms':
          selectedId.value = 'alarms'
+         break
+      case '/events':
+         selectedId.value = 'events'
          break
       default:
          selectedId.value = 'map'
@@ -92,5 +115,11 @@ onMounted(() => {
 
 .back-link {
    @apply inline-block w-full;
+}
+
+@media (max-width: theme('screens.md')) {
+   .sidebar-navigation {
+      @apply px-4;
+   }
 }
 </style>

@@ -5,10 +5,13 @@
       "about": "About",
       "back": "Back",
       "all": "All",
+      "yes": "Yes",
+      "no": "No",
       "updated-at": "last updated on {time}",
       "last-update": "last update: {time}",
       "auto": "Auto",
       "cancel": "Cancel",
+      "close": "Close",
       "search": "Search",
       "save": "Save",
       "no-data": "No data available",
@@ -56,11 +59,27 @@
          "no-alarms": "No active alarms",
          "select-station-to-see-alarms": "Select at least one station to see alarms"
       },
+      "events-table": {
+         "start-time": "Start time",
+         "end-time": "End time",
+         "open-end-event": "Open-end event",
+         "data-provider": "Data provider",
+         "category": "Category",
+         "subcategory": "Subcategory",
+         "description-de": "Description (DE)",
+         "description-it": "Description (IT)",
+         "shortname": "Short name",
+         "no-events": "No active events"
+      },
       "sidebar": {
          "map": "Maps",
          "charts": "Charts",
          "events": "Events",
          "alarms": "Alarms"
+      },
+      "sidebar-toggle": {
+         "select-dataset": "Tap to select dataset",
+         "chart-settings": "Tap to see chart settings"
       },
       "sidebar-map-content": {
          "deselect": "Deselect all",
@@ -174,7 +193,7 @@
          "map-tooltip": "To make your selection, you can simply click on the pins on the map or use the search!"
       },
       "events": {
-         "title": "Headline for Tables"
+         "title": "Events"
       },
       "events-weather": {
          "title": "Headline for Tables"
@@ -193,8 +212,17 @@
       "app-sidebar": {
          "alarms": "Highlight alarms on dataset",
          "auto-refresh": "Auto-refresh data every minute",
-         "view-alarms": "View Alarms"
+         "view-alarms": "View Alarms",
+         "map-settings": "Map settings",
+         "hide-inactive-sensors": "Hide inactive sensors"
       }
    },
-   "pages": {}
+   "pages": {},
+   "datasets": {
+      "listView": {
+         "rowsPerPage": "Rows per page",
+         "go": "GO",
+         "of": "of {pageCount}"
+      }
+   }
 }

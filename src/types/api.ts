@@ -20,7 +20,7 @@ export type DataMarker = {
    selected?: boolean
    coordinates: [number, number]
    infoColor?: string
-   eventData?: EventPoint
+   eventData?: EventPoint | AnnouncementEvent
 } & Pick<Layer, 'color' | 'iconColor'> &
    Pick<DataPoint, 'stype' | 'scode'>
 
@@ -90,6 +90,74 @@ export type EventPoint = {
    prlineage: string
    prname: string
    prversion: string
+}
+
+export type AnnouncementEvent = {
+   Id: string
+   Geo?: {
+      position?: {
+         Default?: boolean
+         Gpstype?: string | null
+         Altitude?: number | null
+         Geometry?: string | null
+         Latitude?: number
+         Longitude?: number
+         AltitudeUnitofMeasure?: string | null
+      }
+   }
+   _Meta?: {
+      Id?: string
+      Type?: string
+      Source?: string
+      Reduced?: boolean
+      LastUpdate?: string
+      UpdateInfo?: {
+         UpdatedBy?: string
+         UpdateSource?: string
+         UpdateHistory?: Array<{
+            UpdatedBy?: string
+            LastUpdate?: string
+            UpdateSource?: string
+         }>
+      }
+   }
+   Active: boolean
+   Detail?: {
+      de?: {
+         Title?: string
+         BaseText?: string
+         Language?: string | null
+      }
+      it?: {
+         Title?: string
+         BaseText?: string
+         Language?: string | null
+      }
+      [lang: string]:
+         | {
+              Title?: string
+              BaseText?: string
+              Language?: string | null
+           }
+         | undefined
+   }
+   Source?: string
+   TagIds?: string[]
+   EndTime?: string | null
+   Mapping?: Record<string, unknown>
+   Shortname?: string
+   StartTime: string
+   LastChange?: string
+   FirstImport?: string
+   HasLanguage?: string[]
+   LicenseInfo?: {
+      Author?: string | null
+      License?: string
+      ClosedData?: boolean
+      LicenseHolder?: string | null
+   }
+   RelatedContent?: unknown
+   AdditionalProperties?: Record<string, unknown>
 }
 
 export type MarkerInfo = {

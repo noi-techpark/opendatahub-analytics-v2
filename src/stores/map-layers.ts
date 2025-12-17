@@ -27,6 +27,8 @@ export const useMapLayerStore = defineStore('map-layers', () => {
    })
 
    const lastMarkersSet = ref<DataMarker[]>([])
+   const showAlarms = ref<boolean>(false)
+   const hideInactiveSensors = ref<boolean>(false)
 
    // Getters
    const getAllLayers = computed(() => allLayers.value)
@@ -150,6 +152,8 @@ export const useMapLayerStore = defineStore('map-layers', () => {
       uniqueOrigins,
       selectedFilterOrigins,
       lastMarkersSet,
+      showAlarms,
+      hideInactiveSensors,
 
       // Getters
       getAllLayers,

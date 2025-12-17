@@ -120,6 +120,44 @@ export const getIconForStationType = (stationType: string): string => {
          '/markers/icons/road-signs/warning-general_danger.svg',
       'PROVINCE_BZ/SCHNEEFALL':
          '/markers/icons/road-signs/warning-general_danger.svg',
+
+      // New PROVINCE_BZ traffic-event classifications
+      'PROVINCE_BZ/traffic-event:road-work':
+         '/markers/icons/road-signs/warning-work_in_progress.svg',
+      'PROVINCE_BZ/traffic-event:accident':
+         '/markers/icons/road-signs/restrictions-accident.svg',
+      'PROVINCE_BZ/traffic-event:event':
+         '/markers/icons/road-signs/warning-general_danger.svg',
+      'PROVINCE_BZ/traffic-event:animal-on-road':
+         '/markers/icons/road-signs/warning-general_danger.svg',
+      'PROVINCE_BZ/traffic-event:speed-camera':
+         '/markers/icons/road-signs/controls-speed_camera.svg',
+      'PROVINCE_BZ/traffic-event:Public-transport':
+         '/markers/icons/road-signs/warning-general_danger.svg',
+      'PROVINCE_BZ/traffic-event:restriction':
+         '/markers/icons/road-signs/restrictions-traffic_blocked.svg',
+      'PROVINCE_BZ/traffic-event:Prohibition':
+         '/markers/icons/road-signs/restrictions-traffic_blocked.svg',
+      'PROVINCE_BZ/traffic-event:caution':
+         '/markers/icons/road-signs/warning-general_danger.svg',
+      'PROVINCE_BZ/traffic-event:weather-related':
+         '/markers/icons/road-signs/warning-general_danger.svg',
+      'PROVINCE_BZ/traffic-event:road-condition':
+         '/markers/icons/road-signs/warning-general_danger.svg',
+      'PROVINCE_BZ/traffic-event:congestion':
+         '/markers/icons/road-signs/restrictions-slowdown.svg',
+      'PROVINCE_BZ/traffic-event:closure':
+         '/markers/icons/road-signs/restrictions-traffic_blocked.svg',
+      'PROVINCE_BZ/traffic-event:maintenance':
+         '/markers/icons/road-signs/warning-general_danger.svg',
+      'PROVINCE_BZ/traffic-event:hindrance':
+         '/markers/icons/road-signs/warning-general_danger.svg',
+      'PROVINCE_BZ/traffic-event:current':
+         '/markers/icons/road-signs/warning-general_danger.svg',
+      'PROVINCE_BZ/traffic-event:special':
+         '/markers/icons/road-signs/warning-general_danger.svg',
+      'PROVINCE_BZ/traffic-event:mountain-pass':
+         '/markers/icons/road-signs/warning-general_danger.svg',
    }
 
    return (

@@ -5,7 +5,7 @@ SPDX-License-Identifier: AGPL-3.0-or-later
 
 <template>
    <div class="sidebar-map-content">
-      <ul v-if="layerStore.getAllLayersFlat.length > 0" class="layer-list">
+      <ul v-if="visibleLayers.length > 0" class="layer-list">
          <Checkbox
             class="layer-item"
             :checked="
@@ -17,8 +17,8 @@ SPDX-License-Identifier: AGPL-3.0-or-later
             :label="$t('common.all')"
          />
          <li
-            v-for="(layer, j) in layerStore.getAllLayersFlat"
-            :key="layer.id"
+            v-for="item in visibleLayers"
+            :key="item.layer.id"
             class="layer-item"
          >
             <Checkbox
@@ -26,23 +26,23 @@ SPDX-License-Identifier: AGPL-3.0-or-later
                :checked="
                   layerStore.isLayerSelected(
                      layerStore.getSelectedLayer?.id || '',
-                     j
+                     item.index
                   )
                "
-               @change="() => handleLayerToggle(j)"
-               :label="layer.id"
+               @change="() => handleLayerToggle(item.index)"
+               :label="item.layer.id"
             />
 
             <div
                v-if="
                   layerStore.isLayerSelected(
                      layerStore.getSelectedLayer?.id || '',
-                     j
+                     item.index
                   )
                "
                class="layer-item-color"
                :style="{
-                  'background-color': layer.color,
+                  'background-color': item.layer.color,
                }"
             />
          </li>
@@ -52,11 +52,28 @@ SPDX-License-Identifier: AGPL-3.0-or-later
 </template>
 
 <script lang="ts" setup>
+import { computed } from 'vue'
+import { useRoute } from 'vue-router'
 import { useMapLayerStore } from '../../stores/map-layers'
 import Checkbox from '../ui/Checkbox.vue'
 import Divider from '../ui/Divider.vue'
 
 const layerStore = useMapLayerStore()
+const route = useRoute()
+
+const visibleLayers = computed(() => {
+   const all = layerStore.getAllLayersFlat
+
+   return all
+      .map((layer, index) => ({ layer, index }))
+      .filter(({ layer }) => {
+         // In alarms view, hide the Traffic Events layer from the sidebar
+         if (route.name === 'alarms' && layer.id === 'Traffic Events') {
+            return false
+         }
+         return true
+      })
+})
 
 const handleToggleAll = () => {
    if (layerStore.getSelectedLayer) {
