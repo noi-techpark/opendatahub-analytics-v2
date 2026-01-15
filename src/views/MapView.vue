@@ -4,47 +4,46 @@ SPDX-License-Identifier: AGPL-3.0-or-later
 -->
 
 <template>
-   <main class="map-view">
-      <div class="map-filters-ct">
-         <div class="flex-grow">
-            <MapFilter
-               :title="t('common.dataprovider')"
-               :value="totalOriginsFilters.toString()"
-               :disabled="Object.keys(uniqueOrigins).length === 0"
-               @click="setCurrentFilter('origin')"
-            />
-         </div>
-         <MapSettingsDropdown />
+   <div class="map-filters-ct">
+      <div class="flex-grow">
+         <MapFilter
+            :title="t('common.dataprovider')"
+            :value="totalOriginsFilters.toString()"
+            :disabled="Object.keys(uniqueOrigins).length === 0"
+            @click="setCurrentFilter('origin')"
+         />
       </div>
+      <MapSettingsDropdown />
+   </div>
 
-      <MapOriginFilterCard
-         v-if="currentFilter === 'origin'"
-         @close="setCurrentFilter('')"
-      />
-      <MarkerCard
-         v-if="selectedMarker && selectedScode"
-         :key="selectedMarker.scode"
-         :marker="selectedMarker"
-         :open-on-measurements="!!focusScode"
-         @vue:beforeUnmount="focusScode = undefined"
-         @close="handleSelectMarker()"
-      />
-   </main>
-   <Map
+   <MapOriginFilterCard
+      v-if="currentFilter === 'origin'"
+      @close="setCurrentFilter('')"
+   />
+   <MarkerCard
+      v-if="selectedMarker && selectedScode"
+      :key="selectedMarker.scode"
+      :marker="selectedMarker"
+      :open-on-measurements="!!focusScode"
+      @vue:beforeUnmount="focusScode = undefined"
+      @close="handleSelectMarker()"
+   />
+   <MapComponent
       class="map-ct"
-      :loading="loading > 0"
-      :markers
+      :loading="layerActionInProgress"
+      :markers="markers"
       :selectedScode
       :focusScode
       @markerSelected="handleSelectMarker"
+      @renderingChanged="handleMapRenderingChanged"
    />
 </template>
 
 <script setup lang="ts">
 import { ref, watch, onMounted, nextTick, computed } from 'vue'
-import Map from '../components/ui/map/Map.vue'
+import MapComponent from '../components/ui/map/Map.vue'
 import { useMapLayerStore } from '../stores/map-layers'
-import { useArrayDifference } from '@vueuse/core'
+import { useArrayDifference, watchDebounced } from '@vueuse/core'
 import { DataMarker } from '../types/api'
 import MapOriginFilterCard from '../components/ui/map/MapOriginFilterCard.vue'
 import MarkerCard from '../components/ui/MarkerCard.vue'
@@ -57,7 +56,6 @@ import {
 } from '../types/map-layer'
 import { storeToRefs } from 'pinia'
 import { useI18n } from 'vue-i18n'
-import { watchDebounced } from '@vueuse/core'
 
 import { Alarm } from '../types/alarm-config'
 import { useLayerDataStore } from '../stores/layer-data'
@@ -79,6 +77,26 @@ const loading = ref<number>(0)
 const selectedScode = ref<string>()
 const focusHandled = ref<boolean>(false)
 const focusScode = ref<string | undefined>(undefined)
+const mapRendering = ref<boolean>(false)
+const layerActionInProgress = ref<boolean>(false)
+
+const nextFrame = () =>
+   new Promise<void>((r) => requestAnimationFrame(() => r()))
+
+const handleMapRenderingChanged = (v: boolean) => {
+   mapRendering.value = v
+   if (!v && loading.value === 0) layerActionInProgress.value = false
+}
+
+watch(loading, (v) => {
+   if (v > 0) {
+      layerActionInProgress.value = true
+      return
+   }
+   if (!mapRendering.value) {
+      layerActionInProgress.value = false
+   }
+})
 
 const layerDataStore = useLayerDataStore()
 const {
@@ -87,8 +105,12 @@ const {
    lastMarkersSet: sharedLastMarkersSet,
 } = storeToRefs(layerDataStore)
 const selectedMarker = ref<MapMarkerDetails>()
-const { isTogglingAll, uniqueOrigins, selectedFilterOrigins } =
-   storeToRefs(layerStore)
+const {
+   isTogglingAll,
+   uniqueOrigins,
+   selectedFilterOrigins,
+   hideInactiveSensors,
+} = storeToRefs(layerStore)
 const lastLayers = ref<Layer[]>([])
 const prevSelectedLayers = ref<Layer[]>([])
 const currentFilter = ref<string>('')
@@ -103,7 +125,7 @@ const totalOriginsFilters = computed(
 const handleSelectMarker = async (data?: MapMarkerDetails | DataMarker) => {
    const normalized: MapMarkerDetails | undefined = data
       ? {
-           scode: data.scode,
+           scode: String(data.scode),
            stype: (data as MapMarkerDetails | DataMarker).stype,
            eventData:
               typeof (data as any).eventData === 'string'
@@ -170,6 +192,12 @@ const getMarkerColorFromAlarmConfig = (
    return undefined
 }
 
+watch(hideInactiveSensors, async () => {
+   layerActionInProgress.value = true
+   await nextTick()
+   await nextFrame()
+})
+
 watchDebounced(
    selectedFilterOrigins,
    (newVal, oldVal) => {
@@ -197,6 +225,9 @@ watchDebounced(
 watch(
    () => layerStore.getSelectedLayers,
    async (curr, old) => {
+      layerActionInProgress.value = true
+      await nextTick()
+      await nextFrame()
       const { saveToUrl } = useQueryInit()
       saveToUrl()
 
@@ -204,16 +235,22 @@ watch(
          old && Array.isArray(old) ? old : prevSelectedLayers.value
       if (previous !== undefined) {
          loading.value += 1
-         const updated = await setLayersFromFetcher(curr, previous, {
-            markers: markers.value,
-            selectedFilterOrigins: selectedFilterOrigins.value,
-            uniqueOrigins: uniqueOrigins.value,
-            t,
-            computeInfoColor: ({ stype, dataType, value, period }) =>
-               getMarkerColorFromAlarmConfig(stype, dataType, value, period),
-         })
-         markers.value = updated
-         loading.value -= 1
+         try {
+            const updated = await setLayersFromFetcher(curr, previous, {
+               markers: markers.value,
+               selectedFilterOrigins: selectedFilterOrigins.value,
+               uniqueOrigins: uniqueOrigins.value,
+               t,
+               computeInfoColor: ({ stype, dataType, value, period }) =>
+                  getMarkerColorFromAlarmConfig(stype, dataType, value, period),
+            })
+            markers.value = updated
+         } finally {
+            loading.value -= 1
+            if (loading.value === 0 && !mapRendering.value) {
+               layerActionInProgress.value = false
+            }
+         }
       }
       prevSelectedLayers.value = [...curr]
    },
@@ -226,6 +263,10 @@ watch(isTogglingAll, async (newVal) => {
       return
    }
 
+   layerActionInProgress.value = true
+   await nextTick()
+   await nextFrame()
+
    const arrayDiff = useArrayDifference(
       layerStore.getSelectedLayers,
       lastLayers.value,
@@ -234,18 +275,27 @@ watch(isTogglingAll, async (newVal) => {
 
    if (arrayDiff.value.length > 0) {
       loading.value += 1
-      await refreshSelectedLayers(arrayDiff.value, {
-         selectedFilterOrigins: selectedFilterOrigins.value,
-         uniqueOrigins: uniqueOrigins.value,
-         markers: markers.value,
-         t,
-         computeInfoColor: ({ stype, dataType, value, period }) =>
-            getMarkerColorFromAlarmConfig(stype, dataType, value, period),
-      })
-      loading.value -= 1
+      try {
+         await refreshSelectedLayers(arrayDiff.value, {
+            selectedFilterOrigins: selectedFilterOrigins.value,
+            uniqueOrigins: uniqueOrigins.value,
+            markers: markers.value,
+            t,
+            computeInfoColor: ({ stype, dataType, value, period }) =>
+               getMarkerColorFromAlarmConfig(stype, dataType, value, period),
+         })
+      } finally {
+         loading.value -= 1
+         if (loading.value === 0 && !mapRendering.value) {
+            layerActionInProgress.value = false
+         }
+      }
    } else {
       markers.value = []
       uniqueOrigins.value = {}
+      if (!mapRendering.value) {
+         layerActionInProgress.value = false
+      }
    }
 })
 
@@ -263,15 +313,18 @@ watch(
    async (newTime) => {
       if (newTime && layerStore.getSelectedLayers.length > 0) {
          loading.value += 1
-         await refreshSelectedLayers(layerStore.getSelectedLayers, {
-            selectedFilterOrigins: selectedFilterOrigins.value,
-            uniqueOrigins: uniqueOrigins.value,
-            markers: markers.value,
-            t,
-            computeInfoColor: ({ stype, dataType, value, period }) =>
-               getMarkerColorFromAlarmConfig(stype, dataType, value, period),
-         })
-         loading.value -= 1
+         try {
+            await refreshSelectedLayers(layerStore.getSelectedLayers, {
+               selectedFilterOrigins: selectedFilterOrigins.value,
+               uniqueOrigins: uniqueOrigins.value,
+               markers: markers.value,
+               t,
+               computeInfoColor: ({ stype, dataType, value, period }) =>
+                  getMarkerColorFromAlarmConfig(stype, dataType, value, period),
+            })
+         } finally {
+            loading.value -= 1
+         }
       }
    }
 )
@@ -281,16 +334,19 @@ watch(
    async () => {
       if (layerStore.getSelectedLayers.length > 0) {
          loading.value += 1
-         // Pass empty markers array to force a complete refresh
-         await refreshSelectedLayers(layerStore.getSelectedLayers, {
-            selectedFilterOrigins: selectedFilterOrigins.value,
-            uniqueOrigins: uniqueOrigins.value,
-            markers: [],
-            t,
-            computeInfoColor: ({ stype, dataType, value, period }) =>
-               getMarkerColorFromAlarmConfig(stype, dataType, value, period),
-         })
-         loading.value -= 1
+         try {
+            // Pass empty markers array to force a complete refresh
+            await refreshSelectedLayers(layerStore.getSelectedLayers, {
+               selectedFilterOrigins: selectedFilterOrigins.value,
+               uniqueOrigins: uniqueOrigins.value,
+               markers: [],
+               t,
+               computeInfoColor: ({ stype, dataType, value, period }) =>
+                  getMarkerColorFromAlarmConfig(stype, dataType, value, period),
+            })
+         } finally {
+            loading.value -= 1
+         }
       }
    }
 )
@@ -303,16 +359,19 @@ const {
 
 const refetchForDataTypeWithFilters = async (newVal: SelectedFilterOrigins) => {
    loading.value += 1
-   const updated = await refetchFromFetcher(newVal, {
-      selectedLayers: layerStore.getSelectedLayers,
-      currentMarkers: markers.value,
-      uniqueOrigins: uniqueOrigins.value,
-      t,
-      computeInfoColor: ({ stype, dataType, value, period }) =>
-         getMarkerColorFromAlarmConfig(stype, dataType, value, period),
-   })
-   if (updated) markers.value = updated
-   loading.value -= 1
+   try {
+      const updated = await refetchFromFetcher(newVal, {
+         selectedLayers: layerStore.getSelectedLayers,
+         currentMarkers: markers.value,
+         uniqueOrigins: uniqueOrigins.value,
+         t,
+         computeInfoColor: ({ stype, dataType, value, period }) =>
+            getMarkerColorFromAlarmConfig(stype, dataType, value, period),
+      })
+      if (updated) markers.value = updated
+   } finally {
+      loading.value -= 1
+   }
 }
 
 const tryFocusFromQuery = () => {
@@ -419,21 +478,17 @@ onMounted(async () => {
 </script>
 
 <style lang="postcss" scoped>
-.map-view {
-   @apply relative z-10 w-full;
-
-   & .map-filters-ct {
-      @apply z-20 mb-2 flex gap-2 py-1;
-   }
+.map-filters-ct {
+   @apply absolute left-6 right-6 top-3 z-20 mb-2 flex gap-2 py-1;
 }
 
 .map-ct {
    @apply absolute inset-0 z-0 h-full w-full;
 }
 
-@media (max-width: theme('screens.md')) {
-   .map-view {
-      @apply w-full;
+@media only screen and (max-width: theme('screens.md')) {
+   .map-filters-ct {
+      @apply left-4 right-4;
    }
 }
 </style>

@@ -29,7 +29,7 @@ const props = withDefaults(defineProps<Props>(), {})
 
 <style lang="postcss" scoped>
 .map-filter {
-   @apply flex select-none items-center text-sm font-semibold;
+   @apply flex w-max select-none items-center text-sm font-semibold;
 
    & .map-filter-title {
       @apply flex items-center gap-1 rounded-md rounded-r-none border bg-grey px-3 py-1;

@@ -274,27 +274,51 @@ export const getBaseMarkerSvgUrl = (
    markerColor: string,
    letter?: string,
    showOne?: boolean,
-   fullCircle: boolean = false
+   fullCircle: boolean = false,
+   opts?: {
+      selected?: boolean
+      alarm?: boolean
+      inactive?: boolean
+   }
 ) => {
    const safeLetter = (letter || '').slice(0, 1).toUpperCase()
+   const centerX = 34.7162
+   const letterY = 26.6
+   const oneY = 54.7
    const letterSvg = safeLetter
-      ? `<text x="50%" y="35%" dominant-baseline="middle" text-anchor="middle" fill="#1C1B1F" font-size="18" font-weight="700" font-family="SourceSansPro, Arial, sans-serif">${safeLetter}</text>`
+      ? `<text x="${centerX}" y="${letterY}" dominant-baseline="middle" text-anchor="middle" fill="#1C1B1F" font-size="18" font-weight="700" font-family="SourceSansPro, Arial, sans-serif">${safeLetter}</text>`
       : ''
    const oneSvg = showOne
-      ? `<text x="50%" y="72%" dominant-baseline="middle" text-anchor="middle" fill="#000" font-size="8" font-weight="600" font-family="SourceSansPro, Arial, sans-serif">1</text>`
+      ? `<text x="${centerX}" y="${oneY}" dominant-baseline="middle" text-anchor="middle" fill="#000" font-size="8" font-weight="600" font-family="SourceSansPro, Arial, sans-serif">1</text>`
       : ''
+   const selected = !!opts?.selected
+   const alarm = !!opts?.alarm
+   const inactive = !!opts?.inactive
+
+   const outerFill = alarm ? '#FF9797' : 'white'
+   const outerStroke = selected ? '#50742F' : '#DADADA'
+   const outerStrokeWidth = selected ? 3 : 1
+   const resolvedMarkerColor = inactive ? '#BABABA' : markerColor
+
+   const innerWedgeFill = alarm ? '#FF9797' : 'white'
+
+   const inactiveStrikeSvg = inactive
+      ? `<rect x="48" y="18" width="2" height="30" transform="rotate(65 48 18)" fill="#1C1B1F" opacity="0.6"/>`
+      : ''
+
    const markerSvg = `
-   <svg width="69" height="76" viewBox="0 0 69 76" fill="none" xmlns="http://www.w3.org/2000/svg" text-rendering="geometricPrecision">
+   <svg width="69" height="76" viewBox="-2 -2 73 80" fill="none" xmlns="http://www.w3.org/2000/svg" text-rendering="geometricPrecision">
      <defs>
        <filter id="markerShadow" x="-20%" y="-20%" width="140%" height="160%" color-interpolation-filters="sRGB">
          <feDropShadow dx="0" dy="1.5" stdDeviation="1.5" flood-color="#000000" flood-opacity="0.18"/>
        </filter>
      </defs>
      <g>
-       <path filter="url(#markerShadow)" d="M54.8432 53.2249C61.0773 47.6404 65 39.5283 65 30.5C65 13.6553 51.3447 0 34.5 0C17.6553 0 4 13.6553 4 30.5C4 39.5283 7.92275 47.6404 14.1568 53.2249C14.1776 53.246 14.1984 53.2669 14.2194 53.2879L24.591 63.6595C30.0636 69.1321 38.9364 69.1321 44.409 63.6595L54.7806 53.2879C54.8016 53.2669 54.8224 53.246 54.8432 53.2249Z" fill="white" stroke="#DADADA" stroke-width="1"/>
-       <ellipse cx="34.7162" cy="30.7162" rx="24.7162" ry="24.7162" fill="${markerColor}" />
-       ${fullCircle ? '' : '<path d="M23.5 55.5L11.5 43.5L9.5 39.5H60.5L59.5 43L52.5 53.5L45 56.5L31 58L23.5 55.5Z" fill="white"/>'}
+       <path filter="url(#markerShadow)" d="M54.8432 53.2249C61.0773 47.6404 65 39.5283 65 30.5C65 13.6553 51.3447 0 34.5 0C17.6553 0 4 13.6553 4 30.5C4 39.5283 7.92275 47.6404 14.1568 53.2249C14.1776 53.246 14.1984 53.2669 14.2194 53.2879L24.591 63.6595C30.0636 69.1321 38.9364 69.1321 44.409 63.6595L54.7806 53.2879C54.8016 53.2669 54.8224 53.246 54.8432 53.2249Z" fill="${outerFill}" stroke="${outerStroke}" stroke-width="${outerStrokeWidth}" stroke-linejoin="round"/>
+       <ellipse cx="34.7162" cy="30.7162" rx="24.7162" ry="24.7162" fill="${resolvedMarkerColor}" />
+       ${fullCircle ? '' : `<path d="M23.5 55.5L11.5 43.5L9.5 39.5H60.5L59.5 43L52.5 53.5L45 56.5L31 58L23.5 55.5Z" fill="${innerWedgeFill}"/>`}
        ${letterSvg}
+       ${inactiveStrikeSvg}
        ${oneSvg}
      </g>
    </svg>`

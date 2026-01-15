@@ -160,16 +160,18 @@ export function useLayerDataFetcher() {
          const newMarkers: DataMarker[] = []
 
          let flatData: EventPoint[] | DataPoint[] | AnnouncementEvent[] = []
+         const activeByScode: Record<string, boolean> = {}
 
          if (isProvinceEvents) {
             const baseUrl = import.meta.env.VITE_ODH_CONTENT_API_URI
             const pagesize = 200000
-            const queryParams =
-               `?pagesize=${pagesize}` +
-               '&tagfilter=announcement%3Atraffic-event' +
-               '&removenullvalues=false' +
-               '&getasidarray=false'
-            const url = `${baseUrl}/Announcement${queryParams}`
+            const params = new URLSearchParams({
+               pagesize: String(pagesize),
+               tagfilter: 'announcement:traffic-event',
+               removenullvalues: 'false',
+               getasidarray: 'false',
+            })
+            const url = `${baseUrl}/Announcement?${params.toString()}`
 
             const { data } = await useFetchWithAuth(url).json()
             const apiResponse = (data.value || {}) as {
@@ -188,24 +190,68 @@ export function useLayerDataFetcher() {
                (item) => item.Active === true && isActiveByTime(item)
             )
          } else {
-            let datasetType = 'node'
+            const datasetType = 'node'
             const activeQuery = hideInactiveSensors.value
                ? 'sactive.eq.true'
                : null
-            let query = 'select=scoordinate%2Cscode%2Cstype%2Csorigin&where='
+            const params = new URLSearchParams({
+               limit: '-1',
+               distinct: 'true',
+               select: 'scoordinate,scode,stype,sorigin,sactive,sname',
+            })
 
-            if (opts.filter?.filterString) {
-               query += activeQuery
+            const where = opts.filter?.filterString
+               ? activeQuery
                   ? `and(${activeQuery},${opts.filter.filterString})`
                   : opts.filter.filterString
-            } else if (activeQuery) {
-               query += activeQuery
-            }
+               : activeQuery || undefined
 
-            const url = `${import.meta.env.VITE_ODH_MOBILITY_API_URI}/flat,${datasetType}/${layer.stationType}/?limit=-1&distinct=true&${query}`
+            if (where) params.set('where', where)
+
+            const url = `${import.meta.env.VITE_ODH_MOBILITY_API_URI}/flat,${datasetType}/${layer.stationType}/?${params.toString()}`
 
             const { data } = await useFetchWithAuth(url).json()
-            flatData = ((data.value?.data as DataPoint[]) || []) as DataPoint[]
+            const maybeArray = (data.value as { data?: unknown } | undefined)
+               ?.data
+            const isDataPoint = (v: unknown): v is DataPoint => {
+               if (!v || typeof v !== 'object') return false
+               const o = v as Record<string, unknown>
+               return (
+                  typeof o.scode === 'string' &&
+                  typeof o.stype === 'string' &&
+                  typeof o.sorigin === 'string' &&
+                  typeof o.sname === 'string'
+               )
+            }
+            const stations: DataPoint[] = Array.isArray(maybeArray)
+               ? (maybeArray.filter(isDataPoint) as DataPoint[])
+               : []
+            flatData = stations
+            // When hideInactiveSensors is disabled, the flat endpoint may include inactive sensors.
+            // Store their active flag (when provided) to style markers accordingly.
+            for (const row of stations) {
+               if (
+                  typeof row.scode === 'string' &&
+                  typeof row.sactive === 'boolean'
+               ) {
+                  activeByScode[row.scode] = row.sactive
+               }
+            }
+         }
+
+         let latestAllTree: any = undefined
+         if (!isProvinceEvents) {
+            try {
+               const url = `${import.meta.env.VITE_ODH_MOBILITY_API_URI}/tree/${layer.stationType}/*/latest?limit=-1&distinct=true&select=tmeasurements&showNull=true`
+               const { data } = await useFetchWithAuth(url).json()
+               latestAllTree = data.value?.data || {}
+            } catch (error) {
+               console.error(
+                  `Error fetching latest measurements for ${Array.isArray(layer.stationType) ? layer.stationType.join('_') : layer.stationType}:`,
+                  error
+               )
+               latestAllTree = {}
+            }
          }
 
          if (flatData && flatData.length > 0) {
@@ -234,7 +280,8 @@ export function useLayerDataFetcher() {
             > = {}
 
             const newPoints: DataMarker[] = []
-            for (const d of flatData) {
+            for (let i = 0; i < flatData.length; i++) {
+               const d = flatData[i]
                const typedDataPoint = d as DataPoint
                const typedAnnouncement = d as AnnouncementEvent
                const stype = isProvinceEvents
@@ -268,6 +315,7 @@ export function useLayerDataFetcher() {
                const fetchedEventsKey = Array.isArray(layer.stationType)
                   ? layer.stationType.join('_')
                   : layer.stationType
+
                if (!isProvinceEvents && !fetchedEvents[fetchedEventsKey]) {
                   let query_where_datatypes = ''
                   let datatype_period_duplicates: Record<string, boolean> = {}
@@ -322,6 +370,8 @@ export function useLayerDataFetcher() {
                   | (DataPoint & { mperiod: number; dataType: string })
                   | undefined = undefined
 
+               let mostRecentDiffHours: number | undefined = undefined
+
                if (
                   !isProvinceEvents &&
                   fetchedEvents[fetchedEventsKey] &&
@@ -356,6 +406,53 @@ export function useLayerDataFetcher() {
                   }
                }
 
+               // Compute most recent measurement across ALL datatypes (ignore alarmConfig)
+               if (
+                  !isProvinceEvents &&
+                  latestAllTree?.[stype]?.stations?.[scode]
+               ) {
+                  const stationAll = latestAllTree[stype].stations[scode]
+                  const sdatatypes = stationAll?.sdatatypes || {}
+                  let best: number | undefined
+                  for (const dataType in sdatatypes) {
+                     const measurements = sdatatypes[dataType]?.tmeasurements
+                     if (measurements && measurements.length > 0) {
+                        const measurement = measurements[0]
+                        if (measurement?.mvalidtime) {
+                           const diffHours = differenceInHours(
+                              now,
+                              new Date(measurement.mvalidtime)
+                           )
+                           if (best === undefined || diffHours < best) {
+                              best = diffHours
+                           }
+                        }
+                     }
+                  }
+                  mostRecentDiffHours = best
+               }
+
+               const computedInfoColor = isProvinceEvents
+                  ? undefined
+                  : lastMeasurement && opts.computeInfoColor
+                    ? opts.computeInfoColor({
+                         stype,
+                         dataType: (lastMeasurement as any).dataType,
+                         value: Number((lastMeasurement as any).mvalue),
+                         diffHours: lastDiffHours || 0,
+                         period: (lastMeasurement as any).mperiod,
+                      })
+                    : undefined
+
+               const isRecent =
+                  !isProvinceEvents &&
+                  typeof mostRecentDiffHours === 'number' &&
+                  mostRecentDiffHours <= 24
+               const isInactive =
+                  !isProvinceEvents &&
+                  typeof activeByScode[scode] === 'boolean' &&
+                  activeByScode[scode] === false
+
                newPoints.push({
                   scode,
                   sname: isProvinceEvents
@@ -367,6 +464,9 @@ export function useLayerDataFetcher() {
                   color: (layer as any).color,
                   iconColor: (layer as any).iconColor,
                   stype,
+                  alarm: !!computedInfoColor,
+                  recent: isRecent,
+                  inactive: isInactive,
                   coordinates: isProvinceEvents
                      ? [
                           typedAnnouncement.Geo?.position?.Longitude || 0,
@@ -376,27 +476,24 @@ export function useLayerDataFetcher() {
                           typedDataPoint.scoordinate?.x || 0,
                           typedDataPoint.scoordinate?.y || 0,
                        ],
-                  infoColor: isProvinceEvents
-                     ? undefined
-                     : lastMeasurement && opts.computeInfoColor
-                       ? opts.computeInfoColor({
-                            stype,
-                            dataType: (lastMeasurement as any).dataType,
-                            value: Number((lastMeasurement as any).mvalue),
-                            diffHours: lastDiffHours || 0,
-                            period: (lastMeasurement as any).mperiod,
-                         })
-                       : undefined,
+                  infoColor: computedInfoColor,
                   eventData: isProvinceEvents
                      ? (typedAnnouncement as AnnouncementEvent)
                      : undefined,
                })
             }
 
-            const uniquePoints = new Set(currentMarkers.map((p) => p.scode))
-            newMarkers.push(
-               ...newPoints.filter((point) => !uniquePoints.has(point.scode))
-            )
+            const uniquePoints = new Set<string>()
+            for (let i = 0; i < currentMarkers.length; i++) {
+               uniquePoints.add(currentMarkers[i].scode)
+            }
+
+            for (let i = 0; i < newPoints.length; i++) {
+               const point = newPoints[i]
+               if (!uniquePoints.has(point.scode)) {
+                  newMarkers.push(point)
+               }
+            }
          } else {
             showNotification({
                type: 'error',
