@@ -10,12 +10,19 @@ export type StationMapMarker = {
    stype: string
    coordinates: [number, number]
    selected?: boolean
+   alarm?: boolean
+   inactive?: boolean
+   stale?: boolean
+   recent?: boolean
    infoColor?: string
    eventData?: string // stringified EventPoint (JSON)
 }
 
 export type DataMarker = {
    alarm?: boolean
+   inactive?: boolean
+   stale?: boolean
+   recent?: boolean
    sname?: string
    selected?: boolean
    coordinates: [number, number]
@@ -27,6 +34,7 @@ export type DataMarker = {
 export type DataPoint = {
    sname: string
    scode: string
+   sactive?: boolean
    scoordinate?: {
       x: number
       y: number

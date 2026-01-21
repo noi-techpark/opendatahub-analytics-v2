@@ -45,6 +45,6 @@ export const initMap = () => {
       center: [11.3295, 46.4896],
       zoom: 13,
       maxZoom: 18,
-      minZoom: 6,
+      minZoom: 4,
    })
 }

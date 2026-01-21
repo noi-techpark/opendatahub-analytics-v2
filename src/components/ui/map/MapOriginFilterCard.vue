@@ -123,7 +123,7 @@ onMounted(() => {
 
 <style lang="postcss" scoped>
 .map-origin-filter-card-component {
-   @apply flex h-[470px] flex-col rounded bg-white;
+   @apply absolute left-6 right-6 top-14 z-10 flex h-[470px] flex-col rounded bg-white;
 
    & .map-origin-filter-card-header {
       @apply sticky top-0 flex items-center justify-between gap-2 rounded-t border bg-white p-4;
@@ -139,6 +139,12 @@ onMounted(() => {
       & .continue-ct {
          @apply flex border-t pt-4;
       }
+   }
+}
+
+@media only screen and (max-width: theme('screens.md')) {
+   .map-origin-filter-card-component {
+      @apply left-4 right-4;
    }
 }
 </style>
