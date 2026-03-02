@@ -13,6 +13,7 @@ export interface Alarm {
    priority: 'high' | 'medium' | 'low'
    thresholds: AlarmThreshold
    periods?: number[]
+   origins?: string[]
 }
 
 export interface MeasurementAlarms {
@@ -36,4 +37,5 @@ export interface AlarmEvent {
    alarm: Alarm
    stationType: string
    measurement: string
+   sorigin?: string
 }

@@ -274,7 +274,7 @@ export function useLayerDataFetcher() {
          let latestAllTree: any = undefined
          if (!isProvinceEvents) {
             try {
-               const url = `${import.meta.env.VITE_ODH_MOBILITY_API_URI}/tree/${layer.stationType}/*/latest?limit=-1&distinct=true&select=tmeasurements&showNull=true`
+               const url = `${import.meta.env.VITE_ODH_MOBILITY_API_URI}/tree/${layer.stationType}/*/latest?limit=-1&distinct=true&select=tmeasurements,sorigin&showNull=true`
                const { data } = await useFetchWithAuth(url).json()
                latestAllTree = data.value?.data || {}
             } catch (error) {
@@ -378,7 +378,7 @@ export function useLayerDataFetcher() {
                   if (query_where_datatypes) {
                      query_where_datatypes += ')'
                      try {
-                        const dataUrl = `${import.meta.env.VITE_ODH_MOBILITY_API_URI}/tree/${layer.stationType}/*/latest?limit=-1&distinct=true&select=tmeasurements&showNull=true&where=${encodeURIComponent(query_where_datatypes)}`
+                        const dataUrl = `${import.meta.env.VITE_ODH_MOBILITY_API_URI}/tree/${layer.stationType}/*/latest?limit=-1&distinct=true&select=tmeasurements,sorigin&showNull=true&where=${encodeURIComponent(query_where_datatypes)}`
                         const { data } = await useFetchWithAuth(dataUrl).json()
                         fetchedEvents[fetchedEventsKey] = data.value?.data || {}
                      } catch (error) {
@@ -681,7 +681,12 @@ export function useLayerDataFetcher() {
    ): Promise<StationMeasurement[]> => {
       const stationInfo: Record<
          string,
-         { sname: string; coords: [number, number]; stype: string }
+         {
+            sname: string
+            coords: [number, number]
+            stype: string
+            sorigin?: string
+         }
       > = {}
       const measurementsOut: StationMeasurement[] = []
 
@@ -689,12 +694,13 @@ export function useLayerDataFetcher() {
          const stationTypes = Array.isArray(layer.stationType)
             ? layer.stationType
             : [layer.stationType]
+
          let hasFilters = false
-         const filtered: string[] = []
+         const filteredTypes: string[] = []
          for (const stype of stationTypes) {
             if (ctx.selectedFilterOrigins.sorigin[stype]?.length > 0) {
                hasFilters = true
-               filtered.push(stype)
+               filteredTypes.push(stype)
             }
          }
 
@@ -702,15 +708,15 @@ export function useLayerDataFetcher() {
             stypeList: string[],
             filterString?: string
          ) => {
-            if (ctx.skipProvinceEvents && stypeList.includes('PROVINCE_BZ')) {
+            if (ctx.skipProvinceEvents && stypeList.includes('PROVINCE_BZ'))
                return
-            }
 
             const activeQuery = hideInactiveSensors.value
                ? 'sactive.eq.true'
                : null
             let query =
                'select=scoordinate%2Cscode%2Cstype%2Csname%2Csorigin&where='
+
             if (filterString) {
                query += activeQuery
                   ? `and(${activeQuery},${filterString})`
@@ -718,6 +724,7 @@ export function useLayerDataFetcher() {
             } else if (activeQuery) {
                query += activeQuery
             }
+
             const url = `${import.meta.env.VITE_ODH_MOBILITY_API_URI}/flat,node/${stypeList}/?limit=-1&distinct=true&${query}`
             const { data } = await useFetchWithAuth(url).json()
             const flat = (data.value?.data as DataPoint[]) || []
@@ -726,6 +733,8 @@ export function useLayerDataFetcher() {
                   sname: d.sname,
                   coords: [d.scoordinate?.x || 0, d.scoordinate?.y || 0],
                   stype: d.stype,
+                  sorigin:
+                     typeof d.sorigin === 'string' ? d.sorigin : undefined,
                }
             }
          }
@@ -737,22 +746,26 @@ export function useLayerDataFetcher() {
                .filter(([key]) => stationTypes.includes(key))
                .map(([_, values]) => buildOriginFilterString(values))
             const filterString = filterStrings.join(',')
-            await fetchFlat(filtered, filterString)
-            const unfiltered = stationTypes.filter((s) => !filtered.includes(s))
-            if (unfiltered.length) await fetchFlat(unfiltered)
+            await fetchFlat(filteredTypes, filterString)
+
+            const unfilteredTypes = stationTypes.filter(
+               (s) => !filteredTypes.includes(s)
+            )
+            if (unfilteredTypes.length) await fetchFlat(unfilteredTypes)
          } else {
             await fetchFlat(stationTypes)
          }
       }
 
-      const byStype: Record<string, string[]> = {}
-      Object.values(stationInfo).forEach((v) => {
-         byStype[v.stype] = byStype[v.stype] || []
-      })
+      const byStype: Record<string, true> = {}
+      for (const v of Object.values(stationInfo)) {
+         byStype[v.stype] = true
+      }
 
       for (const stype of Object.keys(byStype)) {
          const tmap = getMeasurementTypesFromAlarmConfig(stype)
          if (Object.keys(tmap).length === 0) continue
+
          let where = ''
          for (const tnameKey in tmap) {
             for (const mperiodKey in tmap[tnameKey]) {
@@ -762,14 +775,24 @@ export function useLayerDataFetcher() {
          }
          if (where) where += ')'
          else continue
-         const dataUrl = `${import.meta.env.VITE_ODH_MOBILITY_API_URI}/tree/${stype}/*/latest?limit=-1&distinct=true&select=tmeasurements&showNull=true&where=${encodeURIComponent(where)}`
+
+         const dataUrl = `${import.meta.env.VITE_ODH_MOBILITY_API_URI}/tree/${stype}/*/latest?limit=-1&distinct=true&select=tmeasurements,sorigin&showNull=true&where=${encodeURIComponent(where)}`
          try {
             const { data } = await useFetchWithAuth(dataUrl).json()
             const treeData = (data.value?.data || {}) as any
             const typed = treeData[stype]?.stations || {}
+
             for (const scode of Object.keys(typed)) {
                const info = stationInfo[scode]
                if (!info) continue
+
+               const stationOrigin =
+                  info.sorigin ??
+                  (typeof (typed[scode] as any)?.sorigin === 'string'
+                     ? (typed[scode] as any).sorigin
+                     : undefined) ??
+                  'N/A'
+
                const sdatatypes = typed[scode]?.sdatatypes || {}
                for (const dataType in sdatatypes) {
                   const tms = sdatatypes[dataType]?.tmeasurements || []
@@ -781,6 +804,7 @@ export function useLayerDataFetcher() {
                         timestamp: new Date(m.mvalidtime),
                         stationName: info.sname,
                         coordinates: info.coords,
+                        sorigin: stationOrigin,
                      })
                   }
                }

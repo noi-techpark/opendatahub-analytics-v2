@@ -20,6 +20,7 @@ MeteoStation:
               min: -100
               max: -2
            periods: [600]
+
          - name: 'Below Zero Air Temperature (15min)'
            description: 'Daily average temperature below freezing'
            priority: 'high'
@@ -27,6 +28,9 @@ MeteoStation:
               min: -100
               max: -2
            periods: [900]
+         # NOTE: example filter by origins: ['SIAG']
+         # origins: ['SIAG']
+
          - name: 'High Temperature (10min)'
            description: 'Unusually high temperature'
            priority: 'medium'
@@ -41,9 +45,7 @@ MeteoStation:
               min: 30
               max: 99999
            periods: [900]
-          
-          
-          
+
 EnvironmentStation:
    nitrogen-dioxide:
       alarms:
@@ -75,7 +77,6 @@ RWISstation:
               min: -100
               max: -3
            periods: [1]
-
 
 TrafficSensor:
    average-speed-light-vehicles:

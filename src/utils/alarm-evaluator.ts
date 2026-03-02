@@ -11,13 +11,19 @@ export interface StationMeasurement {
    timestamp: Date
    stationName: string
    coordinates: [number, number]
+   sorigin?: string
 }
 
 export function evaluateAlarms(
    measurement: StationMeasurement,
    alarmConfig: AlarmConfig
 ): AlarmEvent[] {
-   const { stationType, measurement: measurementType, value } = measurement
+   const {
+      stationType,
+      measurement: measurementType,
+      value,
+      sorigin,
+   } = measurement
 
    const stationAlarms = alarmConfig[stationType]
    if (!stationAlarms) {
@@ -32,6 +38,20 @@ export function evaluateAlarms(
    const triggeredAlarms: AlarmEvent[] = []
 
    for (const alarm of measurementAlarms.alarms) {
+      if (Array.isArray(alarm.origins) && alarm.origins.length > 0) {
+         const normalizedOrigin =
+            typeof sorigin === 'string' ? sorigin.trim() : undefined
+         const normalizedAllowed = alarm.origins
+            .filter((o): o is string => typeof o === 'string')
+            .map((o) => o.trim())
+
+         if (
+            !normalizedOrigin ||
+            !normalizedAllowed.includes(normalizedOrigin)
+         ) {
+            continue
+         }
+      }
       if (value >= alarm.thresholds.min && value <= alarm.thresholds.max) {
          triggeredAlarms.push({
             timestamp: measurement.timestamp,
@@ -41,6 +61,7 @@ export function evaluateAlarms(
             alarm,
             stationType,
             measurement: measurementType,
+            sorigin,
          })
       }
    }
