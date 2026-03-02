@@ -572,7 +572,7 @@ export function useLayerDataFetcher() {
          }) => string | undefined
       }
    ): Promise<DataMarker[]> => {
-      const newMarkers: DataMarker[] = []
+      let newMarkers: DataMarker[] = []
       for (const layer of layers) {
          const stationTypes = Array.isArray(layer.stationType)
             ? layer.stationType
@@ -602,8 +602,7 @@ export function useLayerDataFetcher() {
                   t: ctx.t,
                   computeInfoColor: ctx.computeInfoColor,
                })
-               if (stypeFilteredMarkers)
-                  newMarkers.push(...stypeFilteredMarkers)
+               if (stypeFilteredMarkers) newMarkers = stypeFilteredMarkers
             }
 
             const unfilteredTypes = stationTypes.filter(
@@ -625,7 +624,7 @@ export function useLayerDataFetcher() {
                      computeInfoColor: ctx.computeInfoColor,
                   }
                )
-               if (unfilteredMarkers) newMarkers.push(...unfilteredMarkers)
+               if (unfilteredMarkers) newMarkers = unfilteredMarkers
             }
          } else {
             const unfilteredMarkers = await fetchStationData(layer, {
@@ -634,7 +633,7 @@ export function useLayerDataFetcher() {
                t: ctx.t,
                computeInfoColor: ctx.computeInfoColor,
             })
-            if (unfilteredMarkers) newMarkers.push(...unfilteredMarkers)
+            if (unfilteredMarkers) newMarkers = unfilteredMarkers
          }
       }
       return applyProvinceFilter(newMarkers, new Date())
@@ -658,16 +657,10 @@ export function useLayerDataFetcher() {
       }
    ): Promise<DataMarker[]> => {
       const fetched = await toggleAllLayers(layers, ctx)
-      // Merge fetched markers with existing ones, removing duplicates by scode
-      const existingCodes = new Set(fetched.map((m) => m.scode))
-      const mergedRaw = [
-         ...fetched,
-         ...ctx.markers.filter((m) => !existingCodes.has(m.scode)),
-      ]
 
-      const merged = normalizeMarkerFlags(mergedRaw)
-      layerData.setMarkers(merged)
-      return merged
+      const replaced = normalizeMarkerFlags(fetched)
+      layerData.setMarkers(replaced)
+      return replaced
    }
 
    // Fetch all relevant measurements for selected layers to evaluate alarms

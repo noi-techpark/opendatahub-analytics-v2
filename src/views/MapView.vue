@@ -105,6 +105,10 @@ const {
    lastMarkersSet: sharedLastMarkersSet,
 } = storeToRefs(layerDataStore)
 
+watch(layerActionInProgress, (v) => {
+   layerDataStore.setMarkersLoading(v)
+})
+
 const selectedMarker = ref<MapMarkerDetails>()
 const {
    isTogglingAll,
@@ -118,6 +122,7 @@ const currentFilter = ref<string>('')
 
 const isInitialLoad = ref<boolean>(true)
 const isRestoringFromSessionStorage = ref<boolean>(false)
+const isBootstrappingFromUrl = ref<boolean>(false)
 
 const totalOriginsFilters = computed(
    () => Object.values(selectedFilterOrigins.value.sorigin).flat().length
@@ -202,6 +207,9 @@ watch(hideInactiveSensors, async () => {
 watchDebounced(
    selectedFilterOrigins,
    (newVal, oldVal) => {
+      if (isBootstrappingFromUrl.value) {
+         return
+      }
       if (
          (!isInitialLoad.value && !oldVal.stype) ||
          newVal.stype !== oldVal.stype
@@ -226,6 +234,9 @@ watchDebounced(
 watch(
    () => layerStore.getSelectedLayers,
    async (curr, old) => {
+      if (isBootstrappingFromUrl.value) {
+         return
+      }
       layerActionInProgress.value = true
       await nextTick()
       await nextFrame()
@@ -433,31 +444,38 @@ onMounted(async () => {
    }
 
    const { bootstrapFromUrl } = useQueryInit()
-   await bootstrapFromUrl({
-      afterInit: async () => {
-         if (
-            selectedFilterOrigins.value.stype &&
-            selectedFilterOrigins.value.sorigin[
-               selectedFilterOrigins.value.stype
-            ]?.length > 0
-         ) {
-            await refetchForDataTypeWithFilters(selectedFilterOrigins.value)
-         }
-      },
-   })
+   // Prevent watchers from firing while we restore URL state and do the first fetch.
+   // Otherwise we can end up fetching twice (bootstrap triggers watchers + manual refresh)
+   // and markers get duplicated.
+   isBootstrappingFromUrl.value = true
+   await bootstrapFromUrl()
 
-   if (markers.value.length === 0 && layerStore.getSelectedLayers.length > 0) {
+   if (layerStore.getSelectedLayers.length > 0) {
       loading.value += 1
-      await refreshSelectedLayers(layerStore.getSelectedLayers, {
-         selectedFilterOrigins: selectedFilterOrigins.value,
-         uniqueOrigins: uniqueOrigins.value,
-         markers: markers.value,
-         t,
-         computeInfoColor: ({ stype, dataType, value, period }) =>
-            getMarkerColorFromAlarmConfig(stype, dataType, value, period),
-      })
-      loading.value -= 1
+      try {
+         await refreshSelectedLayers(layerStore.getSelectedLayers, {
+            selectedFilterOrigins: selectedFilterOrigins.value,
+            uniqueOrigins: uniqueOrigins.value,
+            markers: [],
+            t,
+            computeInfoColor: ({ stype, dataType, value, period }) =>
+               getMarkerColorFromAlarmConfig(stype, dataType, value, period),
+         })
+      } finally {
+         loading.value -= 1
+      }
    }
+
+   // Sync the last known layers snapshot to avoid the first post-bootstrap watcher run
+   // from treating all restored layers as newly added.
+   prevSelectedLayers.value = [...layerStore.getSelectedLayers]
+
+   // Let any queued watcher callbacks flush while still guarded.
+   await nextTick()
+   await nextFrame()
+   isBootstrappingFromUrl.value = false
+
+   // initial refresh performed after URL bootstrap
 
    // If we restored markers from a previous session, they may miss stale/recent.
    // Force one refresh to compute stale correctly from measurements.
