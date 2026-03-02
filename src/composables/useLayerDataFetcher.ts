@@ -127,6 +127,38 @@ export function useLayerDataFetcher() {
          return !filterProvinceBZEvent(ev, date)
       })
 
+   const normalizeMarkerFlags = (markers: DataMarker[]): DataMarker[] => {
+      const out: DataMarker[] = new Array(markers.length)
+      for (let i = 0; i < markers.length; i++) {
+         const m = markers[i]
+         const isProvince =
+            typeof m.stype === 'string' && m.stype.startsWith('PROVINCE_BZ')
+         if (isProvince) {
+            out[i] = m
+            continue
+         }
+
+         const hasStale = typeof m.stale === 'boolean'
+         const hasRecent = typeof m.recent === 'boolean'
+         if (hasStale && hasRecent) {
+            out[i] = m
+            continue
+         }
+         if (hasStale && !hasRecent) {
+            out[i] = { ...m, recent: !m.stale }
+            continue
+         }
+         if (!hasStale && hasRecent) {
+            out[i] = { ...m, stale: !m.recent }
+            continue
+         }
+
+         // No info => treat as stale (missing or unparsable timestamps)
+         out[i] = { ...m, stale: true, recent: false }
+      }
+      return out
+   }
+
    // URL updates are handled via useQueryInit().saveToUrl()
 
    // Fetch flat stations/events and compute markers for a layer
@@ -444,10 +476,19 @@ export function useLayerDataFetcher() {
                       })
                     : undefined
 
+               const bestDiffHours =
+                  typeof mostRecentDiffHours === 'number'
+                     ? mostRecentDiffHours
+                     : typeof lastDiffHours === 'number'
+                       ? lastDiffHours
+                       : undefined
+
                const isRecent =
                   !isProvinceEvents &&
-                  typeof mostRecentDiffHours === 'number' &&
-                  mostRecentDiffHours <= 24
+                  typeof bestDiffHours === 'number' &&
+                  bestDiffHours <= 24
+
+               const isStale = !isProvinceEvents && !isRecent
                const isInactive =
                   !isProvinceEvents &&
                   typeof activeByScode[scode] === 'boolean' &&
@@ -465,6 +506,7 @@ export function useLayerDataFetcher() {
                   iconColor: (layer as any).iconColor,
                   stype,
                   alarm: !!computedInfoColor,
+                  stale: isStale,
                   recent: isRecent,
                   inactive: isInactive,
                   coordinates: isProvinceEvents
@@ -483,17 +525,18 @@ export function useLayerDataFetcher() {
                })
             }
 
-            const uniquePoints = new Set<string>()
+            const byScode = new Map<string, DataMarker>()
             for (let i = 0; i < currentMarkers.length; i++) {
-               uniquePoints.add(currentMarkers[i].scode)
+               const m = currentMarkers[i]
+               byScode.set(m.scode, m)
             }
 
             for (let i = 0; i < newPoints.length; i++) {
                const point = newPoints[i]
-               if (!uniquePoints.has(point.scode)) {
-                  newMarkers.push(point)
-               }
+               byScode.set(point.scode, point)
             }
+
+            newMarkers.push(...byScode.values())
          } else {
             showNotification({
                type: 'error',
@@ -617,10 +660,12 @@ export function useLayerDataFetcher() {
       const fetched = await toggleAllLayers(layers, ctx)
       // Merge fetched markers with existing ones, removing duplicates by scode
       const existingCodes = new Set(fetched.map((m) => m.scode))
-      const merged = [
+      const mergedRaw = [
          ...fetched,
          ...ctx.markers.filter((m) => !existingCodes.has(m.scode)),
       ]
+
+      const merged = normalizeMarkerFlags(mergedRaw)
       layerData.setMarkers(merged)
       return merged
    }
@@ -772,7 +817,7 @@ export function useLayerDataFetcher() {
       )
       if (!layer || !newVal.sorigin[newVal.stype]) return ctx.currentMarkers
       const filterString = buildOriginFilterString(newVal.sorigin[newVal.stype])
-      return await fetchStationData(layer, {
+      const out = await fetchStationData(layer, {
          currentMarkers: ctx.currentMarkers.filter(
             (m) => m.stype !== newVal.stype
          ),
@@ -781,6 +826,7 @@ export function useLayerDataFetcher() {
          t: ctx.t,
          computeInfoColor: ctx.computeInfoColor,
       })
+      return out ? normalizeMarkerFlags(out) : out
    }
 
    const setLayersToMap = async (
@@ -838,11 +884,20 @@ export function useLayerDataFetcher() {
             })
             if (unfiltered) newMarkersOut.push(...unfiltered)
          }
-         const uniquePoints = new Set(ctx.markers.map((p) => p.scode))
-         const merged = [
-            ...ctx.markers,
-            ...newMarkersOut.filter((point) => !uniquePoints.has(point.scode)),
-         ]
+
+         const byScode = new Map<string, DataMarker>()
+         for (let i = 0; i < ctx.markers.length; i++) {
+            const m = ctx.markers[i]
+            byScode.set(m.scode, m)
+         }
+         for (let i = 0; i < newMarkersOut.length; i++) {
+            const m = newMarkersOut[i]
+            byScode.set(m.scode, m)
+         }
+
+         const mergedRaw = [...byScode.values()]
+         const merged = normalizeMarkerFlags(mergedRaw)
+
          return applyProvinceFilter(merged, new Date())
       }
       const newTypes = new Set(curr.flatMap((n) => n.stationType))
@@ -863,7 +918,7 @@ export function useLayerDataFetcher() {
             delete ctx.uniqueOrigins[d]
          }
       })
-      return applyProvinceFilter(updated, new Date())
+      return applyProvinceFilter(normalizeMarkerFlags(updated), new Date())
    }
 
    return {

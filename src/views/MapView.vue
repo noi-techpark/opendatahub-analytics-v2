@@ -104,6 +104,7 @@ const {
    markers,
    lastMarkersSet: sharedLastMarkersSet,
 } = storeToRefs(layerDataStore)
+
 const selectedMarker = ref<MapMarkerDetails>()
 const {
    isTogglingAll,
@@ -456,6 +457,29 @@ onMounted(async () => {
             getMarkerColorFromAlarmConfig(stype, dataType, value, period),
       })
       loading.value -= 1
+   }
+
+   // If we restored markers from a previous session, they may miss stale/recent.
+   // Force one refresh to compute stale correctly from measurements.
+   if (markers.value.length > 0 && layerStore.getSelectedLayers.length > 0) {
+      const hasMissingFlags = markers.value.some(
+         (m: any) => typeof (m as any).stale !== 'boolean'
+      )
+      if (hasMissingFlags) {
+         loading.value += 1
+         try {
+            await refreshSelectedLayers(layerStore.getSelectedLayers, {
+               selectedFilterOrigins: selectedFilterOrigins.value,
+               uniqueOrigins: uniqueOrigins.value,
+               markers: markers.value,
+               t,
+               computeInfoColor: ({ stype, dataType, value, period }) =>
+                  getMarkerColorFromAlarmConfig(stype, dataType, value, period),
+            })
+         } finally {
+            loading.value -= 1
+         }
+      }
    }
 
    try {
