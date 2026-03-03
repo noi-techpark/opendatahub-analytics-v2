@@ -25,7 +25,7 @@ SPDX-License-Identifier: AGPL-3.0-or-later
          </template>
          <template #body-rows>
             <tr v-if="sortedAlarms.length === 0">
-               <TableCell colspan="8" class="empty-message">
+               <TableCell :colspan="tableHeaders.length" class="empty-message">
                   {{
                      hasSelection
                         ? $t('components.alarm-table.no-alarms')
@@ -63,6 +63,9 @@ SPDX-License-Identifier: AGPL-3.0-or-later
                   </template>
                   <template v-else-if="header.key === 'measurement'">
                      {{ alarm.measurement }}
+                  </template>
+                  <template v-else-if="header.key === 'sorigin'">
+                     {{ alarm.sorigin || '' }}
                   </template>
                   <template v-else-if="header.key === 'stationName'">
                      {{ alarm.stationName }}
@@ -126,6 +129,11 @@ const tableHeaders = [
    {
       key: 'measurement',
       label: t('components.alarm-table.measurement'),
+      class: 'w-44',
+   },
+   {
+      key: 'sorigin',
+      label: 'Origin',
       class: 'w-44',
    },
    {
@@ -198,6 +206,8 @@ const sortedAlarms = computed(() => {
             return alarm.timestamp
          case 'measurement':
             return alarm.measurement
+         case 'sorigin':
+            return alarm.sorigin || ''
          case 'stationName':
             return alarm.stationName
          case 'coordinates':

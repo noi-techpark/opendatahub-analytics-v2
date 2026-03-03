@@ -44,7 +44,7 @@ SPDX-License-Identifier: AGPL-3.0-or-later
 
 <script setup lang="ts">
 import 'maplibre-gl/dist/maplibre-gl.css'
-import { computed, nextTick, onMounted, ref, watch } from 'vue'
+import { computed, nextTick, onBeforeUnmount, onMounted, ref, watch } from 'vue'
 import { DataMarker, StationMapMarker } from '../../../types/api'
 import { initMap } from '../../../utils/map-utils'
 import {
@@ -97,6 +97,7 @@ const emit = defineEmits<Emit>()
 const mapLoaded = ref<boolean>()
 const map = ref<Map>()
 const localSelected = ref<string | undefined>(props.selectedScode)
+const isUnmounted = ref<boolean>(false)
 const searchQuery = ref<string>()
 const geojsonBySourceKey = ref<Record<string, any>>({})
 const pendingGeojsonBySourceKey = ref<Record<string, any>>({})
@@ -276,7 +277,7 @@ const clearCurrentClusterSource = async () => {
 }
 
 const setMapClusterSource = async () => {
-   if (!map.value) {
+   if (!map.value || isUnmounted.value) {
       return
    }
 
@@ -307,6 +308,7 @@ const setMapClusterSource = async () => {
    }
 
    for (const [key, value] of Object.entries(stationMarkers.value)) {
+      if (!map.value || isUnmounted.value) return
       const wantsClustering = !value.some(
          (m: any) => (m as any).pseudoCluster === true
       )
@@ -350,6 +352,7 @@ const setMapClusterSource = async () => {
       for (let i = 0; i < value.length; i++) {
          if (value.length > yieldThreshold && i > 0 && i % yieldEvery === 0) {
             await yieldToBrowser()
+            if (!map.value || isUnmounted.value) return
          }
          const marker = value[i]
          features.push({
@@ -364,7 +367,8 @@ const setMapClusterSource = async () => {
                stype: marker.stype,
                alarm: marker.alarm,
                inactive: marker.inactive,
-               recent: marker.recent,
+               stale: marker.stale,
+               recent: (marker as any).recent,
                infoColor: marker.infoColor,
             },
          })
@@ -379,10 +383,12 @@ const setMapClusterSource = async () => {
          try {
             if (features.length > yieldThreshold) {
                await yieldToBrowser()
+               if (!map.value || isUnmounted.value) return
             }
             scheduleSetData(key, geojsonBySourceKey.value[key])
             if (features.length > yieldThreshold) {
                await yieldToBrowser()
+               if (!map.value || isUnmounted.value) return
             }
          } catch (e) {
             console.error('Failed to update GeoJSON source data', e)
@@ -390,6 +396,7 @@ const setMapClusterSource = async () => {
          continue
       }
 
+      if (!map.value || isUnmounted.value) return
       map.value.addSource(key, {
          type: 'geojson',
          data: {
@@ -681,26 +688,37 @@ const setMapClusterSource = async () => {
 
       // "latest" within 24hrs indicator
       const unclusteredMarkerStaleLayerId = `${key}-unclustered-marker-recent`
-      map.value?.addLayer({
-         id: unclusteredMarkerStaleLayerId,
-         type: 'circle',
-         source: key,
-         filter: [
-            'all',
-            ['!', ['has', 'point_count']],
-            ['==', ['get', 'recent'], true],
+      const staleFilter: any = [
+         'all',
+         ['!', ['has', 'point_count']],
+         ['==', ['get', 'stale'], true],
+         [
+            'any',
+            ['!', ['has', 'inactive']],
+            ['==', ['get', 'inactive'], false],
          ],
-         paint: {
-            'circle-radius': 6.5,
-            'circle-color': '#BABABA',
-            'circle-stroke-width': 2,
-            'circle-stroke-color': '#FFFFFF',
-            'circle-stroke-opacity': 1,
-            'circle-blur': 0,
-            'circle-translate': [13, -23],
-            'circle-translate-anchor': 'map',
-         },
-      })
+      ]
+
+      if (map.value?.getLayer(unclusteredMarkerStaleLayerId)) {
+         map.value?.setFilter(unclusteredMarkerStaleLayerId, staleFilter)
+      } else {
+         map.value?.addLayer({
+            id: unclusteredMarkerStaleLayerId,
+            type: 'circle',
+            source: key,
+            filter: staleFilter,
+            paint: {
+               'circle-radius': 6.5,
+               'circle-color': '#BABABA',
+               'circle-stroke-width': 2,
+               'circle-stroke-color': '#FFFFFF',
+               'circle-stroke-opacity': 1,
+               'circle-blur': 0,
+               'circle-translate': [13, -23],
+               'circle-translate-anchor': 'map',
+            },
+         })
+      }
 
       clustersInMap.value[key] = [
          clusterLayerId,
@@ -814,7 +832,7 @@ const handleMousePointerOnLayer = (layerId: string) => {
 
 const stationMarkers = ref<Record<string, StationMapMarker[]>>({})
 
-onMounted(() => {
+onMounted(async () => {
    map.value = initMap()
    map.value.on('load', (e) => {
       mapLoaded.value = e.target.loaded()
@@ -958,6 +976,10 @@ onMounted(() => {
    })
 })
 
+onBeforeUnmount(() => {
+   isUnmounted.value = true
+})
+
 watch(
    () => props.selectedScode,
    (curr, prev) => {
@@ -991,6 +1013,7 @@ watch(
       ],
    async ([currentProps, currentMapLoaded, currentSelectedScode]) => {
       if (preventMapUpdate.value) return
+      if (isUnmounted.value) return
 
       // Avoid re-render loops: only refresh when markers/selection actually changed.
       if (
@@ -1003,51 +1026,65 @@ watch(
       }
 
       if (currentMapLoaded) {
-         setRendering(true)
-         stationMarkers.value = {}
+         try {
+            setRendering(true)
+            stationMarkers.value = {}
 
-         const hasPseudoClusters = (currentProps || []).some(
-            (m: any) => (m as any).pseudoCluster
-         )
+            const hasPseudoClusters = (currentProps || []).some(
+               (m: any) => (m as any).pseudoCluster
+            )
 
-         const markersToRender =
-            hasPseudoClusters || (currentProps?.length || 0) > 5000
-               ? currentProps
-               : currentProps
-                    ?.slice()
-                    .sort(
-                       (p1: DataMarker, p2: DataMarker) =>
-                          p2.coordinates[1] - (p1.coordinates[1] || 0)
-                    )
+            const markersToRender =
+               hasPseudoClusters || (currentProps?.length || 0) > 5000
+                  ? currentProps
+                  : currentProps
+                       ?.slice()
+                       .sort(
+                          (p1: DataMarker, p2: DataMarker) =>
+                             p2.coordinates[1] - (p1.coordinates[1] || 0)
+                       )
 
-         markersToRender?.forEach((data: DataMarker) => {
-            const arr = stationMarkers.value[data.stype] || []
-            arr.push({
-               scode: data.scode,
-               color: data.color,
-               iconColor: data.iconColor,
-               stype: data.stype,
-               coordinates: data.coordinates,
-               alarm: showAlarms.value ? data.alarm : false,
-               inactive: data.inactive,
-               recent: data.recent,
-               infoColor: showAlarms.value ? data.infoColor : undefined,
+            markersToRender?.forEach((data: DataMarker) => {
+               const arr = stationMarkers.value[data.stype] || []
+               const normalizedEventData =
+                  typeof (data as any).eventData === 'string'
+                     ? ((data as any).eventData as string)
+                     : (data as any).eventData
+                       ? JSON.stringify((data as any).eventData)
+                       : undefined
+
+               const derivedStale =
+                  typeof (data as any).stale === 'boolean'
+                     ? ((data as any).stale as boolean)
+                     : typeof (data as any).recent === 'boolean'
+                       ? !(data as any).recent
+                       : undefined
+               arr.push({
+                  ...data,
+                  eventData: normalizedEventData,
+                  stale: derivedStale,
+                  alarm: showAlarms.value ? data.alarm : false,
+                  infoColor: showAlarms.value ? data.infoColor : undefined,
+               })
+               stationMarkers.value[data.stype] = arr
             })
-            stationMarkers.value[data.stype] = arr
-         })
 
-         if (props.markers?.length) {
-            await setMapClusterSource()
-         } else {
-            await clearCurrentClusterSource()
+            if (isUnmounted.value) return
+            if (props.markers?.length) {
+               await setMapClusterSource()
+            } else {
+               await clearCurrentClusterSource()
+            }
+
+            // Ensure selected state is applied after sources are (re)created.
+            syncSelectedToSources(props.selectedScode)
+
+            lastRenderedMarkers.value = currentProps
+            lastRenderedSelected.value = currentSelectedScode
+            lastRenderedShowAlarms.value = showAlarms.value
+         } catch (e) {
+            console.error('Failed during map watcher update', e)
          }
-
-         // Ensure selected state is applied after sources are (re)created.
-         syncSelectedToSources(props.selectedScode)
-
-         lastRenderedMarkers.value = currentProps
-         lastRenderedSelected.value = currentSelectedScode
-         lastRenderedShowAlarms.value = showAlarms.value
       }
    }
 )

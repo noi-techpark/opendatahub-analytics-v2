@@ -15,6 +15,7 @@ SPDX-License-Identifier: AGPL-3.0-or-later
             "
             @change="handleToggleAll"
             :label="$t('common.all')"
+            :disabled="layerDataStore.markersLoading"
          />
          <li
             v-for="item in visibleLayers"
@@ -31,6 +32,7 @@ SPDX-License-Identifier: AGPL-3.0-or-later
                "
                @change="() => handleLayerToggle(item.index)"
                :label="item.layer.id"
+               :disabled="layerDataStore.markersLoading"
             />
 
             <div
@@ -55,10 +57,12 @@ SPDX-License-Identifier: AGPL-3.0-or-later
 import { computed } from 'vue'
 import { useRoute } from 'vue-router'
 import { useMapLayerStore } from '../../stores/map-layers'
+import { useLayerDataStore } from '../../stores/layer-data'
 import Checkbox from '../ui/Checkbox.vue'
 import Divider from '../ui/Divider.vue'
 
 const layerStore = useMapLayerStore()
+const layerDataStore = useLayerDataStore()
 const route = useRoute()
 
 const visibleLayers = computed(() => {
@@ -98,11 +102,6 @@ const handleLayerToggle = (index: number) => {
             @apply size-3 shrink-0 rounded-full;
          }
       }
-   }
-}
-
-@media only screen and (max-width: theme('screens.md')) {
-   .sidebar-map-content {
    }
 }
 </style>

@@ -127,6 +127,38 @@ export function useLayerDataFetcher() {
          return !filterProvinceBZEvent(ev, date)
       })
 
+   const normalizeMarkerFlags = (markers: DataMarker[]): DataMarker[] => {
+      const out: DataMarker[] = new Array(markers.length)
+      for (let i = 0; i < markers.length; i++) {
+         const m = markers[i]
+         const isProvince =
+            typeof m.stype === 'string' && m.stype.startsWith('PROVINCE_BZ')
+         if (isProvince) {
+            out[i] = m
+            continue
+         }
+
+         const hasStale = typeof m.stale === 'boolean'
+         const hasRecent = typeof m.recent === 'boolean'
+         if (hasStale && hasRecent) {
+            out[i] = m
+            continue
+         }
+         if (hasStale && !hasRecent) {
+            out[i] = { ...m, recent: !m.stale }
+            continue
+         }
+         if (!hasStale && hasRecent) {
+            out[i] = { ...m, stale: !m.recent }
+            continue
+         }
+
+         // No info => treat as stale (missing or unparsable timestamps)
+         out[i] = { ...m, stale: true, recent: false }
+      }
+      return out
+   }
+
    // URL updates are handled via useQueryInit().saveToUrl()
 
    // Fetch flat stations/events and compute markers for a layer
@@ -242,7 +274,7 @@ export function useLayerDataFetcher() {
          let latestAllTree: any = undefined
          if (!isProvinceEvents) {
             try {
-               const url = `${import.meta.env.VITE_ODH_MOBILITY_API_URI}/tree/${layer.stationType}/*/latest?limit=-1&distinct=true&select=tmeasurements&showNull=true`
+               const url = `${import.meta.env.VITE_ODH_MOBILITY_API_URI}/tree/${layer.stationType}/*/latest?limit=-1&distinct=true&select=tmeasurements,sorigin&showNull=true`
                const { data } = await useFetchWithAuth(url).json()
                latestAllTree = data.value?.data || {}
             } catch (error) {
@@ -346,7 +378,7 @@ export function useLayerDataFetcher() {
                   if (query_where_datatypes) {
                      query_where_datatypes += ')'
                      try {
-                        const dataUrl = `${import.meta.env.VITE_ODH_MOBILITY_API_URI}/tree/${layer.stationType}/*/latest?limit=-1&distinct=true&select=tmeasurements&showNull=true&where=${encodeURIComponent(query_where_datatypes)}`
+                        const dataUrl = `${import.meta.env.VITE_ODH_MOBILITY_API_URI}/tree/${layer.stationType}/*/latest?limit=-1&distinct=true&select=tmeasurements,sorigin&showNull=true&where=${encodeURIComponent(query_where_datatypes)}`
                         const { data } = await useFetchWithAuth(dataUrl).json()
                         fetchedEvents[fetchedEventsKey] = data.value?.data || {}
                      } catch (error) {
@@ -444,10 +476,19 @@ export function useLayerDataFetcher() {
                       })
                     : undefined
 
+               const bestDiffHours =
+                  typeof mostRecentDiffHours === 'number'
+                     ? mostRecentDiffHours
+                     : typeof lastDiffHours === 'number'
+                       ? lastDiffHours
+                       : undefined
+
                const isRecent =
                   !isProvinceEvents &&
-                  typeof mostRecentDiffHours === 'number' &&
-                  mostRecentDiffHours <= 24
+                  typeof bestDiffHours === 'number' &&
+                  bestDiffHours <= 24
+
+               const isStale = !isProvinceEvents && !isRecent
                const isInactive =
                   !isProvinceEvents &&
                   typeof activeByScode[scode] === 'boolean' &&
@@ -465,6 +506,7 @@ export function useLayerDataFetcher() {
                   iconColor: (layer as any).iconColor,
                   stype,
                   alarm: !!computedInfoColor,
+                  stale: isStale,
                   recent: isRecent,
                   inactive: isInactive,
                   coordinates: isProvinceEvents
@@ -483,17 +525,18 @@ export function useLayerDataFetcher() {
                })
             }
 
-            const uniquePoints = new Set<string>()
+            const byScode = new Map<string, DataMarker>()
             for (let i = 0; i < currentMarkers.length; i++) {
-               uniquePoints.add(currentMarkers[i].scode)
+               const m = currentMarkers[i]
+               byScode.set(m.scode, m)
             }
 
             for (let i = 0; i < newPoints.length; i++) {
                const point = newPoints[i]
-               if (!uniquePoints.has(point.scode)) {
-                  newMarkers.push(point)
-               }
+               byScode.set(point.scode, point)
             }
+
+            newMarkers.push(...byScode.values())
          } else {
             showNotification({
                type: 'error',
@@ -529,7 +572,7 @@ export function useLayerDataFetcher() {
          }) => string | undefined
       }
    ): Promise<DataMarker[]> => {
-      const newMarkers: DataMarker[] = []
+      let newMarkers: DataMarker[] = []
       for (const layer of layers) {
          const stationTypes = Array.isArray(layer.stationType)
             ? layer.stationType
@@ -559,8 +602,7 @@ export function useLayerDataFetcher() {
                   t: ctx.t,
                   computeInfoColor: ctx.computeInfoColor,
                })
-               if (stypeFilteredMarkers)
-                  newMarkers.push(...stypeFilteredMarkers)
+               if (stypeFilteredMarkers) newMarkers = stypeFilteredMarkers
             }
 
             const unfilteredTypes = stationTypes.filter(
@@ -582,7 +624,7 @@ export function useLayerDataFetcher() {
                      computeInfoColor: ctx.computeInfoColor,
                   }
                )
-               if (unfilteredMarkers) newMarkers.push(...unfilteredMarkers)
+               if (unfilteredMarkers) newMarkers = unfilteredMarkers
             }
          } else {
             const unfilteredMarkers = await fetchStationData(layer, {
@@ -591,7 +633,7 @@ export function useLayerDataFetcher() {
                t: ctx.t,
                computeInfoColor: ctx.computeInfoColor,
             })
-            if (unfilteredMarkers) newMarkers.push(...unfilteredMarkers)
+            if (unfilteredMarkers) newMarkers = unfilteredMarkers
          }
       }
       return applyProvinceFilter(newMarkers, new Date())
@@ -615,14 +657,10 @@ export function useLayerDataFetcher() {
       }
    ): Promise<DataMarker[]> => {
       const fetched = await toggleAllLayers(layers, ctx)
-      // Merge fetched markers with existing ones, removing duplicates by scode
-      const existingCodes = new Set(fetched.map((m) => m.scode))
-      const merged = [
-         ...fetched,
-         ...ctx.markers.filter((m) => !existingCodes.has(m.scode)),
-      ]
-      layerData.setMarkers(merged)
-      return merged
+
+      const replaced = normalizeMarkerFlags(fetched)
+      layerData.setMarkers(replaced)
+      return replaced
    }
 
    // Fetch all relevant measurements for selected layers to evaluate alarms
@@ -636,7 +674,12 @@ export function useLayerDataFetcher() {
    ): Promise<StationMeasurement[]> => {
       const stationInfo: Record<
          string,
-         { sname: string; coords: [number, number]; stype: string }
+         {
+            sname: string
+            coords: [number, number]
+            stype: string
+            sorigin?: string
+         }
       > = {}
       const measurementsOut: StationMeasurement[] = []
 
@@ -644,12 +687,13 @@ export function useLayerDataFetcher() {
          const stationTypes = Array.isArray(layer.stationType)
             ? layer.stationType
             : [layer.stationType]
+
          let hasFilters = false
-         const filtered: string[] = []
+         const filteredTypes: string[] = []
          for (const stype of stationTypes) {
             if (ctx.selectedFilterOrigins.sorigin[stype]?.length > 0) {
                hasFilters = true
-               filtered.push(stype)
+               filteredTypes.push(stype)
             }
          }
 
@@ -657,15 +701,15 @@ export function useLayerDataFetcher() {
             stypeList: string[],
             filterString?: string
          ) => {
-            if (ctx.skipProvinceEvents && stypeList.includes('PROVINCE_BZ')) {
+            if (ctx.skipProvinceEvents && stypeList.includes('PROVINCE_BZ'))
                return
-            }
 
             const activeQuery = hideInactiveSensors.value
                ? 'sactive.eq.true'
                : null
             let query =
                'select=scoordinate%2Cscode%2Cstype%2Csname%2Csorigin&where='
+
             if (filterString) {
                query += activeQuery
                   ? `and(${activeQuery},${filterString})`
@@ -673,6 +717,7 @@ export function useLayerDataFetcher() {
             } else if (activeQuery) {
                query += activeQuery
             }
+
             const url = `${import.meta.env.VITE_ODH_MOBILITY_API_URI}/flat,node/${stypeList}/?limit=-1&distinct=true&${query}`
             const { data } = await useFetchWithAuth(url).json()
             const flat = (data.value?.data as DataPoint[]) || []
@@ -681,6 +726,8 @@ export function useLayerDataFetcher() {
                   sname: d.sname,
                   coords: [d.scoordinate?.x || 0, d.scoordinate?.y || 0],
                   stype: d.stype,
+                  sorigin:
+                     typeof d.sorigin === 'string' ? d.sorigin : undefined,
                }
             }
          }
@@ -692,22 +739,26 @@ export function useLayerDataFetcher() {
                .filter(([key]) => stationTypes.includes(key))
                .map(([_, values]) => buildOriginFilterString(values))
             const filterString = filterStrings.join(',')
-            await fetchFlat(filtered, filterString)
-            const unfiltered = stationTypes.filter((s) => !filtered.includes(s))
-            if (unfiltered.length) await fetchFlat(unfiltered)
+            await fetchFlat(filteredTypes, filterString)
+
+            const unfilteredTypes = stationTypes.filter(
+               (s) => !filteredTypes.includes(s)
+            )
+            if (unfilteredTypes.length) await fetchFlat(unfilteredTypes)
          } else {
             await fetchFlat(stationTypes)
          }
       }
 
-      const byStype: Record<string, string[]> = {}
-      Object.values(stationInfo).forEach((v) => {
-         byStype[v.stype] = byStype[v.stype] || []
-      })
+      const byStype: Record<string, true> = {}
+      for (const v of Object.values(stationInfo)) {
+         byStype[v.stype] = true
+      }
 
       for (const stype of Object.keys(byStype)) {
          const tmap = getMeasurementTypesFromAlarmConfig(stype)
          if (Object.keys(tmap).length === 0) continue
+
          let where = ''
          for (const tnameKey in tmap) {
             for (const mperiodKey in tmap[tnameKey]) {
@@ -717,14 +768,24 @@ export function useLayerDataFetcher() {
          }
          if (where) where += ')'
          else continue
-         const dataUrl = `${import.meta.env.VITE_ODH_MOBILITY_API_URI}/tree/${stype}/*/latest?limit=-1&distinct=true&select=tmeasurements&showNull=true&where=${encodeURIComponent(where)}`
+
+         const dataUrl = `${import.meta.env.VITE_ODH_MOBILITY_API_URI}/tree/${stype}/*/latest?limit=-1&distinct=true&select=tmeasurements,sorigin&showNull=true&where=${encodeURIComponent(where)}`
          try {
             const { data } = await useFetchWithAuth(dataUrl).json()
             const treeData = (data.value?.data || {}) as any
             const typed = treeData[stype]?.stations || {}
+
             for (const scode of Object.keys(typed)) {
                const info = stationInfo[scode]
                if (!info) continue
+
+               const stationOrigin =
+                  info.sorigin ??
+                  (typeof (typed[scode] as any)?.sorigin === 'string'
+                     ? (typed[scode] as any).sorigin
+                     : undefined) ??
+                  'N/A'
+
                const sdatatypes = typed[scode]?.sdatatypes || {}
                for (const dataType in sdatatypes) {
                   const tms = sdatatypes[dataType]?.tmeasurements || []
@@ -736,6 +797,7 @@ export function useLayerDataFetcher() {
                         timestamp: new Date(m.mvalidtime),
                         stationName: info.sname,
                         coordinates: info.coords,
+                        sorigin: stationOrigin,
                      })
                   }
                }
@@ -772,7 +834,7 @@ export function useLayerDataFetcher() {
       )
       if (!layer || !newVal.sorigin[newVal.stype]) return ctx.currentMarkers
       const filterString = buildOriginFilterString(newVal.sorigin[newVal.stype])
-      return await fetchStationData(layer, {
+      const out = await fetchStationData(layer, {
          currentMarkers: ctx.currentMarkers.filter(
             (m) => m.stype !== newVal.stype
          ),
@@ -781,6 +843,7 @@ export function useLayerDataFetcher() {
          t: ctx.t,
          computeInfoColor: ctx.computeInfoColor,
       })
+      return out ? normalizeMarkerFlags(out) : out
    }
 
    const setLayersToMap = async (
@@ -838,11 +901,20 @@ export function useLayerDataFetcher() {
             })
             if (unfiltered) newMarkersOut.push(...unfiltered)
          }
-         const uniquePoints = new Set(ctx.markers.map((p) => p.scode))
-         const merged = [
-            ...ctx.markers,
-            ...newMarkersOut.filter((point) => !uniquePoints.has(point.scode)),
-         ]
+
+         const byScode = new Map<string, DataMarker>()
+         for (let i = 0; i < ctx.markers.length; i++) {
+            const m = ctx.markers[i]
+            byScode.set(m.scode, m)
+         }
+         for (let i = 0; i < newMarkersOut.length; i++) {
+            const m = newMarkersOut[i]
+            byScode.set(m.scode, m)
+         }
+
+         const mergedRaw = [...byScode.values()]
+         const merged = normalizeMarkerFlags(mergedRaw)
+
          return applyProvinceFilter(merged, new Date())
       }
       const newTypes = new Set(curr.flatMap((n) => n.stationType))
@@ -863,7 +935,7 @@ export function useLayerDataFetcher() {
             delete ctx.uniqueOrigins[d]
          }
       })
-      return applyProvinceFilter(updated, new Date())
+      return applyProvinceFilter(normalizeMarkerFlags(updated), new Date())
    }
 
    return {

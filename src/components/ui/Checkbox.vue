@@ -5,13 +5,17 @@ SPDX-License-Identifier: AGPL-3.0-or-later
 -->
 
 <template>
-   <label class="checkbox-component __clickable">
+   <label
+      class="checkbox-component __clickable"
+      :class="{ 'pointer-events-none opacity-50': props.disabled }"
+   >
       <div class="checkbox-ct">
          <input
             class="checkbox"
             :class="{ 'rounded-full': rounded }"
             type="checkbox"
             :checked="props.checked"
+            :disabled="props.disabled"
          />
          <CheckIcon v-if="props.checked" class="check-icon" />
       </div>
@@ -26,6 +30,7 @@ type Props = {
    checked: boolean
    rounded?: boolean
    label: string
+   disabled?: boolean
 }
 const props = withDefaults(defineProps<Props>(), {})
 </script>
@@ -52,11 +57,6 @@ const props = withDefaults(defineProps<Props>(), {})
 
    & .checkbox-text {
       @apply flex-grow pb-1;
-   }
-}
-
-@media only screen and (max-width: theme('screens.md')) {
-   .checkbox {
    }
 }
 </style>

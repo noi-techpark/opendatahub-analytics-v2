@@ -7,49 +7,57 @@ import type { AlarmConfig } from '../types/alarm-config'
 import type { DataMarker } from '../types/api'
 
 export const useLayerDataStore = defineStore('layer-data', () => {
-  // Shared alarm configuration across views
-  const alarmConfig = ref<AlarmConfig>({})
+   // Shared alarm configuration across views
+   const alarmConfig = ref<AlarmConfig>({})
 
-  // Shared markers and origins cache to persist across navigation
-  const markers = ref<DataMarker[]>([])
-  const uniqueOrigins = ref<Record<string, Set<string>>>({})
-  const lastMarkersSet = ref<DataMarker[]>([])
+   // Shared markers and origins cache to persist across navigation
+   const markers = ref<DataMarker[]>([])
+   const uniqueOrigins = ref<Record<string, Set<string>>>({})
+   const lastMarkersSet = ref<DataMarker[]>([])
 
-  // Simple loading flag for shared operations (can be expanded later)
-  const loading = ref<number>(0)
+   const markersLoading = ref<boolean>(false)
 
-  const setAlarmConfig = (config: AlarmConfig) => {
-    alarmConfig.value = config || {}
-  }
+   // Simple loading flag for shared operations (can be expanded later)
+   const loading = ref<number>(0)
 
-  const setMarkers = (m: DataMarker[]) => {
-    markers.value = m || []
-  }
+   const setAlarmConfig = (config: AlarmConfig) => {
+      alarmConfig.value = config || {}
+   }
 
-  const setUniqueOrigins = (map: Record<string, Set<string>>) => {
-    uniqueOrigins.value = map || {}
-  }
+   const setMarkers = (m: DataMarker[]) => {
+      markers.value = m || []
+   }
 
-  const setLastMarkersSet = (m: DataMarker[]) => {
-    lastMarkersSet.value = m || []
-  }
+   const setUniqueOrigins = (map: Record<string, Set<string>>) => {
+      uniqueOrigins.value = map || {}
+   }
 
-  const incLoading = () => (loading.value += 1)
-  const decLoading = () => (loading.value = Math.max(0, loading.value - 1))
+   const setLastMarkersSet = (m: DataMarker[]) => {
+      lastMarkersSet.value = m || []
+   }
 
-  return {
-    // state
-    alarmConfig,
-    markers,
-    uniqueOrigins,
-    lastMarkersSet,
-    loading,
-    // actions
-    setAlarmConfig,
-    setMarkers,
-    setUniqueOrigins,
-    setLastMarkersSet,
-    incLoading,
-    decLoading,
-  }
+   const setMarkersLoading = (v: boolean) => {
+      markersLoading.value = !!v
+   }
+
+   const incLoading = () => (loading.value += 1)
+   const decLoading = () => (loading.value = Math.max(0, loading.value - 1))
+
+   return {
+      // state
+      alarmConfig,
+      markers,
+      uniqueOrigins,
+      lastMarkersSet,
+      markersLoading,
+      loading,
+      // actions
+      setAlarmConfig,
+      setMarkers,
+      setUniqueOrigins,
+      setLastMarkersSet,
+      setMarkersLoading,
+      incLoading,
+      decLoading,
+   }
 })

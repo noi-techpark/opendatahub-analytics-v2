@@ -47,6 +47,14 @@ const { t } = useI18n()
 const layerStore = useMapLayerStore()
 const { selectedFilterOrigins, uniqueOrigins } = storeToRefs(layerStore)
 
+watch(
+   loading,
+   (v) => {
+      layerDataStore.setMarkersLoading(!!v)
+   },
+   { immediate: true }
+)
+
 async function fetchAndEvaluateAlarms() {
    loading.value = true
    try {
@@ -69,6 +77,7 @@ async function fetchAndEvaluateAlarms() {
 async function loadConfig() {
    try {
       const { ensureAlarmConfigLoaded } = useLayerDataFetcher()
+      layerDataStore.setAlarmConfig({})
       await ensureAlarmConfigLoaded()
    } catch (error) {
       console.error('Error ensuring alarm configuration:', error)
