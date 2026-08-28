@@ -52,7 +52,7 @@ export type Layer = {
       dataTypeMetadata: string
       valueSeparator: string
       metaDataImgData: string
-   }
+   }[]
 }
 
 export type MapMarkerDetails = {

@@ -70,12 +70,31 @@ SPDX-License-Identifier: AGPL-3.0-or-later
                            <!-- <HydroIcon class="text-grey-2" /> -->
                         </IconText>
                      </div>
-                     <P class="value">
+                     <P v-if="!item.displayParts" class="value">
                         {{ item.mvalue }}
                         <sup class="unit">
                            {{ item.tunit }}
                         </sup>
                      </P>
+                     <div v-else class="mapped-value">
+                        <template
+                           v-for="(part, index) in item.displayParts"
+                           :key="`${part.text}-${index}`"
+                        >
+                           <span v-if="index" class="mapped-separator">|</span>
+                           <img
+                              v-if="part.imageSrc"
+                              class="mapped-image"
+                              :src="part.imageSrc"
+                              :alt="part.title || part.text"
+                              :title="part.title || part.text"
+                           />
+                           <span>{{ part.text }}</span>
+                        </template>
+                        <sup v-if="item.tunit" class="unit">
+                           {{ item.tunit }}
+                        </sup>
+                     </div>
                   </div>
                   <div class="mc-footer">
                      <P label>
@@ -123,11 +142,10 @@ import { useI18n } from 'vue-i18n'
 import { MapMarkerDetails } from '../../types/map-layer'
 import {
    AnnouncementEvent,
-   EventPoint,
    MarkerInfo,
    MarkerMeasurements,
 } from '../../types/api'
-import { asyncComputed, formatDate } from '@vueuse/core'
+import { formatDate } from '@vueuse/core'
 import { useFetchWithAuth } from '../../utils/api'
 import { useMapLayerStore } from '../../stores/map-layers'
 import { useTimeSeriesStore } from '../../stores/time-series'
@@ -148,7 +166,7 @@ type Props = {
 const props = withDefaults(defineProps<Props>(), {})
 
 const router = useRouter()
-const { t } = useI18n()
+const { locale, t } = useI18n()
 const data = ref()
 const isLoading = ref(false)
 const selectedId = ref<'metadata' | 'measurements' | 'alarms'>('metadata')
@@ -275,6 +293,88 @@ const buildAnnouncementMetadata = (
    return { name, metadata }
 }
 
+type ImageMappingMetadata = {
+   id?: string | number
+   description?: Record<string, string>
+   [key: string]: unknown
+}
+
+const getMappingDescription = (entry: ImageMappingMetadata): string => {
+   const descriptions = entry.description || {}
+   const language = locale.value.split('-')[0]
+   return (
+      descriptions[language] ||
+      descriptions.it ||
+      descriptions.de ||
+      descriptions.en ||
+      String(entry.id ?? '')
+   )
+}
+
+const applyImageMappings = async (
+   measurements: MarkerMeasurements[]
+): Promise<MarkerMeasurements[]> => {
+   const imageMappings =
+      layerStore.getLayerByStationType(props.marker.stype)?.imageMapping || []
+
+   if (imageMappings.length === 0) return measurements
+
+   const mappedMeasurements = [...measurements]
+
+   await Promise.all(
+      imageMappings.map(async (mapping) => {
+         const matchingMeasurements = mappedMeasurements.filter(
+            (measurement) => measurement.tname === mapping.dataType
+         )
+         if (matchingMeasurements.length === 0) return
+
+         let metadata: ImageMappingMetadata[] | undefined
+         try {
+            const metadataUrl = `${import.meta.env.VITE_ODH_MOBILITY_API_URI}/flat/${encodeURIComponent(props.marker.stype)}/${encodeURIComponent(mapping.dataType)}/?limit=1&offset=0&shownull=false&distinct=true&select=tmetadata`
+            const { data: metadataResponse } =
+               await useFetchWithAuth(metadataUrl).json()
+            metadata = metadataResponse.value?.data?.[0]?.tmetadata?.[
+               mapping.dataTypeMetadata
+            ] as ImageMappingMetadata[] | undefined
+         } catch (error) {
+            console.error('Failed to load measurement image mapping:', error)
+            return
+         }
+
+         if (!Array.isArray(metadata)) return
+
+         for (const measurement of matchingMeasurements) {
+            const values = String(measurement.mvalue).split(
+               mapping.valueSeparator
+            )
+            measurement.displayParts = values.map((value) => {
+               const normalizedValue = value.trim()
+               const entry = metadata.find(
+                  (candidate) => String(candidate.id) === normalizedValue
+               )
+
+               if (!entry) return { text: normalizedValue }
+
+               const description = getMappingDescription(entry)
+               const encodedImage = entry[mapping.metaDataImgData]
+               return {
+                  text: description,
+                  title: description,
+                  imageSrc:
+                     typeof encodedImage === 'string' && encodedImage
+                        ? encodedImage.startsWith('data:')
+                           ? encodedImage
+                           : `data:image/*;base64,${encodedImage}`
+                        : undefined,
+               }
+            })
+         }
+      })
+   )
+
+   return mappedMeasurements
+}
+
 const fetchMarkerData = async () => {
    isLoading.value = true
 
@@ -312,28 +412,38 @@ const fetchMarkerData = async () => {
       return
    }
 
-   const dataUrl = `${import.meta.env.VITE_ODH_MOBILITY_API_URI}/flat%2Cnode/${props.marker.stype}/?where=scode.eq.%22${props.marker.scode}%22`
-   const measurementsUrl = `${import.meta.env.VITE_ODH_MOBILITY_API_URI}/flat%2Cnode/${props.marker.stype}/*/latest?where=scode.eq.%22${props.marker.scode}%22`
+   const escapedStationCode = props.marker.scode.replace(/(['"()\\])/g, '\\$1')
+   const where = encodeURIComponent(`scode.eq."${escapedStationCode}"`)
+   const stationType = encodeURIComponent(props.marker.stype)
+   const dataUrl = `${import.meta.env.VITE_ODH_MOBILITY_API_URI}/flat,node/${stationType}/?where=${where}`
+   const measurementsUrl = `${import.meta.env.VITE_ODH_MOBILITY_API_URI}/flat,node/${stationType}/*/latest?where=${where}`
 
-   const { data: dataResponse } = await useFetchWithAuth(dataUrl).json()
-   const resData = (dataResponse.value?.data?.[0] || {}) as MarkerInfo
+   try {
+      const [{ data: dataResponse }, { data: measurementsResponse }] =
+         await Promise.all([
+            useFetchWithAuth(dataUrl).json(),
+            useFetchWithAuth(measurementsUrl).json(),
+         ])
+      const resData = (dataResponse.value?.data?.[0] || {}) as MarkerInfo
+      const resMeasurements = await applyImageMappings(
+         (measurementsResponse.value?.data || []) as MarkerMeasurements[]
+      )
 
-   const { data: measurementsResponse } =
-      await useFetchWithAuth(measurementsUrl).json()
-   const resMeasurements = (measurementsResponse.value?.data ||
-      []) as MarkerMeasurements[]
-
-   const mainMetadata: Partial<MarkerInfo> = { ...resData }
-   delete mainMetadata.smetadata
-   data.value = {
-      name: resData.sname,
-      color: layerStore.getLayerByStationType(props.marker.stype)?.color,
-      metadata: mainMetadata,
-      additionalMetadata: resData.smetadata,
-      alarms: [],
-      measurements: resMeasurements,
+      const mainMetadata: Partial<MarkerInfo> = { ...resData }
+      delete mainMetadata.smetadata
+      data.value = {
+         name: resData.sname,
+         color: layerStore.getLayerByStationType(props.marker.stype)?.color,
+         metadata: mainMetadata,
+         additionalMetadata: resData.smetadata,
+         alarms: [],
+         measurements: resMeasurements,
+      }
+   } catch (error) {
+      console.error('Failed to load marker details:', error)
+   } finally {
+      isLoading.value = false
    }
-   isLoading.value = false
 }
 
 watch(links, () => {
@@ -422,6 +532,17 @@ onMounted(() => {
 
                   & .value {
                      @apply truncate text-4xl font-semibold;
+                  }
+                  & .mapped-value {
+                     @apply flex flex-wrap items-center gap-1 text-sm font-semibold;
+
+                     & .mapped-image {
+                        @apply size-6 object-contain;
+                     }
+
+                     & .mapped-separator {
+                        @apply px-1 text-grey-2;
+                     }
                   }
                   & .unit {
                      @apply text-lg font-semibold;

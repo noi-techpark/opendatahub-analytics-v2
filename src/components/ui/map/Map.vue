@@ -53,6 +53,7 @@ import {
    getIconForStationType,
    getProvinceColorForType,
    needsWhiteIcon,
+   SELECTED_MARKER_COLOR,
 } from '../../../utils/marker-utils'
 
 import { Map } from 'maplibre-gl'
@@ -64,11 +65,16 @@ import P from '../tags/P.vue'
 import Loader from '../Loader.vue'
 import { useMapLayerStore } from '../../../stores/map-layers'
 import { storeToRefs } from 'pinia'
+import {
+   getMarkerKey,
+   spreadOverlappingMarkers,
+} from '../../../utils/map-marker-utils'
 
 type Props = {
    loading?: boolean
    markers?: DataMarker[]
    selectedScode?: string
+   selectedStype?: string
    focusScode?: string
    preventZoomOnSelected?: boolean
    showSearch?: boolean | string
@@ -97,6 +103,8 @@ const emit = defineEmits<Emit>()
 const mapLoaded = ref<boolean>()
 const map = ref<Map>()
 const localSelected = ref<string | undefined>(props.selectedScode)
+const localSelectedStype = ref<string | undefined>(props.selectedStype)
+const OVERLAP_SATELLITE_MIN_ZOOM = 15
 const isUnmounted = ref<boolean>(false)
 const searchQuery = ref<string>()
 const geojsonBySourceKey = ref<Record<string, any>>({})
@@ -112,7 +120,11 @@ const searchResults = computed(() => {
    }
 })
 const localSelectedItem = computed(() => {
-   return props.markers?.find((m) => m.scode === localSelected.value)
+   return props.markers?.find(
+      (m) =>
+         m.scode === localSelected.value &&
+         (!localSelectedStype.value || m.stype === localSelectedStype.value)
+   )
 })
 
 const handleSelectSearch = (data?: DataMarker) => {
@@ -150,6 +162,7 @@ const handleMarkerSelected = async (data?: DataMarker) => {
    preventMapUpdate.value = true
    emit('markerSelected', data)
    localSelected.value = data?.scode
+   localSelectedStype.value = data?.stype
    focus(data)
 
    await nextTick()
@@ -164,7 +177,7 @@ const focus = (data?: DataMarker) => {
             lat: data.coordinates[1],
          },
          duration: 1000,
-         zoom: 15.1,
+         zoom: OVERLAP_SATELLITE_MIN_ZOOM + 0.1,
       })
    }
 }
@@ -175,6 +188,157 @@ const mapLayerStore = useMapLayerStore()
 const { showAlarms } = storeToRefs(mapLayerStore)
 
 const lastRenderedShowAlarms = ref<boolean | undefined>(undefined)
+const OVERLAP_CONNECTION_SOURCE_ID = 'overlap-hover-connection-source'
+const OVERLAP_CONNECTION_LAYER_ID = 'overlap-hover-connection-layer'
+
+const emptyOverlapConnection = () => ({
+   type: 'FeatureCollection' as const,
+   features: [],
+})
+
+type OverlapConnectionKind = 'selected' | 'hover'
+const overlapConnectionFeatures = ref<
+   Partial<Record<OverlapConnectionKind, any>>
+>({})
+const overlapConnectionTargets = ref<
+   Partial<Record<OverlapConnectionKind, any>>
+>({})
+
+const ensureOverlapConnectionLayer = () => {
+   if (!map.value) return
+
+   if (!map.value.getSource(OVERLAP_CONNECTION_SOURCE_ID)) {
+      map.value.addSource(OVERLAP_CONNECTION_SOURCE_ID, {
+         type: 'geojson',
+         data: emptyOverlapConnection(),
+      })
+   }
+
+   if (!map.value.getLayer(OVERLAP_CONNECTION_LAYER_ID)) {
+      map.value.addLayer({
+         id: OVERLAP_CONNECTION_LAYER_ID,
+         type: 'line',
+         source: OVERLAP_CONNECTION_SOURCE_ID,
+         minzoom: OVERLAP_SATELLITE_MIN_ZOOM,
+         paint: {
+            'line-color': ['get', 'color'],
+            'line-width': 2,
+            'line-opacity': 0.85,
+            'line-dasharray': [2, 2],
+         },
+      })
+   }
+}
+
+const renderOverlapConnections = () => {
+   const source = map.value?.getSource(OVERLAP_CONNECTION_SOURCE_ID)
+   if (!source) return
+
+   const selectedConnection = overlapConnectionFeatures.value.selected
+   const hoverConnection = overlapConnectionFeatures.value.hover
+   const features = selectedConnection ? [selectedConnection] : []
+   if (
+      hoverConnection &&
+      hoverConnection.properties?.markerKey !==
+         selectedConnection?.properties?.markerKey
+   ) {
+      features.push(hoverConnection)
+   }
+
+   // @ts-ignore GeoJSON source exposes setData at runtime.
+   source.setData({
+      type: 'FeatureCollection',
+      features,
+   })
+}
+
+const clearOverlapConnection = (kind?: OverlapConnectionKind) => {
+   if (kind) {
+      delete overlapConnectionFeatures.value[kind]
+      delete overlapConnectionTargets.value[kind]
+   } else {
+      overlapConnectionFeatures.value = {}
+      overlapConnectionTargets.value = {}
+   }
+   renderOverlapConnections()
+}
+
+const showOverlapConnection = (
+   feature: any,
+   kind: OverlapConnectionKind = 'hover',
+   render = true
+) => {
+   if (!map.value || !feature?.properties) return
+
+   const offset: [number, number] = [
+      Number(feature.properties.overlapOffsetX),
+      Number(feature.properties.overlapOffsetY),
+   ]
+   if (offset.some((value) => !Number.isFinite(value))) return
+   if (feature.geometry?.type !== 'Point') return
+
+   const satelliteScale = Number(feature.properties.overlapSatelliteScale) || 1
+   const center = feature.geometry.coordinates as [number, number]
+   const centerPoint = map.value.project(center)
+   const satellite = map.value.unproject([
+      centerPoint.x + offset[0] * satelliteScale,
+      centerPoint.y + offset[1] * satelliteScale,
+   ])
+   overlapConnectionTargets.value[kind] = feature
+   overlapConnectionFeatures.value[kind] = {
+      type: 'Feature',
+      geometry: {
+         type: 'LineString',
+         coordinates: [center, [satellite.lng, satellite.lat]],
+      },
+      properties: {
+         kind,
+         markerKey: getMarkerKey({
+            scode: feature.properties.scode,
+            stype: feature.properties.stype,
+         }),
+         color:
+            kind === 'selected'
+               ? SELECTED_MARKER_COLOR
+               : feature.properties.layerColor || SELECTED_MARKER_COLOR,
+      },
+   }
+   if (render) renderOverlapConnections()
+}
+
+const refreshOverlapConnections = () => {
+   for (const kind of ['selected', 'hover'] as OverlapConnectionKind[]) {
+      const target = overlapConnectionTargets.value[kind]
+      if (target) showOverlapConnection(target, kind, false)
+   }
+   renderOverlapConnections()
+}
+
+const restoreSelectedOverlapConnection = () => {
+   if (!localSelected.value) {
+      clearOverlapConnection('selected')
+      return
+   }
+
+   const sourceKeys = localSelectedStype.value
+      ? [localSelectedStype.value]
+      : Object.keys(geojsonBySourceKey.value)
+   for (const sourceKey of sourceKeys) {
+      const selectedFeature = geojsonBySourceKey.value[
+         sourceKey
+      ]?.features?.find(
+         (feature: any) =>
+            feature.properties?.scode === localSelected.value &&
+            feature.properties?.overlapSatellite === true
+      )
+      if (selectedFeature) {
+         showOverlapConnection(selectedFeature, 'selected')
+         return
+      }
+   }
+
+   clearOverlapConnection('selected')
+}
 
 const setSelectedOnSource = (
    sourceKey: string,
@@ -185,26 +349,51 @@ const setSelectedOnSource = (
    const cached = geojsonBySourceKey.value[sourceKey]
    if (!cached || !cached.features) return
 
-   let changed = false
-   for (const f of cached.features) {
-      const fid = (f as any).id
-      if (fid === scode) {
-         ;(f as any).properties = (f as any).properties || {}
-         if ((f as any).properties.selected !== selected) {
-            ;(f as any).properties.selected = selected
-            changed = true
+   const targetFeature = cached.features.find(
+      (feature: any) => feature.properties?.scode === scode
+   )
+   if (!targetFeature) return
+
+   targetFeature.properties = targetFeature.properties || {}
+   const changedSources = new Set<string>()
+   if (targetFeature.properties.selected !== selected) {
+      targetFeature.properties.selected = selected
+      changedSources.add(sourceKey)
+   }
+
+   const overlapGroupKey = targetFeature.properties.overlapGroupKey
+   if (overlapGroupKey) {
+      for (const [candidateSourceKey, candidateData] of Object.entries(
+         geojsonBySourceKey.value
+      )) {
+         for (const feature of candidateData?.features || []) {
+            const properties = feature.properties || {}
+            if (properties.overlapGroupKey !== overlapGroupKey) continue
+
+            const shouldBeCenter = selected
+               ? feature === targetFeature
+               : properties.overlapGroupDominant === true
+            if (properties.overlapGroupCenter !== shouldBeCenter) {
+               properties.overlapGroupCenter = shouldBeCenter
+               feature.properties = properties
+               changedSources.add(candidateSourceKey)
+            }
          }
-         break
       }
    }
 
-   if (changed) {
+   for (const changedSourceKey of changedSources) {
       try {
-         scheduleSetData(sourceKey, cached)
+         scheduleSetData(
+            changedSourceKey,
+            geojsonBySourceKey.value[changedSourceKey]
+         )
       } catch (_) {
          // noop
       }
    }
+
+   requestAnimationFrame(restoreSelectedOverlapConnection)
 }
 
 const scheduleSetData = (sourceKey: string, geojson: any) => {
@@ -241,14 +430,23 @@ const scheduleSetData = (sourceKey: string, geojson: any) => {
    })
 }
 
-const syncSelectedToSources = (newScode?: string, oldScode?: string) => {
+const syncSelectedToSources = (
+   newScode?: string,
+   oldScode?: string,
+   newStype?: string,
+   oldStype?: string
+) => {
    if (!map.value || !mapLoaded.value) return
    if (oldScode) {
-      const oldMarker = props.markers?.find((m) => m.scode === oldScode)
+      const oldMarker = props.markers?.find(
+         (m) => m.scode === oldScode && (!oldStype || m.stype === oldStype)
+      )
       if (oldMarker) setSelectedOnSource(oldMarker.stype, oldScode, false)
    }
    if (newScode) {
-      const newMarker = props.markers?.find((m) => m.scode === newScode)
+      const newMarker = props.markers?.find(
+         (m) => m.scode === newScode && (!newStype || m.stype === newStype)
+      )
       if (newMarker) setSelectedOnSource(newMarker.stype, newScode, true)
    }
 }
@@ -257,6 +455,7 @@ const clearCurrentClusterSource = async () => {
    if (!map.value) return
 
    try {
+      clearOverlapConnection()
       markRenderStart()
       for (const source in clustersInMap.value) {
          for (const layer of clustersInMap.value[source]) {
@@ -281,11 +480,37 @@ const setMapClusterSource = async () => {
       return
    }
 
+   ensureOverlapConnectionLayer()
+
    const yieldToBrowser = () =>
       new Promise<void>((resolve) => requestAnimationFrame(() => resolve()))
 
    const DEFAULT_YIELD_EVERY = 200
    const DEFAULT_YIELD_THRESHOLD = 1500
+
+   const getSatelliteOffsetKey = (offset: [number, number]) =>
+      `${offset[0]},${offset[1]}`
+
+   const getSatelliteOffsetExpression = (
+      markers: Pick<DataMarker, 'overlapOffset'>[]
+   ) => {
+      const expression: any[] = ['match', ['get', 'overlapOffsetKey']]
+      const offsets = new globalThis.Map<string, [number, number]>()
+
+      for (const marker of markers) {
+         if (!marker.overlapOffset) continue
+         offsets.set(
+            getSatelliteOffsetKey(marker.overlapOffset),
+            marker.overlapOffset
+         )
+      }
+      for (const [offsetKey, offset] of offsets) {
+         expression.push(offsetKey, ['literal', offset])
+      }
+      expression.push(['literal', [0, 0]])
+
+      return expression
+   }
 
    // Incremental update: avoid full teardown/rebuild (very expensive for large marker sets)
    const nextKeys = new Set(Object.keys(stationMarkers.value))
@@ -335,6 +560,9 @@ const setMapClusterSource = async () => {
       }
 
       const hasSourceAfterRecreate = !!map.value.getSource(key)
+      const layerForStype = mapLayerStore.getLayerByStationType(key)
+      const fallbackLayerColor =
+         layerForStype?.iconColor || layerForStype?.color || '#BABABA'
       const features: any[] = []
       const layerSize = value.length
       const yieldEvery =
@@ -357,7 +585,7 @@ const setMapClusterSource = async () => {
          const marker = value[i]
          features.push({
             type: 'Feature',
-            id: marker.scode,
+            id: getMarkerKey(marker),
             geometry: {
                type: 'Point',
                coordinates: marker.coordinates,
@@ -370,6 +598,20 @@ const setMapClusterSource = async () => {
                stale: marker.stale,
                recent: (marker as any).recent,
                infoColor: marker.infoColor,
+               overlapSatellite: marker.overlapSatellite,
+               overlapGroupCenter: marker.overlapGroupCenter,
+               overlapGroupDominant: marker.overlapGroupDominant,
+               overlapGroupKey: marker.overlapGroupKey,
+               overlapGroupSize: marker.overlapGroupSize,
+               overlapGroupRadiusPixels: marker.overlapGroupRadiusPixels,
+               overlapOffsetKey: marker.overlapOffset
+                  ? getSatelliteOffsetKey(marker.overlapOffset)
+                  : undefined,
+               overlapOffsetX: marker.overlapOffset?.[0],
+               overlapOffsetY: marker.overlapOffset?.[1],
+               overlapSatelliteScale: marker.overlapSatelliteScale,
+               layerColor:
+                  marker.iconColor || marker.color || fallbackLayerColor,
             },
          })
       }
@@ -381,6 +623,14 @@ const setMapClusterSource = async () => {
             features,
          }
          try {
+            const satelliteLayerId = `${key}-overlap-satellite`
+            if (map.value.getLayer(satelliteLayerId)) {
+               map.value.setLayoutProperty(
+                  satelliteLayerId,
+                  'icon-offset',
+                  getSatelliteOffsetExpression(value)
+               )
+            }
             if (features.length > yieldThreshold) {
                await yieldToBrowser()
                if (!map.value || isUnmounted.value) return
@@ -425,6 +675,10 @@ const setMapClusterSource = async () => {
       const unclusteredMarkerLayerId = `${key}-unclustered-marker`
       const unclusteredMarkerInfoLayerId = `${key}-unclustered-marker-info`
       const unclusteredCountLayerId = `${key}-unclustered-count`
+      const overlapGroupAreaLayerId = `${key}-overlap-group-area`
+      const overlapGroupPreviewLayerId = `${key}-overlap-group-preview`
+      const overlapGroupMarkerLayerId = `${key}-overlap-group-marker`
+      const overlapSatelliteLayerId = `${key}-overlap-satellite`
 
       map.value.addLayer({
          id: clusterLayerId,
@@ -466,7 +720,6 @@ const setMapClusterSource = async () => {
       const singleInactiveSelectedIconId = `custom-marker-${key}-single-inactive-selected`
       const singleInactiveAlarmIconId = `custom-marker-${key}-single-inactive-alarm`
       const singleInactiveSelectedAlarmIconId = `custom-marker-${key}-single-inactive-selected-alarm`
-      const layerForStype = mapLayerStore.getLayerByStationType(key)
       const letter = layerForStype?.id?.[0]?.toUpperCase() || ''
       const isProvince = key.startsWith('PROVINCE_BZ')
       // Build CLUSTER icon
@@ -568,6 +821,51 @@ const setMapClusterSource = async () => {
          alarm: true,
       })
 
+      const satelliteIconId = `custom-marker-${key}-satellite`
+      const satelliteSelectedIconId = `custom-marker-${key}-satellite-selected`
+      const satelliteInactiveIconId = `custom-marker-${key}-satellite-inactive`
+      const satelliteInactiveSelectedIconId = `custom-marker-${key}-satellite-inactive-selected`
+      const satelliteBaseColor = singleBaseColor || fallbackLayerColor
+      const buildSatelliteIcon = async (
+         id: string,
+         strokeColor: string,
+         fillOpacity: number
+      ) => {
+         if (map.value?.hasImage(id)) return
+
+         const canvas = document.createElement('canvas')
+         canvas.width = 30
+         canvas.height = 30
+         const context = canvas.getContext('2d')
+         if (!context) return
+
+         context.beginPath()
+         context.arc(15, 15, 10.5, 0, Math.PI * 2)
+         context.fillStyle = satelliteBaseColor
+         context.globalAlpha = fillOpacity
+         context.fill()
+         context.globalAlpha = 1
+         context.strokeStyle = strokeColor
+         context.lineWidth = 4
+         context.stroke()
+
+         const bitmap = await createImageBitmap(canvas)
+         map.value?.addImage(id, bitmap, { pixelRatio: 1.5 })
+      }
+
+      await buildSatelliteIcon(satelliteIconId, satelliteBaseColor, 0.2)
+      await buildSatelliteIcon(
+         satelliteSelectedIconId,
+         SELECTED_MARKER_COLOR,
+         1
+      )
+      await buildSatelliteIcon(satelliteInactiveIconId, '#BABABA', 0.2)
+      await buildSatelliteIcon(
+         satelliteInactiveSelectedIconId,
+         SELECTED_MARKER_COLOR,
+         1
+      )
+
       try {
          const idsToCheck = [
             singleIconId,
@@ -592,10 +890,91 @@ const setMapClusterSource = async () => {
       }
 
       map.value?.addLayer({
+         id: overlapGroupAreaLayerId,
+         type: 'circle',
+         source: key,
+         minzoom: OVERLAP_SATELLITE_MIN_ZOOM,
+         filter: [
+            'all',
+            ['!', ['has', 'point_count']],
+            ['==', ['get', 'overlapGroupCenter'], true],
+            ['has', 'overlapGroupRadiusPixels'],
+         ],
+         paint: {
+            'circle-radius': ['get', 'overlapGroupRadiusPixels'],
+            'circle-color': ['get', 'layerColor'],
+            'circle-opacity': 0.2,
+            'circle-stroke-width': 0,
+         },
+      })
+
+      map.value?.addLayer({
+         id: overlapGroupPreviewLayerId,
+         type: 'symbol',
+         source: key,
+         maxzoom: OVERLAP_SATELLITE_MIN_ZOOM,
+         filter: [
+            'all',
+            ['!', ['has', 'point_count']],
+            ['==', ['get', 'overlapGroupCenter'], true],
+         ],
+         layout: {
+            'icon-image': [
+               'case',
+               ['==', ['get', 'selected'], true],
+               singleSelectedIconId,
+               singleIconId,
+            ],
+            'icon-size': 1,
+            'icon-allow-overlap': true,
+            'icon-ignore-placement': true,
+            'icon-optional': true,
+         },
+      })
+
+      map.value?.addLayer({
+         id: overlapGroupMarkerLayerId,
+         type: 'symbol',
+         source: key,
+         minzoom: OVERLAP_SATELLITE_MIN_ZOOM,
+         filter: [
+            'all',
+            ['!', ['has', 'point_count']],
+            ['==', ['get', 'overlapGroupCenter'], true],
+         ],
+         layout: {
+            'icon-image': [
+               'case',
+               ['==', ['get', 'selected'], true],
+               singleSelectedIconId,
+               singleIconId,
+            ],
+            'icon-size': [
+               'interpolate',
+               ['linear'],
+               ['get', 'overlapGroupSize'],
+               2,
+               0.82,
+               8,
+               0.7,
+               16,
+               0.6,
+            ],
+            'icon-allow-overlap': true,
+            'icon-ignore-placement': true,
+            'icon-optional': true,
+         },
+      })
+
+      map.value?.addLayer({
          id: unclusteredMarkerLayerId,
          type: 'symbol',
          source: key,
-         filter: ['!', ['has', 'point_count']],
+         filter: [
+            'all',
+            ['!', ['has', 'point_count']],
+            ['!=', ['get', 'overlapSatellite'], true],
+         ],
          layout: {
             'icon-image': [
                'case',
@@ -645,7 +1024,11 @@ const setMapClusterSource = async () => {
             id: unclusteredCountLayerId,
             type: 'symbol',
             source: key,
-            filter: ['!', ['has', 'point_count']],
+            filter: [
+               'all',
+               ['!', ['has', 'point_count']],
+               ['!=', ['get', 'overlapSatellite'], true],
+            ],
             layout: {
                'text-field': '1',
                'text-font': ['Open Sans Regular'],
@@ -664,12 +1047,46 @@ const setMapClusterSource = async () => {
       }
 
       map.value?.addLayer({
+         id: overlapSatelliteLayerId,
+         type: 'symbol',
+         source: key,
+         minzoom: OVERLAP_SATELLITE_MIN_ZOOM,
+         filter: [
+            'all',
+            ['!', ['has', 'point_count']],
+            ['==', ['get', 'overlapSatellite'], true],
+         ],
+         layout: {
+            'icon-image': [
+               'case',
+               [
+                  'all',
+                  ['==', ['get', 'inactive'], true],
+                  ['==', ['get', 'selected'], true],
+               ],
+               satelliteInactiveSelectedIconId,
+               ['==', ['get', 'inactive'], true],
+               satelliteInactiveIconId,
+               ['==', ['get', 'selected'], true],
+               satelliteSelectedIconId,
+               satelliteIconId,
+            ],
+            'icon-offset': getSatelliteOffsetExpression(value) as any,
+            'icon-size': ['get', 'overlapSatelliteScale'],
+            'icon-allow-overlap': true,
+            'icon-ignore-placement': true,
+            'icon-optional': true,
+         },
+      })
+
+      map.value?.addLayer({
          id: unclusteredMarkerInfoLayerId,
          type: 'circle',
          source: key,
          filter: [
             'all',
             ['!', ['has', 'point_count']],
+            ['!=', ['get', 'overlapSatellite'], true],
             ['has', 'infoColor'],
             ['!=', ['get', 'alarm'], true],
          ],
@@ -691,6 +1108,7 @@ const setMapClusterSource = async () => {
       const staleFilter: any = [
          'all',
          ['!', ['has', 'point_count']],
+         ['!=', ['get', 'overlapSatellite'], true],
          ['==', ['get', 'stale'], true],
          [
             'any',
@@ -728,6 +1146,10 @@ const setMapClusterSource = async () => {
          unclusteredMarkerLayerId,
          unclusteredMarkerInfoLayerId,
          unclusteredCountLayerId,
+         overlapGroupAreaLayerId,
+         overlapGroupPreviewLayerId,
+         overlapGroupMarkerLayerId,
+         overlapSatelliteLayerId,
          unclusteredMarkerStaleLayerId,
       ]
 
@@ -751,7 +1173,9 @@ const setMapClusterSource = async () => {
 
       handleMousePointerOnLayer(clusterLayerId)
       handleMousePointerOnLayer(unclusteredMarkerLayerId)
+      handleSatelliteHover(overlapSatelliteLayerId)
       handleClickOnMarker(unclusteredMarkerLayerId)
+      handleClickOnMarker(overlapSatelliteLayerId)
    }
 }
 
@@ -799,17 +1223,20 @@ const handleClickOnMarker = (layerId: string) => {
             }
          }
 
-         const scode =
-            ((feature as any).id as string | undefined) ||
-            ((feature.properties as any).scode as string | undefined)
+         // Always prefer the original property. MapLibre feature ids are not a
+         // safe transport for station codes that start with digits.
+         const scode = (feature.properties as any).scode as string | undefined
+         const stype = (feature.properties as any).stype as string | undefined
          const marker = scode
-            ? props.markers?.find((m) => m.scode === scode)
+            ? props.markers?.find(
+                 (m) => m.scode === scode && (!stype || m.stype === stype)
+              )
             : undefined
          const eventData =
             marker ||
             ({
                scode: scode || '',
-               stype: (feature.properties as any).stype,
+               stype: stype || '',
                // @ts-ignore
                coordinates: feature.geometry.coordinates,
             } as DataMarker)
@@ -827,6 +1254,23 @@ const handleMousePointerOnLayer = (layerId: string) => {
    map.value?.on('mouseleave', layerId, () => {
       const canvas = map.value?.getCanvas()
       if (canvas) canvas.style.cursor = ''
+   })
+}
+
+const handleSatelliteHover = (layerId: string) => {
+   map.value?.on('mousemove', layerId, (event) => {
+      const canvas = map.value?.getCanvas()
+      if (canvas) canvas.style.cursor = 'pointer'
+
+      const feature = event.features?.[0]
+      if (feature) showOverlapConnection(feature)
+   })
+
+   map.value?.on('mouseleave', layerId, () => {
+      const canvas = map.value?.getCanvas()
+      if (canvas) canvas.style.cursor = ''
+      clearOverlapConnection('hover')
+      restoreSelectedOverlapConnection()
    })
 }
 
@@ -879,7 +1323,6 @@ onMounted(async () => {
             const layerForStype = mapLayerStore.getLayerByStationType(stype)
             const letter = layerForStype?.id?.[0]?.toUpperCase() || ''
             const isProvince = stype.startsWith('PROVINCE_BZ')
-
             const buildSingleIcon = async (opts?: {
                selected?: boolean
                alarm?: boolean
@@ -971,8 +1414,19 @@ onMounted(async () => {
       }
 
       emitBounds('load')
-      map.value?.on('moveend', () => emitBounds('moveend'))
-      map.value?.on('zoomend', () => emitBounds('zoomend'))
+      map.value?.on('movestart', () => {
+         clearOverlapConnection('hover')
+         if (!localSelected.value) clearOverlapConnection('selected')
+      })
+      map.value?.on('moveend', () => {
+         emitBounds('moveend')
+         restoreSelectedOverlapConnection()
+      })
+      map.value?.on('zoomend', () => {
+         emitBounds('zoomend')
+         restoreSelectedOverlapConnection()
+      })
+      map.value?.on('zoom', refreshOverlapConnections)
    })
 })
 
@@ -981,10 +1435,16 @@ onBeforeUnmount(() => {
 })
 
 watch(
-   () => props.selectedScode,
-   (curr, prev) => {
-      localSelected.value = curr
-      syncSelectedToSources(curr, prev)
+   () => [props.selectedScode, props.selectedStype] as const,
+   ([currentScode, currentStype], [previousScode, previousStype]) => {
+      localSelected.value = currentScode
+      localSelectedStype.value = currentStype
+      syncSelectedToSources(
+         currentScode,
+         previousScode,
+         currentStype,
+         previousStype
+      )
    }
 )
 
@@ -1004,21 +1464,36 @@ watch(
          props.markers,
          mapLoaded.value,
          props.selectedScode,
+         props.selectedStype,
          showAlarms.value,
       ] as [
          DataMarker[] | undefined,
          boolean | undefined,
          string | undefined,
+         string | undefined,
          boolean,
       ],
-   async ([currentProps, currentMapLoaded, currentSelectedScode]) => {
+   async ([
+      currentProps,
+      currentMapLoaded,
+      currentSelectedScode,
+      currentSelectedStype,
+   ]) => {
       if (preventMapUpdate.value) return
       if (isUnmounted.value) return
+
+      const currentSelectedKey =
+         currentSelectedScode && currentSelectedStype
+            ? getMarkerKey({
+                 scode: currentSelectedScode,
+                 stype: currentSelectedStype,
+              })
+            : currentSelectedScode
 
       // Avoid re-render loops: only refresh when markers/selection actually changed.
       if (
          lastRenderedMarkers.value === currentProps &&
-         lastRenderedSelected.value === currentSelectedScode &&
+         lastRenderedSelected.value === currentSelectedKey &&
          lastRenderedShowAlarms.value === showAlarms.value
       ) {
          preventMapUpdate.value = false
@@ -1044,7 +1519,11 @@ watch(
                              p2.coordinates[1] - (p1.coordinates[1] || 0)
                        )
 
-            markersToRender?.forEach((data: DataMarker) => {
+            const spreadMarkers = spreadOverlappingMarkers(
+               markersToRender || []
+            )
+
+            spreadMarkers.forEach((data: DataMarker) => {
                const arr = stationMarkers.value[data.stype] || []
                const normalizedEventData =
                   typeof (data as any).eventData === 'string'
@@ -1077,10 +1556,14 @@ watch(
             }
 
             // Ensure selected state is applied after sources are (re)created.
-            syncSelectedToSources(props.selectedScode)
+            syncSelectedToSources(
+               props.selectedScode,
+               undefined,
+               props.selectedStype
+            )
 
             lastRenderedMarkers.value = currentProps
-            lastRenderedSelected.value = currentSelectedScode
+            lastRenderedSelected.value = currentSelectedKey
             lastRenderedShowAlarms.value = showAlarms.value
          } catch (e) {
             console.error('Failed during map watcher update', e)

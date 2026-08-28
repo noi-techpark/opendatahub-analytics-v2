@@ -6,6 +6,7 @@ const PROVINCE_MARKER_GREY = '#666A66'
 const PROVINCE_MARKER_RED = '#D40000'
 const PROVINCE_MARKER_ORANGE = '#FFB347'
 const PROVINCE_MARKER_BLUE = '#1B6EF3'
+export const SELECTED_MARKER_COLOR = '#50742F'
 
 export const needsWhiteIcon = (color: string): boolean => {
    return (
@@ -70,6 +71,7 @@ export const getIconForStationType = (stationType: string): string => {
       BikeParking: '/markers/icons/parking.svg',
       BluetoothStation: '/markers/icons/bluetooth.svg',
       TrafficSensor: '/markers/icons/traffic.svg',
+      TrafficStation: '/markers/icons/traffic.svg',
       TrafficDirection: '/markers/icons/traffic.svg',
       BikeCounter: '/markers/icons/traffic.svg',
       RWISstation: '/markers/icons/road-weather.svg',
@@ -77,6 +79,7 @@ export const getIconForStationType = (stationType: string): string => {
       BikesharingStation: '/markers/icons/bike-sharing.svg',
       Bicycle: '/markers/icons/bike-sharing.svg',
       EChargingStation: '/markers/icons/e-mobility.svg',
+      EChargingPlug: '/markers/icons/e-mobility.svg',
       BIKE_CHARGER: '/markers/icons/e-mobility.svg',
       VMS: '/markers/icons/vms.svg',
       LinkStation: '/markers/icons/vehicular-times.svg',
@@ -296,7 +299,7 @@ export const getBaseMarkerSvgUrl = (
    const inactive = !!opts?.inactive
 
    const outerFill = alarm ? '#FF9797' : 'white'
-   const outerStroke = selected ? '#50742F' : '#DADADA'
+   const outerStroke = selected ? SELECTED_MARKER_COLOR : '#DADADA'
    const outerStrokeWidth = selected ? 3 : 1
    const resolvedMarkerColor = inactive ? '#BABABA' : markerColor
 

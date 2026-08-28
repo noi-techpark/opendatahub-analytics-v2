@@ -76,7 +76,11 @@
          },
          {
             "id": "Traffic",
-            "stationType": ["TrafficSensor", "TrafficDirection"],
+            "stationType": [
+               "TrafficStation",
+               "TrafficSensor",
+               "TrafficDirection"
+            ],
             "format": "integreen",
             "projection": "EPSG:4326",
             "custom-function": null,
@@ -135,7 +139,7 @@
          },
          {
             "id": "E-Mobility",
-            "stationType": ["EChargingStation"],
+            "stationType": ["EChargingStation", "EChargingPlug"],
             "format": "integreen",
             "projection": "EPSG:4326",
             "custom-function": null,
