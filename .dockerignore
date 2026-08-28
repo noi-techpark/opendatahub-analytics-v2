@@ -26,6 +26,7 @@ output
 *.backup
 *.swp
 *.lock
+!yarn.lock
 *.cache
 
 Dockerfile*

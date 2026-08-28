@@ -10,7 +10,7 @@ COPY . .
 # explicit copy due to .dockerignore
 COPY .env.build .env
 
-RUN yarn install
+RUN yarn install --frozen-lockfile
 RUN yarn build-only
 
 # Stage 2: Serve the application using nginx
