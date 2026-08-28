@@ -20,6 +20,7 @@ import { differenceInHours } from 'date-fns'
 import type { StationMeasurement } from '../utils/alarm-evaluator'
 import { useNotificationsStore } from '../stores/notifications'
 import { useMapLayerStore } from '../stores/map-layers'
+import { getMarkerKey } from '../utils/map-marker-utils'
 
 export function useLayerDataFetcher() {
    const layerData = useLayerDataStore()
@@ -192,7 +193,7 @@ export function useLayerDataFetcher() {
          const newMarkers: DataMarker[] = []
 
          let flatData: EventPoint[] | DataPoint[] | AnnouncementEvent[] = []
-         const activeByScode: Record<string, boolean> = {}
+         const activeByMarker: Record<string, boolean> = {}
 
          if (isProvinceEvents) {
             const baseUrl = import.meta.env.VITE_ODH_CONTENT_API_URI
@@ -251,7 +252,6 @@ export function useLayerDataFetcher() {
                return (
                   typeof o.scode === 'string' &&
                   typeof o.stype === 'string' &&
-                  typeof o.sorigin === 'string' &&
                   typeof o.sname === 'string'
                )
             }
@@ -266,7 +266,7 @@ export function useLayerDataFetcher() {
                   typeof row.scode === 'string' &&
                   typeof row.sactive === 'boolean'
                ) {
-                  activeByScode[row.scode] = row.sactive
+                  activeByMarker[getMarkerKey(row)] = row.sactive
                }
             }
          }
@@ -340,7 +340,7 @@ export function useLayerDataFetcher() {
                     typedAnnouncement._Meta?.Source ||
                     'PROVINCE_BZ'
                   : typedDataPoint.sorigin
-               opts.uniqueOrigins[stype].add(origin)
+               if (origin) opts.uniqueOrigins[stype].add(origin)
 
                // Province events filter is handled in MapView; for now include all
 
@@ -491,8 +491,9 @@ export function useLayerDataFetcher() {
                const isStale = !isProvinceEvents && !isRecent
                const isInactive =
                   !isProvinceEvents &&
-                  typeof activeByScode[scode] === 'boolean' &&
-                  activeByScode[scode] === false
+                  typeof activeByMarker[getMarkerKey({ scode, stype })] ===
+                     'boolean' &&
+                  activeByMarker[getMarkerKey({ scode, stype })] === false
 
                newPoints.push({
                   scode,
@@ -525,18 +526,18 @@ export function useLayerDataFetcher() {
                })
             }
 
-            const byScode = new Map<string, DataMarker>()
+            const byMarker = new Map<string, DataMarker>()
             for (let i = 0; i < currentMarkers.length; i++) {
                const m = currentMarkers[i]
-               byScode.set(m.scode, m)
+               byMarker.set(getMarkerKey(m), m)
             }
 
             for (let i = 0; i < newPoints.length; i++) {
                const point = newPoints[i]
-               byScode.set(point.scode, point)
+               byMarker.set(getMarkerKey(point), point)
             }
 
-            newMarkers.push(...byScode.values())
+            newMarkers.push(...byMarker.values())
          } else {
             showNotification({
                type: 'error',
@@ -722,7 +723,7 @@ export function useLayerDataFetcher() {
             const { data } = await useFetchWithAuth(url).json()
             const flat = (data.value?.data as DataPoint[]) || []
             for (const d of flat) {
-               stationInfo[d.scode] = {
+               stationInfo[getMarkerKey(d)] = {
                   sname: d.sname,
                   coords: [d.scoordinate?.x || 0, d.scoordinate?.y || 0],
                   stype: d.stype,
@@ -776,7 +777,7 @@ export function useLayerDataFetcher() {
             const typed = treeData[stype]?.stations || {}
 
             for (const scode of Object.keys(typed)) {
-               const info = stationInfo[scode]
+               const info = stationInfo[getMarkerKey({ scode, stype })]
                if (!info) continue
 
                const stationOrigin =
@@ -902,17 +903,17 @@ export function useLayerDataFetcher() {
             if (unfiltered) newMarkersOut.push(...unfiltered)
          }
 
-         const byScode = new Map<string, DataMarker>()
+         const byMarker = new Map<string, DataMarker>()
          for (let i = 0; i < ctx.markers.length; i++) {
             const m = ctx.markers[i]
-            byScode.set(m.scode, m)
+            byMarker.set(getMarkerKey(m), m)
          }
          for (let i = 0; i < newMarkersOut.length; i++) {
             const m = newMarkersOut[i]
-            byScode.set(m.scode, m)
+            byMarker.set(getMarkerKey(m), m)
          }
 
-         const mergedRaw = [...byScode.values()]
+         const mergedRaw = [...byMarker.values()]
          const merged = normalizeMarkerFlags(mergedRaw)
 
          return applyProvinceFilter(merged, new Date())

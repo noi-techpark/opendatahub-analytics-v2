@@ -14,6 +14,14 @@ export type StationMapMarker = {
    inactive?: boolean
    stale?: boolean
    recent?: boolean
+   overlapSatellite?: boolean
+   overlapGroupCenter?: boolean
+   overlapGroupDominant?: boolean
+   overlapGroupKey?: string
+   overlapGroupSize?: number
+   overlapGroupRadiusPixels?: number
+   overlapOffset?: [number, number]
+   overlapSatelliteScale?: number
    infoColor?: string
    eventData?: string // stringified EventPoint (JSON)
 }
@@ -23,6 +31,14 @@ export type DataMarker = {
    inactive?: boolean
    stale?: boolean
    recent?: boolean
+   overlapSatellite?: boolean
+   overlapGroupCenter?: boolean
+   overlapGroupDominant?: boolean
+   overlapGroupKey?: string
+   overlapGroupSize?: number
+   overlapGroupRadiusPixels?: number
+   overlapOffset?: [number, number]
+   overlapSatelliteScale?: number
    sname?: string
    selected?: boolean
    coordinates: [number, number]
@@ -41,7 +57,7 @@ export type DataPoint = {
       srid: number
    }
    stype: string
-   sorigin: string
+   sorigin?: string
 }
 
 export type EventPoint = {
@@ -188,9 +204,14 @@ export type MarkerMeasurements = {
    mperiod: number
    tname: string
    tunit: string
-   mvalue: number
+   mvalue: string | number
    sorigin: string
    stype: string
    sname: string
    _timestamp: string
+   displayParts?: {
+      text: string
+      imageSrc?: string
+      title?: string
+   }[]
 }

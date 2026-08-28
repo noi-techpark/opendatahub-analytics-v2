@@ -22,7 +22,7 @@ SPDX-License-Identifier: AGPL-3.0-or-later
    />
    <MarkerCard
       v-if="selectedMarker && selectedScode"
-      :key="selectedMarker.scode"
+      :key="getMarkerKey(selectedMarker)"
       :marker="selectedMarker"
       :open-on-measurements="!!focusScode"
       @vue:beforeUnmount="focusScode = undefined"
@@ -33,6 +33,7 @@ SPDX-License-Identifier: AGPL-3.0-or-later
       :loading="layerActionInProgress"
       :markers="markers"
       :selectedScode
+      :selectedStype="selectedMarker?.stype"
       :focusScode
       @markerSelected="handleSelectMarker"
       @renderingChanged="handleMapRenderingChanged"
@@ -65,6 +66,7 @@ import { useLayoutStore } from '../stores/layout'
 import { useAutoRefreshStore } from '../stores/auto-refresh'
 import { useRoute } from 'vue-router'
 import { getColorForPriority } from '../utils/marker-utils'
+import { getMarkerKey } from '../utils/map-marker-utils'
 
 const layoutStore = useLayoutStore()
 const { sidebarMapContent } = storeToRefs(layoutStore)
