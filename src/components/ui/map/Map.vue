@@ -46,7 +46,7 @@ SPDX-License-Identifier: AGPL-3.0-or-later
 import 'maplibre-gl/dist/maplibre-gl.css'
 import { computed, nextTick, onBeforeUnmount, onMounted, ref, watch } from 'vue'
 import { DataMarker, StationMapMarker } from '../../../types/api'
-import { initMap } from '../../../utils/map-utils'
+import { initMap, mapFontStack } from '../../../utils/map-utils'
 import {
    createMarkerIcon,
    getBaseMarkerSvgUrl,
@@ -699,7 +699,7 @@ const setMapClusterSource = async () => {
          filter: ['has', 'point_count'],
          layout: {
             'text-field': '{point_count_abbreviated}',
-            'text-font': ['Open Sans Regular'],
+            'text-font': mapFontStack,
             'text-size': 10,
             'text-allow-overlap': true,
          },
@@ -1031,7 +1031,7 @@ const setMapClusterSource = async () => {
             ],
             layout: {
                'text-field': '1',
-               'text-font': ['Open Sans Regular'],
+               'text-font': mapFontStack,
                'text-size': 10,
                'text-allow-overlap': true,
                'text-ignore-placement': true,
