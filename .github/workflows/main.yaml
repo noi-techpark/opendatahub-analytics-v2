@@ -8,7 +8,7 @@ on:
   pull_request:
 
 env:
-  NODE_VERSION: 20.x
+  NODE_VERSION: 22.x
   PROJECT_NAME: opendatahub-analytics-v2
   DOCKER_IMAGE: ghcr.io/${{ github.repository }}/analytics
 
@@ -22,10 +22,24 @@ jobs:
       - name: REUSE Compliance Check
         uses: fsfe/reuse-action@v4
 
+  build:
+    runs-on: ubuntu-22.04
+    steps:
+      - name: Checkout source code
+        uses: actions/checkout@v4
+
+      - name: Create .env file
+        run: cp .env.example .env.build
+
+      - name: Build image
+        run: docker compose -f infrastructure/docker-compose.build.yml build
+        env:
+          DOCKER_TAG: ci
+
   deploy-test:
     runs-on: ubuntu-22.04
     if: github.ref == 'refs/heads/main'
-    needs: test
+    needs: [test, build]
     concurrency: deploy-test
     env:
       SERVER_PORT: 8999
@@ -83,7 +97,7 @@ jobs:
   deploy-prod:
     runs-on: ubuntu-22.04
     if: github.ref == 'refs/heads/prod'
-    needs: test
+    needs: [test, build]
     concurrency: deploy-prod
     env:
       SERVER_PORT: 8999
