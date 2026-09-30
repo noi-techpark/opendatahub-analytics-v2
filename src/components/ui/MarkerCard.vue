@@ -330,7 +330,7 @@ const applyImageMappings = async (
 
          let metadata: ImageMappingMetadata[] | undefined
          try {
-            const metadataUrl = `${import.meta.env.VITE_ODH_MOBILITY_API_URI}/flat/${encodeURIComponent(props.marker.stype)}/${encodeURIComponent(mapping.dataType)}/?limit=1&offset=0&shownull=false&distinct=true&select=tmetadata`
+            const metadataUrl = `${import.meta.env.VITE_ODH_MOBILITY_API_URI}/flat/${encodeURIComponent(props.marker.stype)}/${encodeURIComponent(mapping.dataType)}?limit=1&offset=0&shownull=false&distinct=true&select=tmetadata`
             const { data: metadataResponse } =
                await useFetchWithAuth(metadataUrl).json()
             metadata = metadataResponse.value?.data?.[0]?.tmetadata?.[
@@ -415,7 +415,7 @@ const fetchMarkerData = async () => {
    const escapedStationCode = props.marker.scode.replace(/(['"()\\])/g, '\\$1')
    const where = encodeURIComponent(`scode.eq."${escapedStationCode}"`)
    const stationType = encodeURIComponent(props.marker.stype)
-   const dataUrl = `${import.meta.env.VITE_ODH_MOBILITY_API_URI}/flat,node/${stationType}/?where=${where}`
+   const dataUrl = `${import.meta.env.VITE_ODH_MOBILITY_API_URI}/flat,node/${stationType}?where=${where}`
    const measurementsUrl = `${import.meta.env.VITE_ODH_MOBILITY_API_URI}/flat,node/${stationType}/*/latest?where=${where}`
 
    try {
