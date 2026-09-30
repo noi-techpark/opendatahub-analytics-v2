@@ -241,7 +241,7 @@ export function useLayerDataFetcher() {
 
             if (where) params.set('where', where)
 
-            const url = `${import.meta.env.VITE_ODH_MOBILITY_API_URI}/flat,${datasetType}/${layer.stationType}/?${params.toString()}`
+            const url = `${import.meta.env.VITE_ODH_MOBILITY_API_URI}/flat,${datasetType}/${layer.stationType}?${params.toString()}`
 
             const { data } = await useFetchWithAuth(url).json()
             const maybeArray = (data.value as { data?: unknown } | undefined)
@@ -719,7 +719,7 @@ export function useLayerDataFetcher() {
                query += activeQuery
             }
 
-            const url = `${import.meta.env.VITE_ODH_MOBILITY_API_URI}/flat,node/${stypeList}/?limit=-1&distinct=true&${query}`
+            const url = `${import.meta.env.VITE_ODH_MOBILITY_API_URI}/flat,node/${stypeList}?limit=-1&distinct=true&${query}`
             const { data } = await useFetchWithAuth(url).json()
             const flat = (data.value?.data as DataPoint[]) || []
             for (const d of flat) {
