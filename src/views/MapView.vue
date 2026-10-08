@@ -504,7 +504,7 @@ onMounted(async () => {
 
    try {
       const { ensureAlarmConfigLoaded } = useLayerDataFetcher()
-      await ensureAlarmConfigLoaded()
+      await ensureAlarmConfigLoaded(t)
    } catch (error) {
       console.error('Failed to ensure alarm configuration:', error)
    }

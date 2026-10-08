@@ -38,4 +38,6 @@ export interface AlarmEvent {
    stationType: string
    measurement: string
    sorigin?: string
+   /** mperiod (seconds) of the time series that triggered the alarm */
+   period?: number
 }

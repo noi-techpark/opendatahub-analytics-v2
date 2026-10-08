@@ -44,6 +44,7 @@
          "title": "Active Alarms",
          "timestamp": "Timestamp",
          "measurement": "Measurement",
+         "period": "Period",
          "station": "Station",
          "coordinates": "Coordinates",
          "alarm": "Alarm",
@@ -58,6 +59,9 @@
          },
          "no-alarms": "No active alarms",
          "select-station-to-see-alarms": "Select at least one station to see alarms"
+      },
+      "alarm-config": {
+         "error": "Alarms are disabled: the alarm configuration could not be loaded. {detail}"
       },
       "events-table": {
          "start-time": "Start time",
