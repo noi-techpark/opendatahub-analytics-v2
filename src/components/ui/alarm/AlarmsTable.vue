@@ -37,7 +37,7 @@ SPDX-License-Identifier: AGPL-3.0-or-later
             </tr>
             <tr
                v-for="alarm in sortedAlarms"
-               :key="`${alarm.stationName}-${alarm.measurement}-${alarm.alarm.name}`"
+               :key="`${alarm.stationName}-${alarm.measurement}-${alarm.alarm.name}-${alarm.period}`"
                class="__clickable table-row"
                @click="navigateToMap(alarm)"
             >
@@ -63,6 +63,9 @@ SPDX-License-Identifier: AGPL-3.0-or-later
                   </template>
                   <template v-else-if="header.key === 'measurement'">
                      {{ alarm.measurement }}
+                  </template>
+                  <template v-else-if="header.key === 'period'">
+                     {{ formatPeriod(alarm.period) }}
                   </template>
                   <template v-else-if="header.key === 'sorigin'">
                      {{ alarm.sorigin || '' }}
@@ -130,6 +133,11 @@ const tableHeaders = [
       key: 'measurement',
       label: t('components.alarm-table.measurement'),
       class: 'w-44',
+   },
+   {
+      key: 'period',
+      label: t('components.alarm-table.period'),
+      class: 'w-28',
    },
    {
       key: 'sorigin',
@@ -206,6 +214,8 @@ const sortedAlarms = computed(() => {
             return alarm.timestamp
          case 'measurement':
             return alarm.measurement
+         case 'period':
+            return alarm.period ?? -1
          case 'sorigin':
             return alarm.sorigin || ''
          case 'stationName':
@@ -233,6 +243,13 @@ const sortedAlarms = computed(() => {
 
 const formatDate = (date: Date): string => {
    return format(date, 'yyyy-MM-dd HH:mm:ss')
+}
+
+const formatPeriod = (period?: number): string => {
+   if (!period) return ''
+   if (period % 3600 === 0) return `${period / 3600} h`
+   if (period % 60 === 0) return `${period / 60} min`
+   return `${period} s`
 }
 
 const formatCoordinates = (coordinates: [number, number]): string => {

@@ -98,15 +98,4 @@ ParkingStation:
            thresholds:
               min: 0
               max: 25
-           periods: [600]
-
-ParkingStation:
-   free:
-      alarms:
-         - name: 'Limited availability'
-           description: 'Parking nearly fully occupied'
-           priority: 'high'
-           thresholds:
-              min: 0
-              max: 25
-           periods: [120]
+           periods: [600, 120]

@@ -78,7 +78,7 @@ async function loadConfig() {
    try {
       const { ensureAlarmConfigLoaded } = useLayerDataFetcher()
       layerDataStore.setAlarmConfig({})
-      await ensureAlarmConfigLoaded()
+      await ensureAlarmConfigLoaded(t)
    } catch (error) {
       console.error('Error ensuring alarm configuration:', error)
    }

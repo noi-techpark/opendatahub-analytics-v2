@@ -12,6 +12,8 @@ export interface StationMeasurement {
    stationName: string
    coordinates: [number, number]
    sorigin?: string
+   /** mperiod of the time series the value was read from, in seconds */
+   period?: number
 }
 
 export function evaluateAlarms(
@@ -52,6 +54,17 @@ export function evaluateAlarms(
             continue
          }
       }
+      // An alarm only applies to the aggregation windows it declares: without this
+      // check every alarm fires once per fetched period, duplicating rows.
+      if (
+         Array.isArray(alarm.periods) &&
+         alarm.periods.length > 0 &&
+         typeof measurement.period === 'number' &&
+         !alarm.periods.includes(measurement.period)
+      ) {
+         continue
+      }
+
       if (value >= alarm.thresholds.min && value <= alarm.thresholds.max) {
          triggeredAlarms.push({
             timestamp: measurement.timestamp,
@@ -62,6 +75,7 @@ export function evaluateAlarms(
             stationType,
             measurement: measurementType,
             sorigin,
+            period: measurement.period,
          })
       }
    }

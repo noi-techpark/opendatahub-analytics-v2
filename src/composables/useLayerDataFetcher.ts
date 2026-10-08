@@ -6,6 +6,7 @@ import { useLayerDataStore } from '../stores/layer-data'
 import {
    loadAlarmConfig,
    getDefaultAlarmConfigUrl,
+   AlarmConfigError,
 } from '../utils/alarm-config-loader'
 import type { AlarmConfig } from '../types/alarm-config'
 import { useFetchWithAuth } from '../utils/api'
@@ -21,6 +22,11 @@ import type { StationMeasurement } from '../utils/alarm-evaluator'
 import { useNotificationsStore } from '../stores/notifications'
 import { useMapLayerStore } from '../stores/map-layers'
 import { getMarkerKey } from '../utils/map-marker-utils'
+import type { ComposerTranslation } from 'vue-i18n'
+
+// One notification per distinct failure: the configuration is retried on every
+// refresh, so a broken alarms.yaml would otherwise pile up identical toasts.
+let alarmConfigErrorNotified: string | null = null
 
 export function useLayerDataFetcher() {
    const layerData = useLayerDataStore()
@@ -29,14 +35,32 @@ export function useLayerDataFetcher() {
    const layerStore = useMapLayerStore()
    const { hideInactiveSensors } = storeToRefs(layerStore)
 
-   const ensureAlarmConfigLoaded = async () => {
-      if (!alarmConfig.value || Object.keys(alarmConfig.value).length === 0) {
-         try {
-            const cfg = await loadAlarmConfig(getDefaultAlarmConfigUrl())
-            layerData.setAlarmConfig(cfg)
-         } catch (e) {
-            console.error('Failed to load alarm configuration:', e)
-         }
+   const ensureAlarmConfigLoaded = async (t?: ComposerTranslation) => {
+      if (alarmConfig.value && Object.keys(alarmConfig.value).length > 0) {
+         return
+      }
+      try {
+         const cfg = await loadAlarmConfig(getDefaultAlarmConfigUrl())
+         layerData.setAlarmConfig(cfg)
+         alarmConfigErrorNotified = null
+      } catch (e) {
+         console.error('Failed to load alarm configuration:', e)
+         const detail =
+            e instanceof AlarmConfigError
+               ? e.detail
+               : e instanceof Error
+                 ? e.message.split('\n')[0].trim()
+                 : String(e)
+         if (alarmConfigErrorNotified === detail) return
+         alarmConfigErrorNotified = detail
+         layerData.setAlarmConfig({})
+         showNotification({
+            type: 'error',
+            duration: 0,
+            message: t
+               ? t('components.alarm-config.error', { detail })
+               : `Alarms are disabled: ${detail}`,
+         })
       }
    }
 
@@ -799,6 +823,7 @@ export function useLayerDataFetcher() {
                         stationName: info.sname,
                         coordinates: info.coords,
                         sorigin: stationOrigin,
+                        period: Number(m.mperiod),
                      })
                   }
                }
