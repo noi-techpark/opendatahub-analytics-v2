@@ -22,6 +22,7 @@ import type { StationMeasurement } from '../utils/alarm-evaluator'
 import { useNotificationsStore } from '../stores/notifications'
 import { useMapLayerStore } from '../stores/map-layers'
 import { getMarkerKey } from '../utils/map-marker-utils'
+import { ALARM_PRIORITY_COLORS } from '../utils/marker-utils'
 import type { ComposerTranslation } from 'vue-i18n'
 
 // One notification per distinct failure: the configuration is retried on every
@@ -311,29 +312,71 @@ export function useLayerDataFetcher() {
          }
 
          if (flatData && flatData.length > 0) {
-            const fetchedEvents: Record<
+            // Alarm measurements, cached per station type. A layer can mix
+            // station types (Parking = ParkingStation, ParkingSensor,
+            // ParkingFacility) and only some of them declare alarms, so the
+            // query has to be built from the station's own stype: deriving it
+            // once per layer silently disables alarms for every other type.
+            const alarmMeasurementsByStype: Record<
                string,
                Record<
                   string,
                   {
-                     stations: Record<
+                     sdatatypes: Record<
                         string,
                         {
-                           sdatatypes: Record<
-                              string,
-                              {
-                                 tmeasurements: Array<{
-                                    mperiod: number
-                                    mvalidtime: string
-                                    mvalue: number
-                                 }>
-                              }
-                           >
+                           tmeasurements: Array<{
+                              mperiod: number
+                              mvalidtime: string
+                              mvalue: number
+                           }>
                         }
                      >
                   }
                >
             > = {}
+
+            const loadAlarmMeasurements = async (stype: string) => {
+               if (alarmMeasurementsByStype[stype]) {
+                  return alarmMeasurementsByStype[stype]
+               }
+               const measurementTypes =
+                  getMeasurementTypesFromAlarmConfig(stype)
+               let query_where_datatypes = ''
+               const datatype_period_duplicates: Record<string, boolean> = {}
+               for (const tnameKey in measurementTypes) {
+                  for (const mperiodKey in measurementTypes[tnameKey]) {
+                     const duplicatesKey = tnameKey + '_' + mperiodKey
+                     if (datatype_period_duplicates[duplicatesKey]) continue
+                     datatype_period_duplicates[duplicatesKey] = true
+                     query_where_datatypes +=
+                        (query_where_datatypes === '' ? 'or(' : ',') +
+                        'and(mperiod.eq.' +
+                        mperiodKey +
+                        ',tname.eq."' +
+                        tnameKey.replace(/(['"\(\)\\])/g, '\\$1') +
+                        '")'
+                  }
+               }
+               if (!query_where_datatypes) {
+                  alarmMeasurementsByStype[stype] = {}
+                  return alarmMeasurementsByStype[stype]
+               }
+               query_where_datatypes += ')'
+               try {
+                  const dataUrl = `${import.meta.env.VITE_ODH_MOBILITY_API_URI}/tree/${stype}/*/latest?limit=-1&distinct=true&select=tmeasurements,sorigin&showNull=true&where=${encodeURIComponent(query_where_datatypes)}`
+                  const { data } = await useFetchWithAuth(dataUrl).json()
+                  alarmMeasurementsByStype[stype] =
+                     data.value?.data?.[stype]?.stations || {}
+               } catch (error) {
+                  console.error(
+                     `Error fetching alarm measurements for ${stype}:`,
+                     error
+                  )
+                  alarmMeasurementsByStype[stype] = {}
+               }
+               return alarmMeasurementsByStype[stype]
+            }
 
             const newPoints: DataMarker[] = []
             for (let i = 0; i < flatData.length; i++) {
@@ -368,95 +411,52 @@ export function useLayerDataFetcher() {
 
                // Province events filter is handled in MapView; for now include all
 
-               const fetchedEventsKey = Array.isArray(layer.stationType)
-                  ? layer.stationType.join('_')
-                  : layer.stationType
-
-               if (!isProvinceEvents && !fetchedEvents[fetchedEventsKey]) {
-                  let query_where_datatypes = ''
-                  let datatype_period_duplicates: Record<string, boolean> = {}
-
-                  const measurementTypes = getMeasurementTypesFromAlarmConfig(
-                     typedDataPoint.stype
-                  )
-                  if (Object.keys(measurementTypes).length > 0) {
-                     for (const tnameKey in measurementTypes) {
-                        for (const mperiodKey in measurementTypes[tnameKey]) {
-                           const duplicatesKey = tnameKey + '_' + mperiodKey
-                           if (!datatype_period_duplicates[duplicatesKey]) {
-                              datatype_period_duplicates[duplicatesKey] = true
-                              let query_datatype =
-                                 'and(mperiod.eq.' +
-                                 mperiodKey +
-                                 ',tname.eq."' +
-                                 tnameKey.replace(/(['"\(\)\\])/g, '\\$1') +
-                                 '")'
-                              query_where_datatypes +=
-                                 (query_where_datatypes === '' ? 'or(' : ',') +
-                                 query_datatype
-                           }
-                        }
-                     }
-                  }
-
-                  if (query_where_datatypes) {
-                     query_where_datatypes += ')'
-                     try {
-                        const dataUrl = `${import.meta.env.VITE_ODH_MOBILITY_API_URI}/tree/${layer.stationType}/*/latest?limit=-1&distinct=true&select=tmeasurements,sorigin&showNull=true&where=${encodeURIComponent(query_where_datatypes)}`
-                        const { data } = await useFetchWithAuth(dataUrl).json()
-                        fetchedEvents[fetchedEventsKey] = data.value?.data || {}
-                     } catch (error) {
-                        console.error(
-                           `Error fetching data for ${fetchedEventsKey}:`,
-                           error
-                        )
-                        fetchedEvents[fetchedEventsKey] = {}
-                     }
-                  } else {
-                     fetchedEvents[fetchedEventsKey] = {}
-                  }
-               }
-
                const scode = isProvinceEvents
                   ? typedAnnouncement.Id
                   : typedDataPoint.scode
 
                let lastDiffHours: number | undefined = undefined
-               let lastMeasurement:
-                  | (DataPoint & { mperiod: number; dataType: string })
-                  | undefined = undefined
+               let alarmColor: string | undefined = undefined
+               let alarmColorRank = ALARM_PRIORITY_COLORS.length + 1
 
                let mostRecentDiffHours: number | undefined = undefined
 
-               if (
-                  !isProvinceEvents &&
-                  fetchedEvents[fetchedEventsKey] &&
-                  fetchedEvents[fetchedEventsKey][stype] &&
-                  fetchedEvents[fetchedEventsKey][stype].stations &&
-                  fetchedEvents[fetchedEventsKey][stype].stations[scode]
-               ) {
-                  const station =
-                     fetchedEvents[fetchedEventsKey][stype].stations[scode]
-                  for (const dataType in station.sdatatypes) {
+               if (!isProvinceEvents) {
+                  const sdatatypes =
+                     (await loadAlarmMeasurements(stype))[scode]?.sdatatypes ||
+                     {}
+                  for (const dataType in sdatatypes) {
                      const measurements =
-                        station.sdatatypes[dataType].tmeasurements
-                     if (measurements && measurements.length > 0) {
-                        const measurement = measurements[0]
-                        if (measurement.mvalidtime) {
-                           const diffHours = differenceInHours(
-                              now,
-                              new Date(measurement.mvalidtime)
-                           )
-                           if (
-                              lastDiffHours === undefined ||
-                              diffHours < lastDiffHours
-                           ) {
-                              lastDiffHours = diffHours
-                              ;(lastMeasurement as any) = {
-                                 ...measurement,
-                                 dataType,
-                              }
-                           }
+                        sdatatypes[dataType].tmeasurements || []
+                     for (const measurement of measurements) {
+                        if (!measurement.mvalidtime) continue
+                        const diffHours = differenceInHours(
+                           now,
+                           new Date(measurement.mvalidtime)
+                        )
+                        if (
+                           lastDiffHours === undefined ||
+                           diffHours < lastDiffHours
+                        ) {
+                           lastDiffHours = diffHours
+                        }
+                        // Every period the station reports is evaluated, like
+                        // in the alarms table: an alarm declared on a slower
+                        // series must not be hidden by a fresher one.
+                        const color = opts.computeInfoColor?.({
+                           stype,
+                           dataType,
+                           value: Number(measurement.mvalue),
+                           diffHours,
+                           period: measurement.mperiod,
+                        })
+                        if (!color) continue
+                        const index = ALARM_PRIORITY_COLORS.indexOf(color)
+                        const rank =
+                           index < 0 ? ALARM_PRIORITY_COLORS.length : index
+                        if (rank < alarmColorRank) {
+                           alarmColor = color
+                           alarmColorRank = rank
                         }
                      }
                   }
@@ -490,15 +490,7 @@ export function useLayerDataFetcher() {
 
                const computedInfoColor = isProvinceEvents
                   ? undefined
-                  : lastMeasurement && opts.computeInfoColor
-                    ? opts.computeInfoColor({
-                         stype,
-                         dataType: (lastMeasurement as any).dataType,
-                         value: Number((lastMeasurement as any).mvalue),
-                         diffHours: lastDiffHours || 0,
-                         period: (lastMeasurement as any).mperiod,
-                      })
-                    : undefined
+                  : alarmColor
 
                const bestDiffHours =
                   typeof mostRecentDiffHours === 'number'
@@ -816,6 +808,7 @@ export function useLayerDataFetcher() {
                   const tms = sdatatypes[dataType]?.tmeasurements || []
                   for (const m of tms) {
                      measurementsOut.push({
+                        scode,
                         stationType: stype,
                         measurement: dataType,
                         value: Number(m.mvalue),

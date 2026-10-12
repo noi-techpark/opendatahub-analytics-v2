@@ -61,6 +61,17 @@ export const getColorForPriority = (priority: string): string => {
    }
 }
 
+// Colours in priority order: index 0 is the most urgent. This is the single
+// alarm colour scale shared by the alarms table, the alarmed pin body and the
+// overlap-satellite alarm badge.
+export const ALARM_PRIORITY_COLORS = ['high', 'medium', 'low'].map((priority) =>
+   getColorForPriority(priority)
+)
+
+// Salmon shell of an alarmed marker: the pin body and the overlap-satellite
+// alarm badge must read as the same signal.
+export const ALARM_MARKER_BG = '#FF9797'
+
 export const getIconForStationType = (stationType: string): string => {
    const map: Record<string, string> = {
       MeteoStation: '/markers/icons/weather.svg',
@@ -298,12 +309,12 @@ export const getBaseMarkerSvgUrl = (
    const alarm = !!opts?.alarm
    const inactive = !!opts?.inactive
 
-   const outerFill = alarm ? '#FF9797' : 'white'
+   const outerFill = alarm ? ALARM_MARKER_BG : 'white'
    const outerStroke = selected ? SELECTED_MARKER_COLOR : '#DADADA'
    const outerStrokeWidth = selected ? 3 : 1
    const resolvedMarkerColor = inactive ? '#BABABA' : markerColor
 
-   const innerWedgeFill = alarm ? '#FF9797' : 'white'
+   const innerWedgeFill = alarm ? ALARM_MARKER_BG : 'white'
 
    const inactiveStrikeSvg = inactive
       ? `<rect x="48" y="18" width="2" height="30" transform="rotate(65 48 18)" fill="#1C1B1F" opacity="0.6"/>`

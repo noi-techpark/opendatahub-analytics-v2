@@ -25,7 +25,7 @@ SPDX-License-Identifier: AGPL-3.0-or-later
       :key="getMarkerKey(selectedMarker)"
       :marker="selectedMarker"
       :open-on-measurements="!!focusScode"
-      @vue:beforeUnmount="focusScode = undefined"
+      @vue:beforeUnmount="clearFocus()"
       @close="handleSelectMarker()"
    />
    <MapComponent
@@ -35,6 +35,7 @@ SPDX-License-Identifier: AGPL-3.0-or-later
       :selectedScode
       :selectedStype="selectedMarker?.stype"
       :focusScode
+      :focusStype="focusStype"
       @markerSelected="handleSelectMarker"
       @renderingChanged="handleMapRenderingChanged"
    />
@@ -79,6 +80,7 @@ const loading = ref<number>(0)
 const selectedScode = ref<string>()
 const focusHandled = ref<boolean>(false)
 const focusScode = ref<string | undefined>(undefined)
+const focusStype = ref<string | undefined>(undefined)
 const mapRendering = ref<boolean>(false)
 const layerActionInProgress = ref<boolean>(false)
 
@@ -388,28 +390,50 @@ const refetchForDataTypeWithFilters = async (newVal: SelectedFilterOrigins) => {
    }
 }
 
+const clearFocus = () => {
+   focusScode.value = undefined
+   focusStype.value = undefined
+}
+
 const tryFocusFromQuery = () => {
    if (focusHandled.value) return
    const q = route.query as Record<string, string | undefined>
    const focusScodeParam = q.focusScode
+   const focusStypeParam = q.focusStype
    const focusCoords = q.focusCoords
    const focusName = q.focusName
    if (!markers.value || markers.value.length === 0) return
 
    let target: DataMarker | undefined
-   // Prefer scode when provided
+   // scode is preferred, but it is not unique on its own: the same code can
+   // exist under two station types (ParkingStation/105 and
+   // ParkingFacility/105 are two different stations), so the type sent by the
+   // alarm row has to take part in the match.
    if (focusScodeParam) {
-      target = markers.value.find((m) => m.scode === focusScodeParam)
+      target = markers.value.find(
+         (m) =>
+            m.scode === focusScodeParam &&
+            (!focusStypeParam || m.stype === focusStypeParam)
+      )
    }
-   if (focusCoords) {
+   if (!target && focusCoords) {
       const parts = focusCoords.split(',').map((v) => Number(v))
       if (parts.length === 2 && parts.every((n) => Number.isFinite(n))) {
          const [x, y] = parts as [number, number]
-         // Find exact or very close coordinate match
-         target = markers.value.find((m) => {
+         // Every station of an overlap group sits on the exact same
+         // coordinates, so a coordinate hit is only a candidate: the alarm's
+         // station name picks the right one when no scode was provided.
+         const atCoords = markers.value.filter((m) => {
             const [mx, my] = m.coordinates || [NaN, NaN]
             return Math.abs(mx - x) < 1e-6 && Math.abs(my - y) < 1e-6
          })
+         const nameLc = focusName?.toLowerCase()
+         const byName = nameLc
+            ? atCoords.find(
+                 (m) => (m.sname || '').toLowerCase() === nameLc
+              )
+            : undefined
+         target = byName || atCoords[0]
       }
    }
    if (!target && focusName) {
@@ -422,6 +446,7 @@ const tryFocusFromQuery = () => {
    if (target) {
       // Do not change selection; only pan/zoom via focusScode
       focusScode.value = target.scode
+      focusStype.value = target.stype
       focusHandled.value = true
    }
 }

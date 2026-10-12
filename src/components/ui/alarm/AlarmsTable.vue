@@ -107,6 +107,8 @@ import TableHeaderCell from '../../table/TableHeaderCell.vue'
 import SortHeader from '../../table/SortHeader.vue'
 import { useTableSort, type SortDir } from '../../table/useTableSort'
 import { getColorForPriority } from '../../../utils/marker-utils'
+import { storeToRefs } from 'pinia'
+import { useMapLayerStore } from '../../../stores/map-layers'
 
 const props = defineProps<{
    alarms: AlarmEvent[]
@@ -117,6 +119,8 @@ const props = defineProps<{
 const { t } = useI18n()
 const router = useRouter()
 const route = useRoute()
+
+const { showAlarms } = storeToRefs(useMapLayerStore())
 
 const tableHeaders = [
    {
@@ -271,8 +275,16 @@ const getPriorityBadgeClass = (priority: string): string => {
 }
 
 const navigateToMap = (alarm: AlarmEvent) => {
+   // Without the highlight the alarmed station looks like every other marker,
+   // so navigating from an alarm row turns it on.
+   showAlarms.value = true
+
    const query = {
       ...route.query,
+      // scode is the only identifier that survives an overlap group: every
+      // station in the group shares the same coordinates.
+      focusScode: alarm.scode,
+      focusStype: alarm.stationType,
       focusName: alarm.stationName,
       focusCoords: alarm.coordinates
          ? `${alarm.coordinates[0]},${alarm.coordinates[1]}`
