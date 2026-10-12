@@ -48,6 +48,7 @@ import { computed, nextTick, onBeforeUnmount, onMounted, ref, watch } from 'vue'
 import { DataMarker, StationMapMarker } from '../../../types/api'
 import { initMap, mapFontStack } from '../../../utils/map-utils'
 import {
+   ALARM_MARKER_BG,
    createMarkerIcon,
    getBaseMarkerSvgUrl,
    getIconForStationType,
@@ -76,6 +77,7 @@ type Props = {
    selectedScode?: string
    selectedStype?: string
    focusScode?: string
+   focusStype?: string
    preventZoomOnSelected?: boolean
    showSearch?: boolean | string
 }
@@ -829,18 +831,22 @@ const setMapClusterSource = async () => {
       const buildSatelliteIcon = async (
          id: string,
          strokeColor: string,
-         fillOpacity: number
+         fillOpacity: number,
+         alarm?: boolean
       ) => {
          if (map.value?.hasImage(id)) return
 
+         // The canvas is larger than the ring so that the alarm badge can sit
+         // outside it without being clipped; the ring stays centred, so the
+         // icon anchor and the overlap offsets are unchanged.
          const canvas = document.createElement('canvas')
-         canvas.width = 30
-         canvas.height = 30
+         canvas.width = 36
+         canvas.height = 36
          const context = canvas.getContext('2d')
          if (!context) return
 
          context.beginPath()
-         context.arc(15, 15, 10.5, 0, Math.PI * 2)
+         context.arc(18, 18, 10.5, 0, Math.PI * 2)
          context.fillStyle = satelliteBaseColor
          context.globalAlpha = fillOpacity
          context.fill()
@@ -848,6 +854,20 @@ const setMapClusterSource = async () => {
          context.strokeStyle = strokeColor
          context.lineWidth = 4
          context.stroke()
+
+         // Satellites are too small to carry the alarmed pin shape, so the
+         // alarm state becomes a badge on the ring, in the same salmon as the
+         // alarmed pin body: without it an alarming station inside an overlap
+         // group looks like all the others.
+         if (alarm) {
+            context.beginPath()
+            context.arc(29, 7, 6, 0, Math.PI * 2)
+            context.fillStyle = ALARM_MARKER_BG
+            context.fill()
+            context.lineWidth = 2
+            context.strokeStyle = '#FFFFFF'
+            context.stroke()
+         }
 
          const bitmap = await createImageBitmap(canvas)
          map.value?.addImage(id, bitmap, { pixelRatio: 1.5 })
@@ -865,6 +885,47 @@ const setMapClusterSource = async () => {
          SELECTED_MARKER_COLOR,
          1
       )
+
+      // One alarmed variant per satellite state: the icon is resolved at
+      // render time from the feature properties.
+      const satelliteAlarmIconId = `custom-marker-${key}-satellite-alarm`
+      const satelliteAlarmSelectedIconId = `${satelliteAlarmIconId}-selected`
+      const satelliteAlarmInactiveIconId = `${satelliteAlarmIconId}-inactive`
+      const satelliteAlarmInactiveSelectedIconId = `${satelliteAlarmIconId}-inactive-selected`
+      const satelliteAlarmStates: Array<{
+         id: string
+         strokeColor: string
+         fillOpacity: number
+      }> = [
+         {
+            id: satelliteAlarmIconId,
+            strokeColor: satelliteBaseColor,
+            fillOpacity: 0.2,
+         },
+         {
+            id: satelliteAlarmSelectedIconId,
+            strokeColor: SELECTED_MARKER_COLOR,
+            fillOpacity: 1,
+         },
+         {
+            id: satelliteAlarmInactiveIconId,
+            strokeColor: '#BABABA',
+            fillOpacity: 0.2,
+         },
+         {
+            id: satelliteAlarmInactiveSelectedIconId,
+            strokeColor: SELECTED_MARKER_COLOR,
+            fillOpacity: 1,
+         },
+      ]
+      for (const state of satelliteAlarmStates) {
+         await buildSatelliteIcon(
+            state.id,
+            state.strokeColor,
+            state.fillOpacity,
+            true
+         )
+      }
 
       try {
          const idsToCheck = [
@@ -945,8 +1006,37 @@ const setMapClusterSource = async () => {
          layout: {
             'icon-image': [
                'case',
+               [
+                  'all',
+                  ['==', ['get', 'inactive'], true],
+                  ['==', ['get', 'selected'], true],
+                  ['==', ['get', 'alarm'], true],
+               ],
+               singleInactiveSelectedAlarmIconId,
+               [
+                  'all',
+                  ['==', ['get', 'inactive'], true],
+                  ['==', ['get', 'selected'], true],
+               ],
+               singleInactiveSelectedIconId,
+               [
+                  'all',
+                  ['==', ['get', 'inactive'], true],
+                  ['==', ['get', 'alarm'], true],
+               ],
+               singleInactiveAlarmIconId,
+               ['==', ['get', 'inactive'], true],
+               singleInactiveIconId,
+               [
+                  'all',
+                  ['==', ['get', 'selected'], true],
+                  ['==', ['get', 'alarm'], true],
+               ],
+               singleSelectedAlarmIconId,
                ['==', ['get', 'selected'], true],
                singleSelectedIconId,
+               ['==', ['get', 'alarm'], true],
+               singleAlarmIconId,
                singleIconId,
             ],
             'icon-size': [
@@ -1059,6 +1149,27 @@ const setMapClusterSource = async () => {
          layout: {
             'icon-image': [
                'case',
+               [
+                  'all',
+                  ['==', ['get', 'alarm'], true],
+                  ['==', ['get', 'inactive'], true],
+                  ['==', ['get', 'selected'], true],
+               ],
+               satelliteAlarmInactiveSelectedIconId,
+               [
+                  'all',
+                  ['==', ['get', 'alarm'], true],
+                  ['==', ['get', 'inactive'], true],
+               ],
+               satelliteAlarmInactiveIconId,
+               [
+                  'all',
+                  ['==', ['get', 'alarm'], true],
+                  ['==', ['get', 'selected'], true],
+               ],
+               satelliteAlarmSelectedIconId,
+               ['==', ['get', 'alarm'], true],
+               satelliteAlarmIconId,
                [
                   'all',
                   ['==', ['get', 'inactive'], true],
@@ -1451,7 +1562,13 @@ watch(
 watch(
    () => props.focusScode,
    (curr) => {
-      const marker = props.markers?.find((m) => m.scode === curr)
+      // scode alone is not unique: the same code can exist under two station
+      // types, so the type carried by the alarm row narrows the lookup.
+      const marker = props.markers?.find(
+         (m) =>
+            m.scode === curr &&
+            (!props.focusStype || m.stype === props.focusStype)
+      )
       if (marker) {
          handleMarkerSelected(marker)
       }

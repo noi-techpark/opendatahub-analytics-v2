@@ -5,6 +5,9 @@
 import { AlarmConfig, AlarmEvent } from '../types/alarm-config'
 
 export interface StationMeasurement {
+   /** Station code: identifies the station inside an overlap group, where
+    *  several stations share the same coordinates. */
+   scode?: string
    stationType: string
    measurement: string
    value: number
@@ -70,6 +73,7 @@ export function evaluateAlarms(
             timestamp: measurement.timestamp,
             value: measurement.value,
             stationName: measurement.stationName,
+            scode: measurement.scode,
             coordinates: measurement.coordinates,
             alarm,
             stationType,

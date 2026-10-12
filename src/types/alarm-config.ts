@@ -33,6 +33,9 @@ export interface AlarmEvent {
    timestamp: Date
    value: number
    stationName: string
+   /** Station code, when known: identifies the alarming station unambiguously
+    *  inside an overlap group, where several stations share the coordinates. */
+   scode?: string
    coordinates: [number, number]
    alarm: Alarm
    stationType: string
