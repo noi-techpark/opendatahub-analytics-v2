@@ -11,68 +11,64 @@ MeteoStation:
               min: 1
               max: 99999
            periods: [600]
-   air-temperature:
+   air_temperature:
       alarms:
-         - name: 'Below Zero Air Temperature (10min)'
+         - name: 'Below Zero Air Temperature'
            description: 'Daily average temperature below freezing'
            priority: 'high'
            thresholds:
               min: -100
-              max: -2
-           periods: [600]
-
-         - name: 'Below Zero Air Temperature (15min)'
-           description: 'Daily average temperature below freezing'
-           priority: 'high'
-           thresholds:
-              min: -100
-              max: -2
-           periods: [900]
+              max: -5
+           periods: [600,900]
          # NOTE: example filter by origins: ['SIAG']
          # origins: ['SIAG']
 
-         - name: 'High Temperature (10min)'
+         - name: 'High Temperature'
            description: 'Unusually high temperature'
            priority: 'medium'
            thresholds:
-              min: 30
+              min: 35
               max: 99999
-           periods: [600]
-         - name: 'High Temperature (15min)'
-           description: 'Unusually high temperature'
-           priority: 'medium'
-           thresholds:
-              min: 30
-              max: 99999
-           periods: [900]
-
+           periods: [600,900]
+           
 EnvironmentStation:
-   nitrogen-dioxide:
+   NO2-Alphasense_processed:
       alarms:
-         - name: 'High NO2 Level'
+         - name: 'High NO2 Level (A22)'
            description: 'Nitrogen dioxide levels are high'
            priority: 'high'
            thresholds:
               min: 40
               max: 99999
            periods: [3600]
-
-   particulate-matter10:
+           origins: ['a22-algorab']
+   NO2 - Ossidi di azoto:
       alarms:
-         - name: 'High PM10 Level'
-           description: 'Particulate matter (PM10) levels are high'
+        - name: 'High NO2 Level (APPABZ)'
+           description: 'Nitrogen dioxide levels are high'
            priority: 'high'
            thresholds:
-              min: 30
+              min: 40
               max: 99999
            periods: [3600]
+           origins: ['APPABZ']
+   nitrogen-dioxide:
+      alarms:
+        - name: 'High NO2 Level (APPATN)'
+           description: 'Nitrogen dioxide levels are high'
+           priority: 'high'
+           thresholds:
+              min: 40
+              max: 99999
+           periods: [3600]
+           origins: ['APPATN-open']
 
 RWISstation:
-   ground-surface-temperature:
+   temp_suolo:
       alarms:
          - name: 'Below Zero Road Temperature'
            description: 'Road surface temperature near freezing point'
-           priority: 'medium'
+           priority: 'high'
            thresholds:
               min: -100
               max: -3
@@ -86,8 +82,9 @@ TrafficSensor:
            priority: 'high'
            thresholds:
               min: 0
-              max: 25
+              max: 50
            periods: [600]
+           origins: ['A22']
 
 ParkingStation:
    free:
@@ -98,4 +95,4 @@ ParkingStation:
            thresholds:
               min: 0
               max: 25
-           periods: [600, 120]
+           periods: [300,600, 120]
