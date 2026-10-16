@@ -10,6 +10,7 @@ SPDX-License-Identifier: AGPL-3.0-or-later
             <RouterView />
          </div>
          <Notifications />
+         <AlarmConfigDialog />
       </AppLayout>
    </div>
 </template>
@@ -18,6 +19,7 @@ SPDX-License-Identifier: AGPL-3.0-or-later
 import { RouterView } from 'vue-router'
 import AppLayout from './layouts/AppLayout.vue'
 import Notifications from './components/ui/Notifications.vue'
+import AlarmConfigDialog from './components/ui/alarm/AlarmConfigDialog.vue'
 </script>
 
 <style lang="postcss" scoped>

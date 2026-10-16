@@ -4,11 +4,15 @@
 import { defineStore } from 'pinia'
 import { ref } from 'vue'
 import type { AlarmConfig } from '../types/alarm-config'
+import type { AlarmConfigProblem } from '../utils/alarm-config-loader'
 import type { DataMarker } from '../types/api'
 
 export const useLayerDataStore = defineStore('layer-data', () => {
    // Shared alarm configuration across views
    const alarmConfig = ref<AlarmConfig>({})
+   // What is wrong with alarms.yaml, when something is: the dialog lists it
+   // instead of letting the application run with alarms silently disabled.
+   const alarmConfigProblems = ref<AlarmConfigProblem[] | null>(null)
 
    // Shared markers and origins cache to persist across navigation
    const markers = ref<DataMarker[]>([])
@@ -22,6 +26,11 @@ export const useLayerDataStore = defineStore('layer-data', () => {
 
    const setAlarmConfig = (config: AlarmConfig) => {
       alarmConfig.value = config || {}
+   }
+
+   const setAlarmConfigProblems = (problems: AlarmConfigProblem[] | null) => {
+      alarmConfigProblems.value =
+         problems && problems.length > 0 ? problems : null
    }
 
    const setMarkers = (m: DataMarker[]) => {
@@ -46,6 +55,7 @@ export const useLayerDataStore = defineStore('layer-data', () => {
    return {
       // state
       alarmConfig,
+      alarmConfigProblems,
       markers,
       uniqueOrigins,
       lastMarkersSet,
@@ -54,6 +64,7 @@ export const useLayerDataStore = defineStore('layer-data', () => {
       // actions
       setAlarmConfig,
       setMarkers,
+      setAlarmConfigProblems,
       setUniqueOrigins,
       setLastMarkersSet,
       setMarkersLoading,

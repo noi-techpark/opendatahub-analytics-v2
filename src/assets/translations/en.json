@@ -61,7 +61,16 @@
          "select-station-to-see-alarms": "Select at least one station to see alarms"
       },
       "alarm-config": {
-         "error": "Alarms are disabled: the alarm configuration could not be loaded. {detail}"
+         "error-title": "Alarms are disabled",
+         "error-description": "The alarm configuration could not be loaded, so no alarm is evaluated anywhere in the application. Fix the problems below in alarms.yaml and reload the page.",
+         "warning-title": "Alarm configuration problems",
+         "warning-description": "The alarm configuration was applied, but parts of it do not behave as written. Check the problems below.",
+         "severity-error": "Error",
+         "severity-warning": "Warning",
+         "location": "line {lines}",
+         "location-column": "line {lines}, column {column}",
+         "more-lines": "(+{n} more)",
+         "config-file": "Configuration file: {url}"
       },
       "events-table": {
          "start-time": "Start time",
