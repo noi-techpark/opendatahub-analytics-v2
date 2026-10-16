@@ -23,11 +23,6 @@ import { useNotificationsStore } from '../stores/notifications'
 import { useMapLayerStore } from '../stores/map-layers'
 import { getMarkerKey } from '../utils/map-marker-utils'
 import { ALARM_PRIORITY_COLORS } from '../utils/marker-utils'
-import type { ComposerTranslation } from 'vue-i18n'
-
-// One notification per distinct failure: the configuration is retried on every
-// refresh, so a broken alarms.yaml would otherwise pile up identical toasts.
-let alarmConfigErrorNotified: string | null = null
 
 export function useLayerDataFetcher() {
    const layerData = useLayerDataStore()
@@ -36,32 +31,24 @@ export function useLayerDataFetcher() {
    const layerStore = useMapLayerStore()
    const { hideInactiveSensors } = storeToRefs(layerStore)
 
-   const ensureAlarmConfigLoaded = async (t?: ComposerTranslation) => {
+   const ensureAlarmConfigLoaded = async () => {
       if (alarmConfig.value && Object.keys(alarmConfig.value).length > 0) {
          return
       }
       try {
-         const cfg = await loadAlarmConfig(getDefaultAlarmConfigUrl())
-         layerData.setAlarmConfig(cfg)
-         alarmConfigErrorNotified = null
+         const { config, problems } = await loadAlarmConfig(
+            getDefaultAlarmConfigUrl()
+         )
+         layerData.setAlarmConfig(config)
+         layerData.setAlarmConfigProblems(problems)
       } catch (e) {
          console.error('Failed to load alarm configuration:', e)
-         const detail =
-            e instanceof AlarmConfigError
-               ? e.detail
-               : e instanceof Error
-                 ? e.message.split('\n')[0].trim()
-                 : String(e)
-         if (alarmConfigErrorNotified === detail) return
-         alarmConfigErrorNotified = detail
          layerData.setAlarmConfig({})
-         showNotification({
-            type: 'error',
-            duration: 0,
-            message: t
-               ? t('components.alarm-config.error', { detail })
-               : `Alarms are disabled: ${detail}`,
-         })
+         layerData.setAlarmConfigProblems(
+            e instanceof AlarmConfigError
+               ? e.problems
+               : [{ severity: 'error', message: String(e), lines: [] }]
+         )
       }
    }
 
