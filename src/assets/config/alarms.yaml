@@ -45,23 +45,23 @@ EnvironmentStation:
    NO2 - Ossidi di azoto:
       alarms:
         - name: 'High NO2 Level (APPABZ)'
-           description: 'Nitrogen dioxide levels are high'
-           priority: 'high'
-           thresholds:
+          description: 'Nitrogen dioxide levels are high'
+          priority: 'high'
+          thresholds:
               min: 40
               max: 99999
-           periods: [3600]
-           origins: ['APPABZ']
+          periods: [3600]
+          origins: ['APPABZ']
    nitrogen-dioxide:
       alarms:
         - name: 'High NO2 Level (APPATN)'
-           description: 'Nitrogen dioxide levels are high'
-           priority: 'high'
-           thresholds:
+          description: 'Nitrogen dioxide levels are high'
+          priority: 'high'
+          thresholds:
               min: 40
               max: 99999
-           periods: [3600]
-           origins: ['APPATN-open']
+          periods: [3600]
+          origins: ['APPATN-open']
 
 RWISstation:
    temp_suolo:
