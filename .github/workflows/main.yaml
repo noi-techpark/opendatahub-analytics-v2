@@ -46,7 +46,7 @@ jobs:
       DOCKER_TAG: ${{ github.sha }}-test
       VALUES_YAML: infrastructure/helm/test.yaml
       K8S_NAME: analytics-v2
-      ENDPOINT_URL: https://v2-beta.analytics.opendatahub.testingmachine.eu
+      ENDPOINT_URL: https://analytics.opendatahub.testingmachine.eu
     steps:
       - name: Checkout source code
         uses: actions/checkout@v2
@@ -104,7 +104,7 @@ jobs:
       DOCKER_TAG: ${{ github.sha }}-prod
       VALUES_YAML: infrastructure/helm/prod.yaml
       K8S_NAME: analytics-v2
-      ENDPOINT_URL: https://v2-beta.analytics.opendatahub.com
+      ENDPOINT_URL: https://analytics.opendatahub.com
     steps:
       - name: Checkout source code
         uses: actions/checkout@v2

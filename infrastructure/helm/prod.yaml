@@ -14,7 +14,7 @@ ingress:
 
   className: nginx
   hosts:
-    - host: v2-beta.analytics.opendatahub.com
+    - host: analytics.opendatahub.com
       paths: 
         - path: "/"
           pathType: Prefix
