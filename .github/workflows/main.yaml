@@ -67,7 +67,7 @@ jobs:
           X_VITE_KEYCLOAK_REALM: noi
           X_VITE_KEYCLOAK_CLIENT_ID: odh-mobility-analytics
           X_VITE_KEYCLOAK_REDIRECT_URI: ${{ env.ENDPOINT_URL }}
-          X_VITE_KEYCLOAK_SILENT_CHECK_SSO_REDIRECT_URI: ${{ env.ENDPOINT_URL }}
+          X_VITE_KEYCLOAK_SILENT_CHECK_SSO_REDIRECT_URI: ${{ env.ENDPOINT_URL }}/silent-check-sso.html
 
 
       - name: Build and push images
@@ -125,7 +125,7 @@ jobs:
           X_VITE_KEYCLOAK_REALM: noi
           X_VITE_KEYCLOAK_CLIENT_ID: odh-mobility-analytics
           X_VITE_KEYCLOAK_REDIRECT_URI: ${{ env.ENDPOINT_URL }}
-          X_VITE_KEYCLOAK_SILENT_CHECK_SSO_REDIRECT_URI: ${{ env.ENDPOINT_URL }}
+          X_VITE_KEYCLOAK_SILENT_CHECK_SSO_REDIRECT_URI: ${{ env.ENDPOINT_URL }}/silent-check-sso.html
 
       - name: Build and push images
         uses: noi-techpark/github-actions/docker-build-and-push@v2
