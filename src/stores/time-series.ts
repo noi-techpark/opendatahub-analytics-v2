@@ -25,7 +25,7 @@ export const useTimeSeriesStore = defineStore('time-series', () => {
       '#f11c6b',
 
       '#59cd56',
-      '# c806f',
+      '#c806f5',
       '#939bc6',
       '#cee390',
       '#4daeda',
@@ -45,7 +45,7 @@ export const useTimeSeriesStore = defineStore('time-series', () => {
       '#53c124',
       '#59e92a',
       '#ab0c73',
-      '# 69f35',
+      '#069f35',
       '#173583',
       '#c8d25b',
       '#599c0b',
@@ -58,7 +58,7 @@ export const useTimeSeriesStore = defineStore('time-series', () => {
       '#cc4a9c',
       '#156ced',
       '#ef9b7e',
-      '# f3f8d',
+      '#f3f8d0',
    ]
 
    const embeddableKeys = [
@@ -84,11 +84,13 @@ export const useTimeSeriesStore = defineStore('time-series', () => {
       const index = timeSeriesList.value.findIndex(
          (item) => item.id === timeSeries.id
       )
+      if (index === -1) return
       timeSeriesList.value.splice(index, 1, timeSeries)
    }
 
    const deleteTimeSeries = (id: string) => {
       const index = timeSeriesList.value.findIndex((item) => item.id === id)
+      if (index === -1) return
       timeSeriesList.value.splice(index, 1)
    }
 
@@ -124,7 +126,7 @@ export const useTimeSeriesStore = defineStore('time-series', () => {
          station: '',
          datatype: '',
          period: '',
-         color: colors[timeSeriesList.value.length],
+         color: colors[timeSeriesList.value.length % colors.length],
          data: [] as number[],
          labels: [] as string[],
       }
