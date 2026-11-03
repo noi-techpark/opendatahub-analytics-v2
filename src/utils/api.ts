@@ -22,3 +22,11 @@ export const useFetchWithAuth = (url: string) => {
       },
    })(url)
 }
+
+/**
+ * Wraps a string value in double quotes for use in a `where` filter,
+ * escaping characters that are special in the filter syntax.
+ * Numbers and booleans must NOT be quoted.
+ */
+export const quoteWhereValue = (value: string): string =>
+   `"${value.replace(/(['"()\\])/g, '\\$1')}"`

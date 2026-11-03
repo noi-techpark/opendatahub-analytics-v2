@@ -174,7 +174,7 @@ import { startOfDay, subDays, subMonths, isToday } from 'date-fns'
 import { useTimeSeriesStore } from '../stores/time-series'
 import { useAutoRefreshStore } from '../stores/auto-refresh'
 import { useClipboard } from '@vueuse/core'
-import { useFetchWithAuth } from '../utils/api'
+import { quoteWhereValue, useFetchWithAuth } from '../utils/api'
 import SelectPopover from '../components/ui/popover/SelectPopover.vue'
 import IconCheck from '../components/ui/svg/IconCheck.vue'
 import { randomId } from '../components/utils/useRandomId'
@@ -285,7 +285,7 @@ const getTimeseriesData = async () => {
    const to = selectedTime.value.to.toJSON()
 
    for (const element of timeSeriesList.value) {
-      const dataUrl = `${import.meta.env.VITE_ODH_MOBILITY_API_URI}/flat/${encodeURIComponent(element.dataset)}/${encodeURIComponent(element.datatype)}/${from}/${to}?limit=-1&offset=0&select=mvalue,mvalidtime,mperiod&where=sname.eq.${encodeURIComponent(element.station)},sorigin.eq.${encodeURIComponent(element.provider)},mperiod.eq.${element.period},sactive.eq.true&shownull=false&distinct=true`
+      const dataUrl = `${import.meta.env.VITE_ODH_MOBILITY_API_URI}/flat/${encodeURIComponent(element.dataset)}/${encodeURIComponent(element.datatype)}/${from}/${to}?limit=-1&offset=0&select=mvalue,mvalidtime,mperiod&where=sname.eq.${encodeURIComponent(quoteWhereValue(element.station))},sorigin.eq.${encodeURIComponent(quoteWhereValue(element.provider))},mperiod.eq.${element.period},sactive.eq.true&shownull=false&distinct=true`
       const { data } = await useFetchWithAuth(dataUrl).json()
       const labels = []
       const values = []

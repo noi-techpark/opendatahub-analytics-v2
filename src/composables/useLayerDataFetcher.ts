@@ -9,7 +9,7 @@ import {
    AlarmConfigError,
 } from '../utils/alarm-config-loader'
 import type { AlarmConfig } from '../types/alarm-config'
-import { useFetchWithAuth } from '../utils/api'
+import { quoteWhereValue, useFetchWithAuth } from '../utils/api'
 import type {
    AnnouncementEvent,
    DataMarker,
@@ -55,7 +55,9 @@ export function useLayerDataFetcher() {
    // Centralized helper to build origin filters
    const buildOriginFilterString = (origins: string[]): string => {
       if (!origins || origins.length === 0) return ''
-      const filterParts = origins.map((origin) => `sorigin.ire.${origin}`)
+      const filterParts = origins.map(
+         (origin) => `sorigin.ire.${quoteWhereValue(origin)}`
+      )
       const filterString = filterParts.join(',')
       return origins.length > 1 ? `or(${filterString})` : filterString
    }

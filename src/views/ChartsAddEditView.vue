@@ -176,7 +176,7 @@ import Switch from '../components/ui/Switch.vue'
 import { computed, nextTick, onMounted, ref, watch } from 'vue'
 import SelectPopover from '../components/ui/popover/SelectPopover.vue'
 import { useSessionStorage } from '@vueuse/core'
-import { useFetchWithAuth } from '../utils/api'
+import { quoteWhereValue, useFetchWithAuth } from '../utils/api'
 import { SelectOption } from '../types/select'
 import { TimeSeries } from '../types/time-series'
 import { useTimeSeriesStore } from '../stores/time-series'
@@ -317,7 +317,7 @@ const handleSelectMarker = (data?: MapMarkerDetails | DataMarker) => {
 const useComputeILIKESearch = (key: string, searchVal?: string) => {
    if (!searchVal) return ''
 
-   return `${key}.ire.${encodeURIComponent(searchVal)}`
+   return `${key}.ire.${encodeURIComponent(quoteWhereValue(searchVal))}`
 }
 
 const useFetchProviderOptions = async (searchVal?: string) => {
@@ -346,7 +346,7 @@ const useFetchDatasetOptions = async (searchVal?: string) => {
 
    const searchString = useComputeILIKESearch('stype', searchVal)
 
-   const dataUrl = `${import.meta.env.VITE_ODH_MOBILITY_API_URI}/flat/%2A?limit=-1&offset=0&select=stype&where=and(${searchString ? searchString + ',' : ''}sorigin.eq.${selection.value.provider})&shownull=false&distinct=true`
+   const dataUrl = `${import.meta.env.VITE_ODH_MOBILITY_API_URI}/flat/%2A?limit=-1&offset=0&select=stype&where=and(${searchString ? searchString + ',' : ''}sorigin.eq.${encodeURIComponent(quoteWhereValue(selection.value.provider))})&shownull=false&distinct=true`
 
    const { data } = await useFetchWithAuth(dataUrl).json()
    datasets.value = data.value.data
@@ -378,7 +378,7 @@ const useFetchStationOptions = async (searchVal?: string, page = 1) => {
 
    const searchString = useComputeILIKESearch('sname', searchVal)
 
-   const dataUrl = `${import.meta.env.VITE_ODH_MOBILITY_API_URI}/flat/${selection.value.dataset}?limit=${limit}&offset=${offset}&select=sname,scode,scoordinate,stype&where=and(${searchString ? searchString + ',' : ''}sorigin.eq.${selection.value.provider})&shownull=false&distinct=true`
+   const dataUrl = `${import.meta.env.VITE_ODH_MOBILITY_API_URI}/flat/${selection.value.dataset}?limit=${limit}&offset=${offset}&select=sname,scode,scoordinate,stype&where=and(${searchString ? searchString + ',' : ''}sorigin.eq.${encodeURIComponent(quoteWhereValue(selection.value.provider))})&shownull=false&distinct=true`
 
    const { data } = await useFetchWithAuth(dataUrl).json()
    const stationsData = data.value.data
@@ -426,7 +426,7 @@ const useFetchDatatypeOptions = async (searchVal?: string, page = 1) => {
 
    const searchString = useComputeILIKESearch('tname', searchVal)
 
-   const dataUrl = `${import.meta.env.VITE_ODH_MOBILITY_API_URI}/flat/${selection.value.dataset}/*?limit=${limit}&offset=${offset}&select=tname,tdescription&where=and(${searchString ? searchString + ',' : ''}sorigin.eq.${selection.value.provider})&shownull=false&distinct=true`
+   const dataUrl = `${import.meta.env.VITE_ODH_MOBILITY_API_URI}/flat/${selection.value.dataset}/*?limit=${limit}&offset=${offset}&select=tname,tdescription&where=and(${searchString ? searchString + ',' : ''}sorigin.eq.${encodeURIComponent(quoteWhereValue(selection.value.provider))})&shownull=false&distinct=true`
 
    const { data } = await useFetchWithAuth(dataUrl).json()
 
