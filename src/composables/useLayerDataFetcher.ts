@@ -56,7 +56,7 @@ export function useLayerDataFetcher() {
    const buildOriginFilterString = (origins: string[]): string => {
       if (!origins || origins.length === 0) return ''
       const filterParts = origins.map(
-         (origin) => `sorigin.ire.${quoteWhereValue(origin)}`
+         (origin) => `sorigin.eq.${quoteWhereValue(origin)}`
       )
       const filterString = filterParts.join(',')
       return origins.length > 1 ? `or(${filterString})` : filterString
@@ -255,7 +255,7 @@ export function useLayerDataFetcher() {
 
             if (where) params.set('where', where)
 
-            const url = `${import.meta.env.VITE_ODH_MOBILITY_API_URI}/flat,${datasetType}/${layer.stationType}?${params.toString()}`
+            const url = `${import.meta.env.VITE_ODH_MOBILITY_API_URI}/flat,${datasetType}/${opts.filter?.filterString ? opts.filter.stype : layer.stationType}?${params.toString()}`
 
             const { data } = await useFetchWithAuth(url).json()
             const maybeArray = (data.value as { data?: unknown } | undefined)
@@ -595,12 +595,9 @@ export function useLayerDataFetcher() {
 
          if (hasFilters) {
             for (const stype of filteredStationTypes) {
-               const filterStrings = Object.entries(
-                  ctx.selectedFilterOrigins.sorigin
+               const filterString = buildOriginFilterString(
+                  ctx.selectedFilterOrigins.sorigin[stype]
                )
-                  .filter(([key]) => stationTypes.includes(key))
-                  .map(([key, values]) => buildOriginFilterString(values))
-               const filterString = filterStrings.join(',')
                const stypeFilteredMarkers = await fetchStationData(layer, {
                   currentMarkers: newMarkers.length ? newMarkers : ctx.markers,
                   filter: { stype, filterString },
@@ -739,13 +736,12 @@ export function useLayerDataFetcher() {
          }
 
          if (hasFilters) {
-            const filterStrings = Object.entries(
-               ctx.selectedFilterOrigins.sorigin
-            )
-               .filter(([key]) => stationTypes.includes(key))
-               .map(([_, values]) => buildOriginFilterString(values))
-            const filterString = filterStrings.join(',')
-            await fetchFlat(filteredTypes, filterString)
+            for (const stype of filteredTypes) {
+               await fetchFlat(
+                  [stype],
+                  buildOriginFilterString(ctx.selectedFilterOrigins.sorigin[stype])
+               )
+            }
 
             const unfilteredTypes = stationTypes.filter(
                (s) => !filteredTypes.includes(s)

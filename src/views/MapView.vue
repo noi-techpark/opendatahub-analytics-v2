@@ -373,7 +373,13 @@ const {
    refreshSelectedLayers,
 } = useLayerDataFetcher()
 
+// Monotonic id so a slow, older filter fetch can't overwrite a newer one
+let filterRefetchSeq = 0
+
 const refetchForDataTypeWithFilters = async (newVal: SelectedFilterOrigins) => {
+   const seq = ++filterRefetchSeq
+   // Snapshot: the debounced watcher mutates this object while the user keeps selecting
+   newVal = JSON.parse(JSON.stringify(newVal))
    loading.value += 1
    try {
       const updated = await refetchFromFetcher(newVal, {
@@ -384,7 +390,7 @@ const refetchForDataTypeWithFilters = async (newVal: SelectedFilterOrigins) => {
          computeInfoColor: ({ stype, dataType, value, period }) =>
             getMarkerColorFromAlarmConfig(stype, dataType, value, period),
       })
-      if (updated) markers.value = updated
+      if (updated && seq === filterRefetchSeq) markers.value = updated
    } finally {
       loading.value -= 1
    }
